@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calvin Le — Floor General</title>
+  <title>Calvin Le</title>
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
     {
@@ -16,330 +16,389 @@
 </head>
 <body>
 
-<!-- ── NAV ──────────────────────────────────────────── -->
 <nav>
-  <span class="nav-brand">Calvin Le</span>
-  <ul class="tab-list" role="tablist">
-    <li><button class="tab-btn active" data-tab="about"      role="tab">About</button></li>
-    <li><button class="tab-btn"        data-tab="career"     role="tab">Career</button></li>
-    <li><button class="tab-btn"        data-tab="attributes" role="tab">Attributes</button></li>
-    <li><button class="tab-btn"        data-tab="projects"   role="tab">Projects</button></li>
+  <a href="#bio" class="nav-brand">Calvin Le</a>
+  <ul class="nav-links">
+    <li><a href="#bio" class="nav-link">Bio</a></li>
+    <li><button class="nav-link" data-open="career">Career</button></li>
+    <li><button class="nav-link" data-open="projects">Projects</button></li>
+    <li><button class="nav-link" data-open="hobbies">Hobbies</button></li>
   </ul>
 </nav>
 
-<!-- ── MAIN ─────────────────────────────────────────── -->
 <main>
 
-  <!-- ABOUT ----------------------------------------- -->
-  <section id="about" class="tab-pane active" role="tabpanel">
-    <div class="hero-layout">
-
-      <!-- LEFT: Career + Projects -->
-      <div class="hero-col">
-
-        <div class="hero-panel" data-goto="career" role="button" tabindex="0">
-          <div class="panel-label">Career</div>
-          <div class="ovr-progression">
-            <div class="ovr-step">
-              <span class="ovr-step-num">72</span>
-              <span class="ovr-step-team">Meta</span>
-            </div>
-            <span class="ovr-arrow">›</span>
-            <div class="ovr-step">
-              <span class="ovr-step-num">81</span>
-              <span class="ovr-step-team">BetMGM</span>
-            </div>
-            <span class="ovr-arrow">›</span>
-            <div class="ovr-step current">
-              <span class="ovr-step-num">89</span>
-              <span class="ovr-step-team">BetMGM</span>
-            </div>
-          </div>
-          <div class="panel-meta">3 Seasons · 4 yrs experience</div>
-          <div class="panel-cta">View Career ›</div>
+  <!-- BIO -->
+  <section id="bio" class="bio-section">
+    <div class="bio-inner">
+      <div class="bio-text">
+        <div class="bio-kicker">Senior PM · BetMGM · Season 3</div>
+        <h1 class="bio-name">Calvin Le</h1>
+        <p class="bio-archetype">Floor General</p>
+        <p class="bio-body">I'm Calvin, a Sr. Product Manager at BetMGM. I've spent the last 5+ years building consumer facing products for people around the world, most recently focusing on loyalty and rewards at BetMGM. I'm data focused and customer obsessed; often, I'm the customer myself.</p>
+        <p class="bio-body">I chase the art of progress. If we have these in common we'd probably get along: you walk by a business and think about how much money they make. You are always tinkering and finding the next best habit. You love to hack around (e.g. credit card points, loyalty programs). And you love sports. you could just love sports.</p>
+        <div class="bio-links">
+          <a href="https://www.linkedin.com/in/calvinle13/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://x.com/calvinle13" target="_blank" rel="noopener">Twitter</a>
+          <a href="https://github.com/calvinkhoile13" target="_blank" rel="noopener">GitHub</a>
+          <span class="bio-email">calvinkhoile13@gmail.com</span>
         </div>
-
-        <div class="hero-panel" data-goto="projects" role="button" tabindex="0">
-          <div class="panel-label">Projects</div>
-          <div class="mini-projects">
-            <div class="mini-project-row"><span class="dot dot-active"></span>Polymarket Tracker</div>
-            <div class="mini-project-row"><span class="dot dot-progress"></span>LinkedIn Games</div>
-            <div class="mini-project-row"><span class="dot dot-progress"></span>Reverse Split Buyer</div>
-            <div class="mini-project-row"><span class="dot dot-active"></span>PM OS</div>
-          </div>
-          <div class="panel-cta">View Projects ›</div>
-        </div>
-
-      </div>
-
-      <!-- CENTER: Photo + Identity -->
-      <div class="hero-center" id="hero-center">
-        <div class="center-ovr">
-          <span class="center-ovr-label">OVR</span>
-          <span class="center-ovr-num">89</span>
-        </div>
-        <div class="player-photo" id="model-container"></div>
-        <div class="center-identity">
-          <div class="center-name">Calvin Le</div>
-          <div class="center-archetype">Floor General</div>
-          <div class="center-team">BetMGM · Season 3</div>
-          <div class="center-tagline">"PM by day. Builder by night."</div>
+        <div class="achievements">
+          <span class="badge badge-peach">🎯 Sharp Bettor</span>
+          <span class="badge badge-gold">🚀 Ship It</span>
+          <span class="badge badge-mint">📈 Data-Driven</span>
+          <span class="badge badge-blue">🤖 AI Pioneer</span>
+          <span class="badge badge-lavender">🔧 API Architect</span>
         </div>
       </div>
-
-      <!-- RIGHT: Attributes + Badges -->
-      <div class="hero-col">
-
-        <div class="hero-panel" data-goto="attributes" role="button" tabindex="0">
-          <div class="panel-label">Attributes</div>
-          <div class="panel-attrs">
-            <div class="attr-row"><span class="attr-name">Domain</span><span class="attr-num">93</span></div>
-            <div class="attr-row"><span class="attr-name">Execution</span><span class="attr-num">91</span></div>
-            <div class="attr-row"><span class="attr-name">Data</span><span class="attr-num">89</span></div>
-            <div class="attr-row"><span class="attr-name">Strategy</span><span class="attr-num">85</span></div>
-            <div class="attr-row"><span class="attr-name">Comm</span><span class="attr-num">83</span></div>
-            <div class="attr-row"><span class="attr-name">Build</span><span class="attr-num">76</span></div>
-          </div>
-          <div class="panel-cta">View Attributes ›</div>
-        </div>
-
-        <div class="hero-panel" data-goto="attributes" role="button" tabindex="0">
-          <div class="panel-label">Badges</div>
-          <div class="mini-badges">
-            <div class="mini-badge-row tier-gold">🎯 Sharp Bettor</div>
-            <div class="mini-badge-row tier-gold">🚀 Ship It</div>
-            <div class="mini-badge-row tier-silver">📈 Data-Driven</div>
-            <div class="mini-badge-row tier-silver">🤖 AI Pioneer</div>
-            <div class="mini-badge-row tier-bronze">🔧 API Architect</div>
-            <div class="mini-badge-row tier-bronze">🌐 Meta Alumni</div>
-          </div>
-          <div class="panel-cta">View Badges ›</div>
-        </div>
-
-      </div>
-
+      <div class="bio-model" id="model-container"></div>
     </div>
   </section>
 
-  <!-- CAREER ---------------------------------------- -->
-  <section id="career" class="tab-pane" role="tabpanel">
-    <div class="section-inner">
-      <div class="section-header">
-        <h1 class="section-title">Career History</h1>
-        <p class="section-subtitle">Team history, season by season</p>
+  <!-- SECTION GRID — default view, 3 summary cards -->
+  <div class="section-grid" id="section-grid">
+
+    <div class="section-summary" data-target="career">
+      <div class="ss-label">Career</div>
+      <div class="ss-title">Work History</div>
+      <div class="ss-desc">3 companies · 4+ years</div>
+      <div class="ss-logos">
+        <img src="assets/logos/betmgm.png" alt="BetMGM">
+        <img src="assets/logos/meta.svg" alt="Meta">
+        <img src="assets/logos/deloitte.png" alt="Deloitte">
       </div>
+      <div class="ss-cta">Explore ›</div>
+    </div>
 
-      <div class="timeline">
+    <div class="section-summary" data-target="projects">
+      <div class="ss-label">Projects</div>
+      <div class="ss-title">Active Builds</div>
+      <div class="ss-desc">4 side projects</div>
+      <div class="ss-items">
+        <span class="ss-item">● Polymarket Tracker</span>
+        <span class="ss-item">● LinkedIn Games Tracker</span>
+        <span class="ss-item">● Reverse Split Buyer</span>
+        <span class="ss-item">● PM OS</span>
+      </div>
+      <div class="ss-cta">Explore ›</div>
+    </div>
 
-        <div class="season-card current">
-          <div class="season-top">
-            <div class="season-left">
-              <!-- TODO: Calvin — replace with assets/logos/BetMGM.png -->
-              <div class="team-logo">BET<br>MGM</div>
-              <div class="season-info">
-                <span class="season-pill">Season 3 · Current</span>
-                <div class="season-role">Senior PM, Rewards</div>
-                <div class="season-dates">2024 – present</div>
+    <div class="section-summary" data-target="hobbies">
+      <div class="ss-label">Hobbies</div>
+      <div class="ss-title">Off the Clock</div>
+      <div class="ss-desc">What I do outside the 9-5</div>
+      <div class="ss-items">
+        <span class="ss-item">🎯 Sports Betting</span>
+        <span class="ss-item">🏀 Basketball</span>
+        <span class="ss-item">🤖 Building with AI</span>
+      </div>
+      <div class="ss-cta">Explore ›</div>
+    </div>
+
+  </div>
+
+  <!-- SECTION STRIP — compact tab nav when panel is open -->
+  <div class="section-strip" id="section-strip">
+    <button class="strip-back" id="strip-back">← Overview</button>
+    <button class="strip-tab" data-target="career">Career</button>
+    <button class="strip-tab" data-target="projects">Projects</button>
+    <button class="strip-tab" data-target="hobbies">Hobbies</button>
+    <div class="strip-indicator" id="strip-indicator"></div>
+  </div>
+
+  <!-- SECTION PANELS -->
+  <div class="section-panels" id="section-panels">
+
+    <!-- CAREER PANEL -->
+    <div class="section-panel" id="panel-career">
+      <div class="panel-heading">Career</div>
+      <div class="career-layout">
+
+        <!-- LEFT: company + project list -->
+        <div class="career-list" id="career-list">
+
+          <div class="cl-company open" data-company="betmgm">
+            <button class="cl-co-header">
+              <div class="cl-co-left">
+                <div class="cl-co-logo"><img src="assets/logos/betmgm.png" alt="BetMGM"></div>
+                <div class="cl-co-info">
+                  <div class="cl-co-name">BetMGM <span class="cl-co-pill">Now</span></div>
+                  <div class="cl-co-meta">Sr. PM, Rewards · 2024–present</div>
+                </div>
+              </div>
+              <span class="cl-co-chevron">›</span>
+            </button>
+            <div class="cl-projects">
+              <button class="cl-project" data-project="tc-api">Tier Credits API</button>
+              <button class="cl-project" data-project="ec-api">Express Comps API</button>
+              <button class="cl-project" data-project="loyalty-ctx">Loyalty Contextualization</button>
+            </div>
+          </div>
+
+          <div class="cl-company" data-company="meta">
+            <button class="cl-co-header">
+              <div class="cl-co-left">
+                <div class="cl-co-logo"><img src="assets/logos/meta.svg" alt="Meta"></div>
+                <div class="cl-co-info">
+                  <div class="cl-co-name">Meta</div>
+                  <div class="cl-co-meta">Product Ops · 2021–2023</div>
+                </div>
+              </div>
+              <span class="cl-co-chevron">›</span>
+            </button>
+            <div class="cl-projects">
+              <button class="cl-project" data-project="meta-ops">Cross-functional Coordination</button>
+            </div>
+          </div>
+
+          <div class="cl-company" data-company="deloitte">
+            <button class="cl-co-header">
+              <div class="cl-co-left">
+                <div class="cl-co-logo"><img src="assets/logos/deloitte.png" alt="Deloitte"></div>
+                <div class="cl-co-info">
+                  <div class="cl-co-name">Deloitte</div>
+                  <div class="cl-co-meta">Business Technology · 2019–2021</div>
+                </div>
+              </div>
+              <span class="cl-co-chevron">›</span>
+            </button>
+            <div class="cl-projects">
+              <div class="cl-empty-note">Projects coming soon</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: project detail (populated by JS) -->
+        <div class="career-detail" id="career-detail">
+          <div class="cd-empty">Select a project to view details</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PROJECTS PANEL -->
+    <div class="section-panel" id="panel-projects">
+      <div class="panel-heading">Projects</div>
+      <div class="projects-list">
+
+        <div class="project-card" data-project="polymarket">
+          <div class="pc-summary">
+            <div class="pc-left">
+              <div class="pc-name">Polymarket Tracker</div>
+              <div class="pc-tagline">Track open positions and markets in real time</div>
+            </div>
+            <div class="pc-right">
+              <span class="status-pill status-active">Active</span>
+              <span class="pc-chevron">›</span>
+            </div>
+          </div>
+          <div class="pc-detail">
+            <p class="pc-overview">Pulls live data from the Polymarket API to track my open positions, P&amp;L, and active markets. Built a lightweight backend to store history and a frontend dashboard for quick reference. Mainly built this because I was spending too much time opening the app.</p>
+            <div class="pc-stack">
+              <span class="pc-tag">Python</span>
+              <span class="pc-tag">FastAPI</span>
+              <span class="pc-tag">React</span>
+              <span class="pc-tag">Polymarket API</span>
+            </div>
+            <div class="ph-box pc-ph-box"><span>Screenshot placeholder</span></div>
+            <div class="pc-links">
+              <a href="https://github.com/calvinkhoile13" target="_blank" rel="noopener" class="pc-link">GitHub ›</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" data-project="linkedin-games">
+          <div class="pc-summary">
+            <div class="pc-left">
+              <div class="pc-name">LinkedIn Games Tracker</div>
+              <div class="pc-tagline">Daily game scores, streaks, and personal bests</div>
+            </div>
+            <div class="pc-right">
+              <span class="status-pill status-progress">In Progress</span>
+              <span class="pc-chevron">›</span>
+            </div>
+          </div>
+          <div class="pc-detail">
+            <p class="pc-overview">Logs my daily LinkedIn game scores (Queens, Pinpoint, Tango, Crossclimb) and surfaces stats over time: streaks, personal bests, and rolling averages. The goal is to make the games more meaningful with some data behind them.</p>
+            <div class="pc-stack">
+              <span class="pc-tag">Python</span>
+              <span class="pc-tag">SQLite</span>
+              <span class="pc-tag">Vanilla JS</span>
+            </div>
+            <div class="ph-box pc-ph-box"><span>Screenshot placeholder</span></div>
+            <div class="pc-links">
+              <a href="https://github.com/calvinkhoile13" target="_blank" rel="noopener" class="pc-link">GitHub ›</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" data-project="reverse-split">
+          <div class="pc-summary">
+            <div class="pc-left">
+              <div class="pc-name">Reverse Split Buyer</div>
+              <div class="pc-tagline">Identify and act on reverse stock split opportunities</div>
+            </div>
+            <div class="pc-right">
+              <span class="status-pill status-progress">In Progress</span>
+              <span class="pc-chevron">›</span>
+            </div>
+          </div>
+          <div class="pc-detail">
+            <p class="pc-overview">Screens for upcoming reverse stock splits and evaluates whether the pre-split price action creates a tradeable opportunity. Automated alerts and a basic scoring model to filter signal from noise.</p>
+            <div class="pc-stack">
+              <span class="pc-tag">Python</span>
+              <span class="pc-tag">pandas</span>
+              <span class="pc-tag">Alpaca API</span>
+            </div>
+            <div class="ph-box pc-ph-box"><span>Screenshot placeholder</span></div>
+            <div class="pc-links">
+              <a href="https://github.com/calvinkhoile13" target="_blank" rel="noopener" class="pc-link">GitHub ›</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card" data-project="pm-os">
+          <div class="pc-summary">
+            <div class="pc-left">
+              <div class="pc-name">PM OS</div>
+              <div class="pc-tagline">Personal operating system for AI experiments and PM work</div>
+            </div>
+            <div class="pc-right">
+              <span class="status-pill status-active">Active</span>
+              <span class="pc-chevron">›</span>
+            </div>
+          </div>
+          <div class="pc-detail">
+            <p class="pc-overview">A structured workspace built around Claude as a thinking partner. Custom context library, sub-agents, and output templates for everything from PRDs to competitive analysis. More OS than app — it's how I run my side project portfolio.</p>
+            <div class="pc-stack">
+              <span class="pc-tag">Claude API</span>
+              <span class="pc-tag">Markdown</span>
+              <span class="pc-tag">Claude Code</span>
+            </div>
+            <div class="ph-box pc-ph-box"><span>Screenshot placeholder</span></div>
+            <div class="pc-links">
+              <a href="https://github.com/calvinkhoile13" target="_blank" rel="noopener" class="pc-link">GitHub ›</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HOBBIES PANEL -->
+    <div class="section-panel" id="panel-hobbies">
+      <div class="panel-heading">Hobbies</div>
+      <div class="hobby-carousel">
+        <div class="hc-viewport">
+          <div class="hc-track">
+
+            <div class="hc-slide">
+              <div class="hc-slide-inner">
+                <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
+                <div class="hc-content">
+                  <div class="hc-icon">🏃</div>
+                  <div class="hc-name">Marathon Running</div>
+                  <p class="hc-desc">Started running during COVID and got hooked. Finished my first marathon in 2023. Still chasing a sub-4 hour finish. Long runs are where I do my best thinking.</p>
+                  <div class="hc-tags">
+                    <span class="hc-tag">Distance running</span>
+                    <span class="hc-tag">NYC Marathon</span>
+                    <span class="hc-tag">Sub-4 goal</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="season-ovr">
-              <span class="ovr-num">89</span>
-              <span class="ovr-label">OVR</span>
-            </div>
-          </div>
-          <!-- TODO: Calvin — fill in real stat lines -->
-          <ul class="season-stats">
-            <li>Leading loyalty contextualization, making rewards feel personalized at scale</li>
-            <li>Built and shipped Tier Credits API and Express Comps API end-to-end</li>
-            <li>Driving AI initiative across the rewards product suite</li>
-          </ul>
-        </div>
 
-        <div class="season-card">
-          <div class="season-top">
-            <div class="season-left">
-              <!-- TODO: Calvin — replace with assets/logos/BetMGM.png -->
-              <div class="team-logo">BET<br>MGM</div>
-              <div class="season-info">
-                <span class="season-pill">Season 2</span>
-                <div class="season-role">Product Manager, Rewards</div>
-                <div class="season-dates">2023 – 2024</div>
+            <div class="hc-slide">
+              <div class="hc-slide-inner">
+                <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
+                <div class="hc-content">
+                  <div class="hc-icon">♟️</div>
+                  <div class="hc-name">Chess</div>
+                  <p class="hc-desc">Picked it up seriously after watching The Queen's Gambit. Mostly rapid and blitz on Chess.com. Around 900 rated but improving. It's a game of incomplete information, which is basically PM work.</p>
+                  <div class="hc-tags">
+                    <span class="hc-tag">Chess.com</span>
+                    <span class="hc-tag">Rapid / Blitz</span>
+                    <span class="hc-tag">~900 rated</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="season-ovr">
-              <span class="ovr-num">81</span>
-              <span class="ovr-label">OVR</span>
-            </div>
-          </div>
-          <!-- TODO: Calvin — fill in real stat lines -->
-          <ul class="season-stats">
-            <li>Grew into full ownership of the rewards product domain</li>
-            <li>Led A/B test program for engagement and loyalty mechanics</li>
-            <li>Established hypothesis-first culture for new feature development</li>
-          </ul>
-        </div>
 
-        <div class="season-card">
-          <div class="season-top">
-            <div class="season-left">
-              <!-- TODO: Calvin — replace with assets/logos/Meta.png -->
-              <div class="team-logo">META</div>
-              <div class="season-info">
-                <span class="season-pill">Season 1</span>
-                <div class="season-role">Product Operations</div>
-                <div class="season-dates">~2021 – 2023</div>
+            <div class="hc-slide">
+              <div class="hc-slide-inner">
+                <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
+                <div class="hc-content">
+                  <div class="hc-icon">🎯</div>
+                  <div class="hc-name">Sports Betting</div>
+                  <p class="hc-desc">Not a casual bettor. I track line movement, shop for value, and focus on props where the market is softer. Being at BetMGM helps me understand how books think. I try to approach it like investing, not gambling.</p>
+                  <div class="hc-tags">
+                    <span class="hc-tag">Player props</span>
+                    <span class="hc-tag">Line movement</span>
+                    <span class="hc-tag">Sharp bettor</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="season-ovr">
-              <span class="ovr-num">72</span>
-              <span class="ovr-label">OVR</span>
-            </div>
-          </div>
-          <!-- TODO: Calvin — fill in real stat lines -->
-          <ul class="season-stats">
-            <li>Supported product ops across Meta's core product org at scale</li>
-            <li>Built cross-functional coordination skills across eng, design, and data</li>
-            <li>Foundation for moving into a full PM role</li>
-          </ul>
-        </div>
 
-      </div>
-    </div>
-  </section>
+            <div class="hc-slide">
+              <div class="hc-slide-inner">
+                <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
+                <div class="hc-content">
+                  <div class="hc-icon">🏀</div>
+                  <div class="hc-name">Basketball</div>
+                  <p class="hc-desc">Lifelong NBA fan. Grew up playing point guard and that mentality stuck. I watch a lot of film, follow advanced stats, and think about the game more analytically than most people I know. Lakers fan (don't hold it against me).</p>
+                  <div class="hc-tags">
+                    <span class="hc-tag">NBA</span>
+                    <span class="hc-tag">Point guard</span>
+                    <span class="hc-tag">Advanced stats</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-  <!-- ATTRIBUTES ------------------------------------- -->
-  <section id="attributes" class="tab-pane" role="tabpanel">
-    <div class="section-inner">
-      <div class="section-header">
-        <h1 class="section-title">Build Profile</h1>
-        <p class="section-subtitle">Attribute ratings + badges</p>
-      </div>
-
-      <div class="attributes-layout">
-
-        <div class="radar-wrap">
-          <canvas id="radar-canvas"></canvas>
-        </div>
-
-        <div class="stat-list">
-          <div class="stat-row"><span class="stat-name">Domain</span><span class="stat-num">93</span></div>
-          <div class="stat-row"><span class="stat-name">Execution</span><span class="stat-num">91</span></div>
-          <div class="stat-row"><span class="stat-name">Data</span><span class="stat-num">89</span></div>
-          <div class="stat-row"><span class="stat-name">Strategy</span><span class="stat-num">85</span></div>
-          <div class="stat-row"><span class="stat-name">Communication</span><span class="stat-num">83</span></div>
-          <div class="stat-row"><span class="stat-name">Build</span><span class="stat-num">76</span></div>
-        </div>
-
-        <div class="badges-section">
-          <div class="badges-title">Badges</div>
-          <div class="badges-grid">
-            <div class="badge-card">
-              <span class="badge-icon">🎯</span>
-              <span class="badge-name">Sharp Bettor</span>
-              <span class="badge-tier tier-gold">Gold</span>
-              <span class="badge-desc">Identifies mispriced markets, uses edge in product decisions</span>
-            </div>
-            <div class="badge-card">
-              <span class="badge-icon">🚀</span>
-              <span class="badge-name">Ship It</span>
-              <span class="badge-tier tier-gold">Gold</span>
-              <span class="badge-desc">Bias toward action, doesn't wait for perfect</span>
-            </div>
-            <div class="badge-card">
-              <span class="badge-icon">📈</span>
-              <span class="badge-name">Data-Driven</span>
-              <span class="badge-tier tier-silver">Silver</span>
-              <span class="badge-desc">A/B tests over debates, hypothesis before feature</span>
-            </div>
-            <div class="badge-card">
-              <span class="badge-icon">🤖</span>
-              <span class="badge-name">AI Pioneer</span>
-              <span class="badge-tier tier-silver">Silver</span>
-              <span class="badge-desc">Leading AI initiative at BetMGM</span>
-            </div>
-            <div class="badge-card">
-              <span class="badge-icon">🔧</span>
-              <span class="badge-name">API Architect</span>
-              <span class="badge-tier tier-bronze">Bronze</span>
-              <span class="badge-desc">Tier Credits API, Express Comps API</span>
-            </div>
-            <div class="badge-card">
-              <span class="badge-icon">🌐</span>
-              <span class="badge-name">Meta Alumni</span>
-              <span class="badge-tier tier-bronze">Bronze</span>
-              <span class="badge-desc">Product ops at scale</span>
-            </div>
           </div>
         </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- PROJECTS --------------------------------------- -->
-  <section id="projects" class="tab-pane" role="tabpanel">
-    <div class="section-inner">
-      <div class="section-header">
-        <h1 class="section-title">Active Builds</h1>
-        <p class="section-subtitle">Side projects and experiments</p>
-      </div>
-
-      <div class="projects-grid">
-        <!-- TODO: Calvin — add href once deployed -->
-        <div class="project-card no-link">
-          <div class="project-name">Polymarket Tracker</div>
-          <div class="project-desc">Tracks open positions and markets on Polymarket. Backend + frontend in progress.</div>
-          <span class="status-pill status-active">Active</span>
-        </div>
-        <div class="project-card no-link">
-          <div class="project-name">LinkedIn Games Tracker</div>
-          <div class="project-desc">Tracks daily LinkedIn game scores over time. Stats and streaks.</div>
-          <span class="status-pill status-progress">In Progress</span>
-        </div>
-        <div class="project-card no-link">
-          <div class="project-name">Reverse Split Buyer</div>
-          <div class="project-desc">Tool for identifying and acting on reverse stock split opportunities.</div>
-          <span class="status-pill status-progress">In Progress</span>
-        </div>
-        <div class="project-card no-link">
-          <div class="project-name">PM OS</div>
-          <div class="project-desc">Personal operating system for side projects, AI experiments, and PM work.</div>
-          <span class="status-pill status-active">Active</span>
+        <div class="hc-nav">
+          <button class="hc-prev" id="hc-prev" aria-label="Previous">‹</button>
+          <div class="hc-dots" id="hc-dots">
+            <button class="hc-dot active" data-index="0"></button>
+            <button class="hc-dot" data-index="1"></button>
+            <button class="hc-dot" data-index="2"></button>
+            <button class="hc-dot" data-index="3"></button>
+          </div>
+          <button class="hc-next" id="hc-next" aria-label="Next">›</button>
         </div>
       </div>
     </div>
-  </section>
+
+  </div>
 
 </main>
 
-<!-- ── FOOTER ────────────────────────────────────────── -->
 <footer>
   <a href="https://github.com/calvinkhoile13" target="_blank" rel="noopener">GitHub</a>
   <span class="footer-sep">·</span>
   <a href="https://www.linkedin.com/in/calvinle13/" target="_blank" rel="noopener">LinkedIn</a>
   <span class="footer-sep">·</span>
-  <!-- TODO: Calvin — replace with real email -->
-  <a href="mailto:hello@example.com">Email</a>
+  <span class="footer-email">calvinkhoile13@gmail.com</span>
 </footer>
 
 <script src="script.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const container = document.getElementById('model-container');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 
-// Lighting — stadium-style spot from above + fill
 const key = new THREE.DirectionalLight(0xffffff, 2.5);
 key.position.set(1, 3, 2);
 scene.add(key);
@@ -348,39 +407,30 @@ fill.position.set(-2, 1, -1);
 scene.add(fill);
 const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
-const rim = new THREE.DirectionalLight(0xf5c518, 0.4);
+const rim = new THREE.DirectionalLight(0xf54e00, 0.6);
 rim.position.set(0, 2, -3);
 scene.add(rim);
 
-// Load model
 const loader = new GLTFLoader();
 let model, mixer;
 loader.load('assets/model.glb', (gltf) => {
   model = gltf.scene;
-
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
-
   model.position.sub(center);
   model.position.y += size.y * 0.05;
   scene.add(model);
-
-  // Play idle animation
   if (gltf.animations.length > 0) {
     mixer = new THREE.AnimationMixer(model);
-    const action = mixer.clipAction(gltf.animations[0]);
-    action.play();
+    mixer.clipAction(gltf.animations[0]).play();
   }
-
   camera.position.set(0, size.y * 0.1, maxDim * 1.6);
   camera.lookAt(0, size.y * 0.1, 0);
-
   resize();
 });
 
-// Auto-rotate
 let autoRotate = true;
 let lastX = null;
 container.addEventListener('mouseenter', () => autoRotate = false);
@@ -401,14 +451,12 @@ function resize() {
 window.addEventListener('resize', resize);
 
 const clock = new THREE.Clock();
-function animate() {
+(function animate() {
   requestAnimationFrame(animate);
-  const delta = clock.getDelta();
-  if (mixer) mixer.update(delta);
-  if (model && autoRotate) model.rotation.y += 0.008;
+  if (mixer) mixer.update(clock.getDelta());
+  if (model && autoRotate) model.rotation.y += 0.01;
   renderer.render(scene, camera);
-}
-animate();
+})();
 </script>
 </body>
 </html>
