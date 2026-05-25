@@ -451,6 +451,13 @@ document.querySelectorAll('.cl-co-header').forEach(header => {
     if (!isOpen) {
       company.classList.add('open');
       setTimelineNode(company.dataset.company);
+      const firstProject = company.querySelector('.cl-project');
+      if (firstProject) {
+        document.querySelectorAll('.cl-project').forEach(b => b.classList.remove('active'));
+        firstProject.classList.add('active');
+        activeProject = firstProject.dataset.project;
+        renderDetail(activeProject);
+      }
     }
     positionDetailPanel();
   });

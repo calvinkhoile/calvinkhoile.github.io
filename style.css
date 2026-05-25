@@ -120,11 +120,12 @@ main { flex: 1; }
   border-bottom: 1px solid var(--hairline);
 }
 
-.bio-inner {
-  display: grid;
-  grid-template-columns: 1fr 260px;
-  gap: 2rem;
+.bio-header {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .bio-kicker {
@@ -132,8 +133,8 @@ main { flex: 1; }
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted-soft);
-  margin-bottom: 0.6rem;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
 }
 
 .bio-name {
@@ -1157,6 +1158,7 @@ main { flex: 1; }
 .cds-gallery-img {
   width: 100%;
   aspect-ratio: 4 / 3;
+  max-height: 140px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--hairline-strong);
@@ -1542,12 +1544,9 @@ footer a:hover { color: var(--ink); }
 
 /* ── RESPONSIVE — TABLET ─────────────────────────────── */
 @media (max-width: 860px) {
-  .bio-inner { grid-template-columns: 1fr; }
-
   .bio-model {
-    width: 100%;
-    height: 240px;
-    order: -1;
+    width: 180px;
+    height: 220px;
   }
 
   .bio-name { font-size: 3.2rem; }
@@ -1604,15 +1603,14 @@ footer a:hover { color: var(--ink); }
   .bio-section { padding: 2rem 1rem 1.5rem; }
 
   .bio-model {
-    width: 100%;
-    height: 200px;
-    order: -1;
+    width: 110px;
+    height: 150px;
+    flex-shrink: 0;
   }
 
   .bio-name { font-size: 2.5rem; }
 
-  .bio-kicker { font-size: 0.65rem; }
-  .bio-archetype { font-size: 0.65rem; margin-bottom: 1rem; }
+  .bio-kicker { font-size: 0.65rem; margin-bottom: 1rem; }
 
   .bio-body { font-size: 0.88rem; line-height: 1.65; }
 
@@ -1657,6 +1655,9 @@ footer a:hover { color: var(--ink); }
   .cl-co-name { font-size: 0.75rem; }
   .cl-co-meta { font-size: 0.6rem; }
   .cl-project { font-size: 0.72rem; padding: 0.4rem 0.5rem; }
+  .cl-company.open .cl-projects { max-height: 400px; }
+
+  .career-detail { min-height: unset; width: 100%; box-sizing: border-box; overflow: hidden; }
 
   .cd-proj { padding: 1rem; }
   .cd-proj-with-photo { flex-direction: column; }
@@ -1667,14 +1668,28 @@ footer a:hover { color: var(--ink); }
 
   /* Screen flipper */
   .cds-nav { padding: 0.5rem 0.6rem; }
-  .cds-pills { gap: 0.25rem; }
+  .cds-pills { gap: 0.25rem; flex-wrap: wrap; }
   .cds-pill { font-size: 0.55rem; padding: 0.15rem 0.45rem; }
   .cds-ph-box { height: 180px; }
   .cds-caption { font-size: 0.7rem; padding: 0.6rem 0.75rem; }
+  .cds-viewport { overflow: hidden; }
+  .cds-single-img-el { max-width: 100%; }
 
   /* Comparison layout */
-  .cds-comparison { grid-template-columns: 1fr 1fr; gap: 0.6rem; padding: 0.75rem; }
-  .cds-comp-img { max-width: 140px; border-radius: 10px; }
+  .cds-comparison { grid-template-columns: 1fr 1fr; gap: 0.5rem; padding: 0.6rem; overflow: hidden; }
+  .cds-comp-side { min-width: 0; overflow: hidden; }
+  .cds-comp-img,
+  .cds-comp-img-crop,
+  .cds-comp-ph,
+  .cds-comparison--matched .cds-comp-img,
+  .cds-hover-wrap .cds-comp-img { max-width: 100% !important; border-radius: 10px; height: auto; }
+  .cds-comp-ph { height: 160px; }
+  .cds-hover-wrap { max-width: 100%; overflow: hidden; }
+  .cds-hover-img { display: none; }
+
+  /* Gallery: stack vertically */
+  .cds-gallery { grid-template-columns: 1fr; }
+  .cds-gallery-img { aspect-ratio: 16 / 9; }
 
   /* Projects panel */
   .pc-summary { padding: 0.85rem; gap: 0.6rem; }
@@ -1702,8 +1717,8 @@ footer a:hover { color: var(--ink); }
 
 /* ── RESPONSIVE — SMALL MOBILE ──────────────────────── */
 @media (max-width: 380px) {
-  .bio-name { font-size: 2rem; }
-  .bio-model { height: 160px; }
+  .bio-name { font-size: 1.9rem; }
+  .bio-model { width: 80px; height: 110px; }
 
   .nav-link { padding: 0 0.45rem; font-size: 0.6rem; }
 
