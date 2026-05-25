@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calvin Le</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <script type="importmap">
     {
       "imports": {
@@ -20,8 +21,8 @@
   <a href="#bio" class="nav-brand">Calvin Le</a>
   <ul class="nav-links">
     <li><button class="nav-link" data-open="career">Career</button></li>
-    <li><button class="nav-link" data-open="projects">Projects</button></li>
-    <li><button class="nav-link" data-open="hobbies">Hobbies</button></li>
+    <li><button class="nav-link" data-open="projects">MyBadges</button></li>
+    <li><button class="nav-link" data-open="hobbies">MyPark</button></li>
   </ul>
 </nav>
 
@@ -45,11 +46,11 @@
       <span class="bio-email">calvinkhoile13@gmail.com</span>
     </div>
     <div class="achievements">
-      <span class="badge badge-peach">🎯 Sharp Bettor</span>
-      <span class="badge badge-gold">🚀 Ship It</span>
-      <span class="badge badge-mint">📈 Data-Driven</span>
-      <span class="badge badge-blue">🤖 AI Pioneer</span>
-      <span class="badge badge-lavender">🔧 API Architect</span>
+      <span class="badge badge-peach"><i class="ph ph-crosshair"></i> Sharp Bettor</span>
+      <span class="badge badge-gold"><i class="ph ph-rocket"></i> Ship It</span>
+      <span class="badge badge-mint"><i class="ph ph-chart-line-up"></i> Data-Driven</span>
+      <span class="badge badge-blue"><i class="ph ph-robot"></i> AI Pioneer</span>
+      <span class="badge badge-lavender"><i class="ph ph-code"></i> API Architect</span>
     </div>
   </section>
 
@@ -57,7 +58,7 @@
   <div class="section-grid" id="section-grid">
 
     <div class="section-summary" data-target="career">
-      <div class="ss-label">Career</div>
+      <div class="ss-label">MyCareer</div>
       <div class="ss-title">Work History</div>
       <div class="ss-desc">3 companies · 6+ years</div>
       <div class="ss-logos">
@@ -69,9 +70,9 @@
     </div>
 
     <div class="section-summary" data-target="projects">
-      <div class="ss-label">Projects</div>
-      <div class="ss-title">Active Builds</div>
-      <div class="ss-desc">4 side projects</div>
+      <div class="ss-label">MyBadges</div>
+      <div class="ss-title">Side Builds</div>
+      <div class="ss-desc">how i'm hacking away</div>
       <div class="ss-items">
         <span class="ss-item">● Polymarket Tracker</span>
         <span class="ss-item">● LinkedIn Games Tracker</span>
@@ -82,13 +83,13 @@
     </div>
 
     <div class="section-summary" data-target="hobbies">
-      <div class="ss-label">Hobbies</div>
-      <div class="ss-title">Off the Clock</div>
-      <div class="ss-desc">What I do outside the 9-5</div>
+      <div class="ss-label">MyPark</div>
+      <div class="ss-title">Off the Court</div>
+      <div class="ss-desc">When I'm not working...</div>
       <div class="ss-items">
-        <span class="ss-item">🎯 Sports Betting</span>
-        <span class="ss-item">🏀 Basketball</span>
-        <span class="ss-item">🤖 Building with AI</span>
+        <span class="ss-item"><i class="ph ph-target"></i> Sports Betting</span>
+        <span class="ss-item"><i class="ph ph-basketball"></i> Basketball</span>
+        <span class="ss-item"><i class="ph ph-robot"></i> Building with AI</span>
       </div>
       <div class="ss-cta">Explore ›</div>
     </div>
@@ -98,9 +99,9 @@
   <!-- SECTION STRIP — compact tab nav when panel is open -->
   <div class="section-strip" id="section-strip">
     <button class="strip-back" id="strip-back">← Overview</button>
-    <button class="strip-tab" data-target="career">Career</button>
-    <button class="strip-tab" data-target="projects">Projects</button>
-    <button class="strip-tab" data-target="hobbies">Hobbies</button>
+    <button class="strip-tab" data-target="career">MyCareer</button>
+    <button class="strip-tab" data-target="projects">MyBadges</button>
+    <button class="strip-tab" data-target="hobbies">MyPark</button>
     <div class="strip-indicator" id="strip-indicator"></div>
   </div>
 
@@ -109,7 +110,8 @@
 
     <!-- CAREER PANEL -->
     <div class="section-panel" id="panel-career">
-      <div class="panel-heading">Career</div>
+      <div class="panel-heading">MyCareer</div>
+      <div class="panel-subheading">Experience</div>
 
       <div class="career-timeline">
         <div class="ct-node" data-company="ucla">
@@ -223,7 +225,8 @@
 
     <!-- PROJECTS PANEL -->
     <div class="section-panel" id="panel-projects">
-      <div class="panel-heading">Projects</div>
+      <div class="panel-heading">MyBadges</div>
+      <div class="panel-subheading">Side Builds</div>
       <div class="projects-list">
 
         <div class="project-card" data-project="polymarket">
@@ -332,23 +335,30 @@
 
     <!-- HOBBIES PANEL -->
     <div class="section-panel" id="panel-hobbies">
-      <div class="panel-heading">Hobbies</div>
+      <div class="panel-heading">MyPark</div>
+      <div class="panel-subheading">Off the Court</div>
       <div class="hobby-carousel">
         <div class="hc-viewport">
           <div class="hc-track">
 
             <div class="hc-slide">
               <div class="hc-slide-inner">
-                <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
-                <div class="hc-content">
-                  <div class="hc-icon">🏃</div>
-                  <div class="hc-name">Marathon Running</div>
-                  <p class="hc-desc">Started running during COVID and got hooked. Finished my first marathon in 2023. Still chasing a sub-4 hour finish. Long runs are where I do my best thinking.</p>
-                  <div class="hc-tags">
-                    <span class="hc-tag">Distance running</span>
-                    <span class="hc-tag">NYC Marathon</span>
-                    <span class="hc-tag">Sub-4 goal</span>
+                <div class="hc-photo-wrap">
+                  <div class="hc-photo-strip" id="marathon-strip">
+                    <img class="hc-photo" src="assets/hobbies/marathon 2.JPG" alt="LA Marathon">
+                    <img class="hc-photo" src="assets/hobbies/marathon 1.jpeg" alt="Huntington Beach">
                   </div>
+                  <button class="hc-photo-arrow hc-photo-arrow--prev" id="marathon-prev">‹</button>
+                  <button class="hc-photo-arrow hc-photo-arrow--next" id="marathon-next">›</button>
+                  <div class="hc-sub-tabs">
+                    <button class="hc-sub-tab active" data-mi="0">LA Marathon</button>
+                    <button class="hc-sub-tab" data-mi="1">Huntington Beach</button>
+                  </div>
+                </div>
+                <div class="hc-content">
+                  <div class="hc-icon"><i class="ph ph-person-simple-run"></i></div>
+                  <div class="hc-name">Running</div>
+                  <p class="hc-desc" id="marathon-desc">Los Angeles Marathon, 2026: Trained well, but got hit with near 90 degree weather. Finished in 4:30. Taking a bit of a break from running to build general fitness and overall health.</p>
                 </div>
               </div>
             </div>
@@ -357,7 +367,7 @@
               <div class="hc-slide-inner">
                 <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
                 <div class="hc-content">
-                  <div class="hc-icon">♟️</div>
+                  <div class="hc-icon"><i class="ph ph-chess"></i></div>
                   <div class="hc-name">Chess</div>
                   <p class="hc-desc">Picked it up seriously after watching The Queen's Gambit. Mostly rapid and blitz on Chess.com. Around 900 rated but improving. It's a game of incomplete information, which is basically PM work.</p>
                   <div class="hc-tags">
@@ -373,7 +383,7 @@
               <div class="hc-slide-inner">
                 <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
                 <div class="hc-content">
-                  <div class="hc-icon">🎯</div>
+                  <div class="hc-icon"><i class="ph ph-target"></i></div>
                   <div class="hc-name">Sports Betting</div>
                   <p class="hc-desc">Not a casual bettor. I track line movement, shop for value, and focus on props where the market is softer. Being at BetMGM helps me understand how books think. I try to approach it like investing, not gambling.</p>
                   <div class="hc-tags">
@@ -389,7 +399,7 @@
               <div class="hc-slide-inner">
                 <div class="ph-box hc-ph-box"><span>Photo placeholder</span></div>
                 <div class="hc-content">
-                  <div class="hc-icon">🏀</div>
+                  <div class="hc-icon"><i class="ph ph-basketball"></i></div>
                   <div class="hc-name">Basketball</div>
                   <p class="hc-desc">Lifelong NBA fan. Grew up playing point guard and that mentality stuck. I watch a lot of film, follow advanced stats, and think about the game more analytically than most people I know. Lakers fan (don't hold it against me).</p>
                   <div class="hc-tags">

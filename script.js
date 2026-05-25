@@ -259,7 +259,6 @@ const careerData = {
         label: 'Marriott',
         gallery: [
           'assets/betmgm/marriott 1.png',
-          'assets/betmgm/marriott 2.png',
           'assets/betmgm/marriott 3.png',
         ],
         caption: 'We enabled Marriott account linking, point transfers, and other benefits to BetMGM players. The partnership was one of a kind and made various loyalty and points blogs, including "The Points Guy".',
@@ -510,7 +509,8 @@ function renderDetail(id) {
     } else if (s.img) {
       visual = `<div class="cds-single-img"><img src="${s.img}" class="cds-single-img-el" style="${s.imgWidth ? `max-width:${s.imgWidth}` : ''}" alt=""></div>`;
     } else if (s.gallery) {
-      visual = `<div class="cds-gallery">${s.gallery.map(src => `<img src="${src}" class="cds-gallery-img" alt="">`).join('')}</div>`;
+      const galMod = s.gallery.length === 2 ? ' cds-gallery--two' : '';
+      visual = `<div class="cds-gallery${galMod}">${s.gallery.map(src => `<img src="${src}" class="cds-gallery-img" alt="">`).join('')}</div>`;
     } else if (s.beforeAfter) {
       visual = `<div class="cds-comparison">
            <div class="cds-comp-side">
@@ -716,4 +716,32 @@ document.getElementById('career-detail').addEventListener('click', e => {
     if (Math.abs(dx) > 40) goTo(dx < 0 ? current + 1 : current - 1);
     touchStartX = null;
   }, { passive: true });
+})();
+
+
+// ── Marathon photo strip ──────────────────────────────────
+(function initMarathonTabs() {
+  const strip = document.getElementById('marathon-strip');
+  const desc  = document.getElementById('marathon-desc');
+  const tabs  = document.querySelectorAll('.hc-sub-tab');
+  const prev  = document.getElementById('marathon-prev');
+  const next  = document.getElementById('marathon-next');
+  if (!strip) return;
+
+  const descs = [
+    'Los Angeles Marathon, 2026: Trained well, but got hit with near 90 degree weather. Finished in 4:30. Taking a bit of a break from running to build general fitness and overall health.',
+    'Huntington Beach Marathon, 2025: Underestimated a marathon and was hit with runners knee before the race. Had to walk most of it, finished in 5:30.',
+  ];
+  let current = 0;
+
+  function goTo(i) {
+    current = (i + 2) % 2;
+    strip.style.transform = current === 0 ? 'translateX(0)' : 'translateX(-50%)';
+    desc.textContent = descs[current];
+    tabs.forEach((t, idx) => t.classList.toggle('active', idx === current));
+  }
+
+  tabs.forEach(tab => tab.addEventListener('click', () => goTo(+tab.dataset.mi)));
+  prev.addEventListener('click', () => goTo(current - 1));
+  next.addEventListener('click', () => goTo(current + 1));
 })();
