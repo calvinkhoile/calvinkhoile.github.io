@@ -65,6 +65,8 @@ function openSection(id) {
         indicator.style.transition = '';
       }));
 
+      if (id === 'career') resetCareer();
+
       const panel = document.getElementById(`panel-${id}`);
       panel.style.animation = 'panelEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards';
       panel.classList.add('active');
@@ -99,6 +101,7 @@ function switchSection(id) {
     current.classList.remove('active');
     current.style.animation = '';
 
+    if (id === 'career') resetCareer();
     next.classList.add('active');
     const endH = panels.offsetHeight;
 
@@ -212,84 +215,244 @@ navButtons.forEach(btn => {
   });
 });
 
-document.querySelector('.nav-link[href="#bio"]').addEventListener('click', e => {
-  e.preventDefault();
-  if (activeId) closeSection();
-  if (window.scrollY > 10) {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-});
-
 // ── Career: project data ──────────────────────────────────
 const careerData = {
-  'tc-api': {
-    tag: 'API', title: 'Tier Credits API', company: 'BetMGM · Sr. PM, Rewards',
-    desc: 'Built the Tier Credits API end-to-end — the first external endpoint giving partners real-time access to loyalty tier progress. Took it from zero spec to production in one quarter.',
-    impact: [
-      'Unblocked 3 partner integrations that were blocked on manual data exports',
-      'Reduced ad-hoc data requests to the loyalty team by ~40%',
-      'Now a core part of the BetMGM rewards API surface',
-    ],
+  'loyalty-apis': {
+    tag: 'BetMGM', title: 'Loyalty APIs', company: 'Sr. Product Manager, Player Experience',
+    desc: 'Most players think BetMGM and MGM are one company. They\'re not, and for a long time our product made that painfully obvious. I built the Loyalty APIs to close that gap, connecting both platforms so players earn and redeem seamlessly, whether they\'re playing digitally or in person.',
+    impact: [],
     screens: [
-      { label: 'Before',  caption: 'No external API. Partners had to request tier data through manual CSV exports, which took days and had no real-time fidelity.' },
-      { label: 'Spec',    caption: 'Defined the endpoint shape, auth model, and rate-limit strategy. Aligned eng, compliance, and 3 partner teams on a single contract before a line of code was written.' },
-      { label: 'Launch',  caption: 'REST endpoint live with real-time balance, tier level, progress %, and milestone metadata. First partner integrated within 2 weeks of launch.' },
-      { label: 'Scale',   caption: 'Extended with webhooks for tier-change events. Partner doc portal live. 3 integrations active, 2 more in pipeline.' },
+      {
+        label: 'Before / After',
+        before: 'assets/betmgm/rewards hub before.png',
+        after: 'assets/betmgm/rewards hub after.png',
+        caption: 'Before, the Rewards Hub was a static basic account summary. I led the rebuild into a live loyalty dashboard with Tier Status, Tier Credits progress, and automated real time MGM account linking.',
+      },
+      {
+        label: 'Account Linking',
+        left: 'assets/betmgm/rewards hub after.png',
+        leftLabel: 'BetMGM',
+        leftHover: 'assets/betmgm/account linking.png',
+        leftHoverPos: '8%',
+        right: 'assets/betmgm/mgm after comparison.PNG',
+        rightLabel: 'MGM',
+        caption: 'Players now have the same MGM Rewards ID for both digital and physical properties. We automated matching on day 1.',
+      },
+      {
+        label: 'Real-Time Data',
+        left: 'assets/betmgm/rewards hub after.png',
+        leftLabel: 'BetMGM',
+        leftHover: 'assets/betmgm/loyalty info.png',
+        leftHoverPos: '38%',
+        right: 'assets/betmgm/mgm after comparison.PNG',
+        rightLabel: 'MGM',
+        caption: 'With a shared rewards program, we focused on sharing this data real time and accurately. Players now see the same Tier Credit balance on both the BetMGM and MGM app.',
+      },
     ],
   },
-  'ec-api': {
-    tag: 'API', title: 'Express Comps API', company: 'BetMGM · Sr. PM, Rewards',
-    desc: 'Designed and shipped the Express Comps API — the first write-capable comps endpoint, letting partners apply and check comps balances in real time at point of transaction.',
-    impact: [
-      'First API in the BetMGM comps surface to support external write operations',
-      'Enabled a partner sportsbook to offer real-time comps redemption during live betting',
-      'Wrote the full spec including idempotency model and compliance sign-off framework',
-    ],
+  'enablement-wins': {
+    tag: 'BetMGM', title: 'Platform Enablement', company: 'Sr. Product Manager, Player Experience',
+    desc: 'I led a mix of key strategic initiatives for our BetMGM Rewards Program. Some were focused on getting the brilliant basics right, others were enabling key partnerships like Marriott.',
+    impact: [],
     screens: [
-      { label: 'Before',  caption: 'Comps were read-only inside the BetMGM app. No programmatic apply or redemption path for external partners.' },
-      { label: 'Design',  caption: 'Designed the read/write model with idempotency keys, balance locking, and a compliance review layer. Hardest part: defining rollback behavior for failed transactions.' },
-      { label: 'v1',      caption: 'Read/write API live. Partners can check balance, apply comps, and receive confirmation in a single transaction flow.' },
-      { label: 'Live',    caption: 'Partner using the API for real-time comps during live betting events. Zero rollback incidents in first 60 days.' },
+      {
+        label: 'Marriott',
+        gallery: [
+          'assets/betmgm/marriott 1.png',
+          'assets/betmgm/marriott 2.png',
+          'assets/betmgm/marriott 3.png',
+        ],
+        caption: 'We enabled Marriott account linking, point transfers, and other benefits to BetMGM players. The partnership was one of a kind and made various loyalty and points blogs, including "The Points Guy".',
+      },
+      {
+        label: 'Global BRPs',
+        img: 'assets/betmgm/global brps creative copy.jpg',
+        caption: 'Before this, your BetMGM Rewards Points (BRPs) were locked to the state you earned them in. Play in Vegas, live in New York. Those points didn\'t follow you home. About 45% of our multi-state players were affected. We fixed it: one account, one points balance.',
+      },
     ],
   },
-  'loyalty-ctx': {
-    tag: 'Product', title: 'Loyalty Contextualization', company: 'BetMGM · Sr. PM, Rewards',
-    desc: 'Leading an initiative to make loyalty feel personal at scale — surfacing the right message to the right user at the right moment, based on tier, betting activity, and milestone proximity.',
+  'ai-betmgm': {
+    tag: 'BetMGM', title: 'AI at BetMGM', company: 'Sr. Product Manager, Player Experience',
+    desc: 'One of my favorite initiatives. I saw the external push other companies had for AI and wanted BetMGM to be at the forefront. I co-led an AI Enablement Initiative, where the goal was to have every employee have their own "Operating System" (OS). We started with a Product OS and are quickly scaling across the business.',
+    impact: [],
+    screens: [
+      {
+        label: 'Personal OS',
+        img: 'assets/betmgm/operating system.png',
+        imgWidth: '420px',
+        caption: 'We created an AI repository that included onboarding videos, pre-made templates, and guides to getting started with your Personal Operating System.',
+      },
+      {
+        label: 'Team OS',
+        img: 'assets/betmgm/team OS.png',
+        imgWidth: '900px',
+        caption: 'We wanted everyone to be able to benefit from each other\'s context. So we created a git repo and called it Team OS, which allows us to scale context across the product org, including A/B tests, user research, roadmaps.',
+      },
+    ],
+  },
+  'rewards-store': {
+    tag: 'BetMGM', title: 'Rewards Store Enhancements', company: 'Sr. Product Manager, Player Experience',
+    desc: 'I led a full revamp of the BetMGM Rewards Store, giving users more visibility into what they could redeem for, and making it easier to do so. This increased monthly redemption rates from <15% to over 40%.',
+    impact: [],
+    screens: [
+      {
+        label: 'Rewards Store',
+        before: 'assets/betmgm/store_before.PNG',
+        after: 'assets/betmgm/store_after.PNG',
+        caption: 'Key Enhancements: fixed item ordering so users see what they can redeem first, blocked unusable items, added custom icons per reward type, and a full UI uplift.',
+      },
+      {
+        label: 'Redemption',
+        before: 'assets/betmgm/redemption_before.PNG',
+        after: 'assets/betmgm/redemption after.PNG',
+        caption: 'The old modal had the bare minimum. The new bottom sheet shows full details, including longer item titles, detailed descriptions, custom icons, and more scalable spacing.',
+      },
+      {
+        label: 'Merch Redemption',
+        before: 'assets/betmgm/merch_before.PNG',
+        after: 'assets/betmgm/redemption_merch_after.PNG',
+        caption: 'Merch and voucher redemptions got the same bottom sheet treatment, but also allowed for pictures in the app. The description was also scalable and no longer limited to 3 short lines.',
+      },
+    ],
+  },
+  'betmgm-overview': {
+    tag: 'BetMGM', title: 'BetMGM', company: 'Sr. Product Manager, Player Experience · 2024–present',
+    sidePhoto: 'assets/betmgm/product summit.JPG',
+    desc: 'I lead the product experience for the rewards program at BetMGM, targeting the top 10% of players — the segment driving 70%+ of revenue. I started by building the foundation (APIs, MGM Resorts data connectivity, Marriott) and now I\'m focused on 1/1 personalization at scale.',
+    highlights: [
+      { label: 'Rewards Store Enhancements', project: 'rewards-store' },
+      { label: 'Loyalty APIs',               project: 'loyalty-apis' },
+      { label: 'Platform Enablement',        project: 'enablement-wins' },
+      { label: 'AI at BetMGM',              project: 'ai-betmgm' },
+    ],
+    screens: [],
+  },
+  'meta-overview': {
+    tag: 'Overview', title: 'Meta', company: 'Product Operations Manager, SMX · 2021–2024',
+    desc: 'I led product operations for Meta\'s Stories and Messaging Experience (SMX) team — user feedback systems, product quality programs, infrastructure cost reduction, and go-to-market across one of the most-used messaging platforms in the world.',
     impact: [
-      'Personalized messaging across 5+ surfaces in the BetMGM app',
-      'Reduced noise for high-value users who were seeing irrelevant low-tier prompts',
-      'Building the AI scoring layer that ranks relevance per user segment in real time',
+      'Increased user feedback by 300% by redesigning reporting options while protecting privacy',
+      'Cut infrastructure costs by $20M through a Stories Archive capacity analysis',
+      'Music investment research drove a 1.3% increase in stories created and a 0.12% lift in sessions',
+      'Led the "Unship" and "Craft" quality initiatives — catalogued all SMX features and bugs, unshipping 50+',
     ],
     screens: [
-      { label: 'Before',   caption: 'All users saw the same loyalty prompts regardless of tier or behavior. A Platinum member saw the same "earn more points" message as a new user.' },
-      { label: 'Segments', caption: 'Mapped user segments by tier, recency, and milestone distance. Identified 6 distinct messaging contexts that required different content and CTAs.' },
-      { label: 'v1',       caption: 'Tier-aware messaging deployed across homepage and bet slip. High-tier users see tier protection and comp offers; lower tiers see earn-path messaging.' },
-      { label: 'AI layer', caption: 'Building a scoring model that ranks message relevance per user in real time. Goal: contextual loyalty feels like 1:1, not broadcast.' },
+      { label: 'Company', caption: 'Meta\'s Stories and Messaging team builds products used by billions every day. Product Ops at that scale means coordinating across eng, design, data, UXR, and legal — keeping big initiatives moving and decisions from falling through the cracks.' },
+      { label: 'My role', caption: 'I was the Product Operations Manager across SMX — driving quality programs, roadmapping, feedback system design, and go-to-market. I also worked with eng to implement 100+ tracking capabilities, which cut debugging time by 50%.' },
+    ],
+  },
+  'deloitte-overview': {
+    tag: 'Overview', title: 'Deloitte', company: 'Business Analyst · 2019–2021',
+    desc: 'I joined Deloitte as an intern in 2019 and came back full-time as a Business Analyst in early 2020. I worked on enterprise tech implementations — digital transformations, system migrations, and self-service tooling for global clients.',
+    impact: [
+      'Led a digital transformation for a global tech company: financial system upgrade for 5,000+ employees across 4 countries, on time',
+      'Designed self-service HR tools (name/address changes, manager approvals) adopted by 10,000+ employees',
+      'Implemented a JIRA-based case management system that improved ops for 500+ weekly inquiries',
+    ],
+    screens: [
+      { label: 'Company', caption: 'Deloitte\'s consulting practice puts you in front of hard enterprise problems right away. The Business Technology team takes client requirements and turns them into working implementations — from vendor selection and system design through testing and launch.' },
+      { label: 'My role', caption: 'I interned in 2019 and joined full-time in February 2020. My work covered requirements gathering, vendor selection, testing, and launch coordination for multi-country deployments. Consulting gave me the discipline to structure messy problems and communicate clearly under pressure — skills I use every day as a PM.' },
+    ],
+  },
+  'ucla-overview': {
+    tag: 'Education', title: 'UCLA', company: 'B.A. Business Economics · Graduated Dec 2019',
+    desc: 'I studied Business Economics at UCLA. The analytical frameworks, cross-functional instincts, and leadership reps from clubs and consulting projects are things I still pull from in product work today.',
+    impact: [
+      '2019 William Sharpe Fellow in Consulting, Dean\'s Honors List, UCLA Social Enterprise Academy',
+      'Project Lead, 180 Degrees Consulting — ran client engagements for nonprofits and social enterprises',
+      'VP of Professional Development, Pi Sigma Epsilon',
+    ],
+    screens: [
+      { label: 'Education', caption: 'B.A. in Business Economics, graduated December 2019. I focused on analytical frameworks, economic modeling, and business strategy — and got real consulting and leadership reps through clubs. UCLA built the foundation for how I think about data, decisions, and cross-functional work.' },
     ],
   },
   'meta-ops': {
-    tag: 'Ops', title: 'Cross-functional Coordination', company: 'Meta · Product Ops',
-    desc: 'Supported product operations across Meta\'s core product org — keeping large multi-team initiatives on track by building coordination systems that scaled across eng, design, data, and legal.',
+    tag: 'Ops', title: 'Product Quality & Feedback Systems', company: 'Meta · Product Ops, SMX',
+    desc: 'I drove product quality and feedback infrastructure across Meta\'s Stories and Messaging Experience — user reporting, tracking, technical debt reduction, and a company-wide "Unship" initiative that cut over 50 features.',
     impact: [
-      'Maintained alignment across 6+ stakeholder groups on multi-quarter roadmap items',
-      'Built review cadences and shared docs that reduced sync overhead',
-      'This role was the foundation for moving into a full PM seat — learned to drive without authority',
+      '300% increase in user feedback by redesigning reporting options while protecting privacy',
+      'Worked with eng to implement 100+ tracking capabilities, cutting debugging time by 50%',
+      'Led "Unship" and "Craft" — catalogued all SMX features and bugs, unshipping 50+',
+      'Cut infrastructure costs by $20M through a Stories Archive capacity analysis',
     ],
     screens: [
-      { label: 'Before', caption: 'Ad-hoc Slack communication across 6+ teams. Decisions made in meetings without documentation, and misalignment only surfaced at launch reviews.' },
-      { label: 'System', caption: 'Built a lightweight ops layer: weekly alignment doc, shared RACI, and a single source of truth for cross-team dependencies.' },
-      { label: 'After',  caption: 'Reduced re-alignment meetings by ~30%. Blockers surfaced earlier — usually 2+ weeks before they became launch risks.' },
+      { label: 'Feedback', caption: 'I redesigned user reporting options that tripled feedback volume without touching privacy. The extra signal meant faster triage and better prioritization across SMX.' },
+      { label: 'Quality', caption: '"Unship" and "Craft" were org-wide quality pushes to catalog every feature and bug in SMX. I led the effort with eng — unshipping 50+ features to simplify the product surface.' },
+      { label: 'Infra',   caption: 'A capacity analysis of Stories Archive surfaced $20M in redundant storage costs. I led the optimization with data and infra teams — cut costs with zero user-facing impact.' },
     ],
   },
 };
 
+// ── Career: timeline sync ─────────────────────────────────
+function setTimelineNode(companyId) {
+  document.querySelectorAll('.ct-node').forEach(n => n.classList.remove('ct-node-active'));
+  const node = document.querySelector(`.ct-node[data-company="${companyId}"]`);
+  if (node) node.classList.add('ct-node-active');
+}
+
+// ── Career: timeline node click ───────────────────────────
+document.querySelectorAll('.ct-node[data-company]').forEach(node => {
+  node.addEventListener('click', () => {
+    const targetCo = node.dataset.company;
+    const co = document.querySelector(`.cl-company[data-company="${targetCo}"]`);
+    const isOpen = co && co.classList.contains('open');
+    document.querySelectorAll('.cl-company').forEach(c => c.classList.remove('open'));
+    if (!isOpen) {
+      if (co) co.classList.add('open');
+      setTimelineNode(targetCo);
+    }
+  });
+});
+
+// ── Career: detail panel positioning (mobile inline) ─────
+const careerLayout = document.querySelector('.career-layout');
+const careerList   = document.getElementById('career-list');
+
+function positionDetailPanel() {
+  const detail = document.getElementById('career-detail');
+  if (window.innerWidth <= 860) {
+    const openCo = careerList.querySelector('.cl-company.open');
+    if (openCo) {
+      openCo.after(detail);
+    } else {
+      careerList.appendChild(detail);
+    }
+  } else {
+    if (detail.parentElement !== careerLayout) {
+      careerLayout.appendChild(detail);
+    }
+  }
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(positionDetailPanel, 100);
+});
+
 // ── Career: company accordion ─────────────────────────────
+function resetCareer() {
+  document.querySelectorAll('.cl-company').forEach(c => c.classList.remove('open'));
+  const betmgm = document.querySelector('.cl-company[data-company="betmgm"]');
+  if (betmgm) betmgm.classList.add('open');
+  setTimelineNode('betmgm');
+  document.querySelectorAll('.cl-project').forEach(b => b.classList.remove('active'));
+  const overviewBtn = document.querySelector('.cl-project[data-project="betmgm-overview"]');
+  if (overviewBtn) overviewBtn.classList.add('active');
+  activeProject = 'betmgm-overview';
+  renderDetail('betmgm-overview');
+}
+
 document.querySelectorAll('.cl-co-header').forEach(header => {
   header.addEventListener('click', () => {
     const company = header.closest('.cl-company');
-    // Always open the clicked company (close others)
+    const isOpen = company.classList.contains('open');
     document.querySelectorAll('.cl-company').forEach(c => c.classList.remove('open'));
-    company.classList.add('open');
+    if (!isOpen) {
+      company.classList.add('open');
+      setTimelineNode(company.dataset.company);
+    }
+    positionDetailPanel();
   });
 });
 
@@ -307,35 +470,102 @@ function renderDetail(id) {
     `<button class="cds-pill${i === 0 ? ' active' : ''}" data-i="${i}">${s.label}</button>`
   ).join('');
 
-  const slidesHTML = screens.map(s => `
-    <div class="cds-slide">
-      <div class="ph-box cds-ph-box"></div>
-      <p class="cds-caption">${s.caption}</p>
-    </div>`
-  ).join('');
+  const slidesHTML = screens.map(s => {
+    let visual;
+    if (s.left && s.right) {
+      const leftImg = s.leftHover
+        ? `<div class="cds-hover-wrap">
+               <img src="${s.left}" class="cds-comp-img" alt="${s.leftLabel || ''}">
+               <img src="${s.leftHover}" class="cds-hover-img" style="top:${s.leftHoverPos || '8%'}" alt="${s.leftLabel || ''} detail">
+             </div>`
+        : `<img src="${s.left}" class="cds-comp-img" alt="${s.leftLabel || ''}">`;
+      visual = `<div class="cds-comparison${s.leftHover ? ' cds-comparison--matched' : ''}">
+           <div class="cds-comp-side">
+             <div class="cds-comp-label cds-comp-before">${s.leftLabel || 'Left'}</div>
+             ${leftImg}
+           </div>
+           <div class="cds-comp-side">
+             <div class="cds-comp-label cds-comp-after">${s.rightLabel || 'Right'}</div>
+             <img src="${s.right}" class="cds-comp-img" alt="${s.rightLabel || ''}">
+           </div>
+         </div>`;
+    } else if (s.before && s.after) {
+      visual = `<div class="cds-comparison">
+           <div class="cds-comp-side">
+             <div class="cds-comp-label cds-comp-before">Before</div>
+             <img src="${s.before}" class="cds-comp-img" alt="Before">
+           </div>
+           <div class="cds-comp-side">
+             <div class="cds-comp-label cds-comp-after">After</div>
+             <img src="${s.after}" class="cds-comp-img" alt="After">
+           </div>
+         </div>`;
+    } else if (s.img) {
+      visual = `<div class="cds-single-img"><img src="${s.img}" class="cds-single-img-el" style="${s.imgWidth ? `max-width:${s.imgWidth}` : ''}" alt=""></div>`;
+    } else if (s.gallery) {
+      visual = `<div class="cds-gallery">${s.gallery.map(src => `<img src="${src}" class="cds-gallery-img" alt="">`).join('')}</div>`;
+    } else if (s.beforeAfter) {
+      visual = `<div class="cds-comparison">
+           <div class="cds-comp-side">
+             <div class="cds-comp-label cds-comp-before">Before</div>
+             <div class="ph-box cds-comp-ph"></div>
+           </div>
+           <div class="cds-comp-side">
+             <div class="cds-comp-label cds-comp-after">After</div>
+             <div class="ph-box cds-comp-ph"></div>
+           </div>
+         </div>`;
+    } else {
+      visual = `<div class="ph-box cds-ph-box"></div>`;
+    }
+    const visualHTML = s.detail
+      ? `<div class="cds-flippable">
+           <div class="cds-flippable-front">${visual}</div>
+           <div class="cds-flippable-back"><img src="${s.detail}" class="cds-detail-img" alt="In-app view"></div>
+           <button class="cds-flip-btn">See in-app ›</button>
+         </div>`
+      : visual;
+    return `<div class="cds-slide">${visualHTML}<p class="cds-caption">${s.caption}</p></div>`;
+  }).join('');
+
+  const screensHTML = screens.length > 0 ? `
+        <div class="cd-screens">
+          <div class="cds-nav">
+            <button class="cds-prev">&#8249;</button>
+            <div class="cds-pills">${pillsHTML}</div>
+            <button class="cds-next">&#8250;</button>
+          </div>
+          <div class="cds-viewport">
+            <div class="cds-track">${slidesHTML}</div>
+          </div>
+        </div>` : '';
+
+  const innerHTML = `
+      <div class="${data.sidePhoto ? 'cd-proj-content' : ''}">
+        <div class="cd-proj-header-wrap">
+          <div class="cd-proj-header">
+            <span class="cd-proj-tag">${data.tag}</span>
+            <span class="cd-proj-title">${data.title}</span>
+          </div>
+          <div class="cd-proj-company">${data.company}</div>
+        </div>
+        <p class="cd-proj-desc">${data.desc}</p>
+        ${data.highlights
+          ? `<div class="cd-highlights">
+               <div class="cd-highlights-label">Highlighted Experience</div>
+               <div class="cd-highlights-list">${data.highlights.map(h => `<button class="cd-highlight-chip" data-project="${h.project}">${h.label}</button>`).join('')}</div>
+             </div>`
+          : data.impact.length > 0 ? `<ul class="cd-proj-impact">${data.impact.map(i => `<li>${i}</li>`).join('')}</ul>` : ''
+        }
+        ${screensHTML}
+      </div>
+      ${data.sidePhoto ? `<div class="cd-proj-sidephoto"><img src="${data.sidePhoto}" alt=""></div>` : ''}`;
 
   document.getElementById('career-detail').innerHTML = `
-    <div class="cd-proj">
-      <div>
-        <div class="cd-proj-header">
-          <span class="cd-proj-tag">${data.tag}</span>
-          <span class="cd-proj-title">${data.title}</span>
-        </div>
-        <div class="cd-proj-company">${data.company}</div>
-      </div>
-      <p class="cd-proj-desc">${data.desc}</p>
-      <ul class="cd-proj-impact">${data.impact.map(i => `<li>${i}</li>`).join('')}</ul>
-      <div class="cd-screens">
-        <div class="cds-nav">
-          <button class="cds-prev">&#8249;</button>
-          <div class="cds-pills">${pillsHTML}</div>
-          <button class="cds-next">&#8250;</button>
-        </div>
-        <div class="cds-viewport">
-          <div class="cds-track">${slidesHTML}</div>
-        </div>
-      </div>
+    <div class="cd-proj${data.sidePhoto ? ' cd-proj-with-photo' : ''}">${innerHTML}
     </div>`;
+
+  positionDetailPanel();
 
   const detail  = document.getElementById('career-detail');
   const track   = detail.querySelector('.cds-track');
@@ -351,10 +581,12 @@ function renderDetail(id) {
     nextBtn.disabled = screenIdx === screens.length - 1;
   }
 
-  prevBtn.addEventListener('click', () => goToScreen(screenIdx - 1));
-  nextBtn.addEventListener('click', () => goToScreen(screenIdx + 1));
-  pills.forEach(p => p.addEventListener('click', () => goToScreen(+p.dataset.i)));
-  goToScreen(0); // set initial disabled state
+  if (screens.length > 0) {
+    prevBtn.addEventListener('click', () => goToScreen(screenIdx - 1));
+    nextBtn.addEventListener('click', () => goToScreen(screenIdx + 1));
+    pills.forEach(p => p.addEventListener('click', () => goToScreen(+p.dataset.i)));
+    goToScreen(0);
+  }
 }
 
 document.querySelectorAll('.cl-project').forEach(btn => {
@@ -363,8 +595,15 @@ document.querySelectorAll('.cl-project').forEach(btn => {
     btn.classList.add('active');
     activeProject = btn.dataset.project;
     renderDetail(activeProject);
+    const co = btn.closest('.cl-company');
+    if (co) setTimelineNode(co.dataset.company);
+    const timeline = document.querySelector('.career-timeline');
+    if (timeline) setTimeout(() => timeline.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   });
 });
+
+// Initialize timeline to BetMGM (default open company)
+setTimelineNode('betmgm');
 
 // ── Projects: expand/collapse cards ──────────────────────
 document.querySelectorAll('.project-card').forEach(card => {
@@ -381,6 +620,66 @@ document.querySelectorAll('.project-card').forEach(card => {
       setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
     }
   });
+});
+
+// ── Lightbox ──────────────────────────────────────────────
+(function initLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  const lbImg    = document.getElementById('lb-img');
+
+  function open(src) {
+    lbImg.src = src;
+    lightbox.classList.add('open');
+  }
+
+  function close() {
+    lightbox.classList.remove('open');
+    lbImg.src = '';
+  }
+
+  document.getElementById('lb-close').addEventListener('click', close);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  // Event delegation — images are injected dynamically by renderDetail
+  document.getElementById('career-detail').addEventListener('click', e => {
+    const img = e.target.closest('.cds-comp-img, .cds-gallery-img, .cds-single-img-el');
+    if (img) open(img.src);
+  });
+})();
+
+// ── Career: highlight chip navigation ────────────────────
+document.getElementById('career-detail').addEventListener('click', e => {
+  const chip = e.target.closest('.cd-highlight-chip');
+  if (!chip) return;
+  const projectId = chip.dataset.project;
+  document.querySelectorAll('.cl-project').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.cl-project[data-project="${projectId}"]`);
+  if (btn) btn.classList.add('active');
+  activeProject = projectId;
+  renderDetail(projectId);
+});
+
+// ── Career: hover-swap click opens lightbox ───────────────
+document.getElementById('career-detail').addEventListener('click', e => {
+  const wrap = e.target.closest('.cds-hover-wrap');
+  if (!wrap) return;
+  const hoverImg = wrap.querySelector('.cds-hover-img');
+  if (hoverImg) {
+    const lightbox = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lb-img');
+    lbImg.src = hoverImg.src;
+    lightbox.classList.add('open');
+  }
+});
+
+// ── Career: flip toggle ───────────────────────────────────
+document.getElementById('career-detail').addEventListener('click', e => {
+  const btn = e.target.closest('.cds-flip-btn');
+  if (!btn) return;
+  const flippable = btn.closest('.cds-flippable');
+  const isFlipped = flippable.classList.toggle('flipped');
+  btn.textContent = isFlipped ? '‹ Back' : 'See in-app ›';
 });
 
 // ── Hobby carousel ────────────────────────────────────────
