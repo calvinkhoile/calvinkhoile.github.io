@@ -1257,6 +1257,13 @@ main { flex: 1; }
 
 
 /* ── PROJECTS LIST ───────────────────────────────────── */
+.projects-intro {
+  font-size: 0.9rem;
+  color: var(--body);
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
 .projects-list {
   display: flex;
   flex-direction: column;
@@ -1327,6 +1334,14 @@ main { flex: 1; }
   font-size: 0.82rem;
   color: var(--body);
   line-height: 1.65;
+}
+
+.pc-wip-img {
+  width: 50%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  margin: 0 auto;
 }
 
 .pc-stack {

@@ -66,6 +66,7 @@ function openSection(id) {
       }));
 
       if (id === 'career') resetCareer();
+      if (id === 'projects') resetProjects();
 
       const panel = document.getElementById(`panel-${id}`);
       panel.style.animation = 'panelEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards';
@@ -102,6 +103,7 @@ function switchSection(id) {
     current.style.animation = '';
 
     if (id === 'career') resetCareer();
+    if (id === 'projects') resetProjects();
     next.classList.add('active');
     const endH = panels.offsetHeight;
 
@@ -440,6 +442,17 @@ function resetCareer() {
   if (overviewBtn) overviewBtn.classList.add('active');
   activeProject = 'betmgm-overview';
   renderDetail('betmgm-overview');
+}
+
+function resetProjects() {
+  const aiCard = document.querySelector('.project-card[data-project="ai-building"]');
+  if (!aiCard) return;
+  const detail = aiCard.querySelector('.pc-detail');
+  if (!detail) return;
+  if (!aiCard.classList.contains('open')) {
+    aiCard.classList.add('open');
+    expandEl(detail, 'flex');
+  }
 }
 
 document.querySelectorAll('.cl-co-header').forEach(header => {
