@@ -329,31 +329,53 @@ const careerData = {
     screens: [],
   },
   'meta-overview': {
-    tag: 'Overview', title: 'Meta', company: 'Product Operations Manager, SMX · 2021–2024',
-    desc: 'I led product operations for Meta\'s Stories and Messaging Experience (SMX) team — user feedback systems, product quality programs, infrastructure cost reduction, and go-to-market across one of the most-used messaging platforms in the world.',
-    impact: [
-      'Increased user feedback by 300% by redesigning reporting options while protecting privacy',
-      'Cut infrastructure costs by $20M through a Stories Archive capacity analysis',
-      'Music investment research drove a 1.3% increase in stories created and a 0.12% lift in sessions',
-      'Led the "Unship" and "Craft" quality initiatives — catalogued all SMX features and bugs, unshipping 50+',
+    tag: 'Meta', title: 'Meta', company: 'Product Operations Manager, SMX · 2021–2024',
+    sidePhoto: 'assets/meta/meta-photo-placeholder.png',
+    desc: 'I was lucky enough to break into consumer-facing product at Meta, where I led Product Operations for Stories and Messaging Experience (SMX). It was a horizontal PM role, supporting several engineering teams and splitting my focus between roadmap brainstorming and new feature launches.',
+    highlights: [
+      { label: 'External User Feedback Process', project: 'external-feedback' },
+      { label: 'Highlighted Features',            project: 'highlighted-features' },
+      { label: 'Product Feedback',                project: 'product-feedback' },
     ],
+    screens: [],
+  },
+  'external-feedback': {
+    tag: 'Meta', title: 'External User Feedback Process', company: 'Product Operations Manager, SMX',
+    desc: 'I redesigned how users report issues and give feedback across Stories and Messaging. The new reporting flow tripled feedback volume without compromising user privacy, giving the team much faster signal for triage and prioritization. We then partnered with engineering to use machine learning to automatically diagnose new issues and trends.',
+    impact: [],
     screens: [
-      { label: 'Company', caption: 'Meta\'s Stories and Messaging team builds products used by billions every day. Product Ops at that scale means coordinating across eng, design, data, UXR, and legal — keeping big initiatives moving and decisions from falling through the cracks.' },
-      { label: 'My role', caption: 'I was the Product Operations Manager across SMX — driving quality programs, roadmapping, feedback system design, and go-to-market. I also worked with eng to implement 100+ tracking capabilities, which cut debugging time by 50%.' },
+      { label: 'Report Menu', img: 'assets/meta/external signal 1.PNG', imgWidth: '220px', imgHover: 'assets/meta/external signal 1 zoom.png', imgHoverPos: '15%', caption: 'Every story includes reporting options right in the menu, from a quick "Not interested" to a formal "Report story" for more serious issues.' },
+      { label: 'Report Flow', img: 'assets/meta/external signal 2.PNG', imgWidth: '220px', caption: 'Reporting a technical problem lets users describe what went wrong and attach a screenshot or screen recording, giving the team far richer context than a bug report alone.' },
+    ],
+  },
+  'highlighted-features': {
+    tag: 'Meta', title: 'Highlighted Features', company: 'Product Operations Manager, SMX',
+    desc: 'Every key feature we built felt like a unique experience, but the underlying theme was that Meta had the art down to a science. The ability to A/B test, iterate, and gather data and insights was as good as it gets. And when you\'re shipping to billions of users, the bar to getting a feature fully rolled out was so high.',
+    impact: [],
+    screens: [
+      { label: 'Midcards', img: 'assets/meta/midcards.PNG', imgWidth: '220px', caption: 'Midcards is a big driver for several Stories metrics, including creation and reactions. I helped generate new midcards, iterate on existing ideas, and unship the ones that weren\'t working.' },
+      { label: 'Stories Comments', img: 'assets/meta/comments.PNG', imgWidth: '220px', imgHover: 'assets/meta/comments zoom.png', imgHoverPos: '72%', caption: 'I learned so much working on this feature. We iterated and tested for my entire time at Meta and ultimately never fully rolled it out, but it\'s made its way to Instagram!' },
+    ],
+  },
+  'product-feedback': {
+    tag: 'Meta', title: 'Product Feedback', company: 'Product Operations Manager, SMX',
+    desc: 'I was the voice of the customer, and turned user feedback into actionable roadmap items, oftentimes quick wins. This was less about big projects, but arguably some of my most valuable and impactful work, and where I learned how much little details made a difference!',
+    impact: [],
+    screens: [
+      { label: 'Audio Toggle', img: 'assets/meta/music and reactions.png', imgWidth: '220px', imgHover: 'assets/meta/audio-toggle-zoom.png', imgHoverPos: '12%', caption: 'Users complained that music was broken, but many times their phone\'s audio wasn\'t on or the story itself had no audio. The toggle helped distinguish what was going on.' },
+      { label: 'Reactions', img: 'assets/meta/reactions 2.png', imgWidth: '220px', imgHover: 'assets/meta/reactions-zoom.png', imgHoverPos: '82%', caption: 'I partnered with engineering to constantly iterate on the right reaction options, the signals that confirmed a user\'s action, and how we surfaced that back to story creators.' },
     ],
   },
   'deloitte-overview': {
     tag: 'Overview', title: 'Deloitte', company: 'Business Analyst · 2019–2021',
-    desc: 'I joined Deloitte as an intern in 2019 and came back full-time as a Business Analyst in early 2020. I worked on enterprise tech implementations — digital transformations, system migrations, and self-service tooling for global clients.',
+    desc: 'I started my career at Deloitte Consulting, first as a summer intern and then full-time as a Business Analyst. It was one of the best ways to start a career. I still remember how much my day-to-day changed when the world shut down in 2020 (I was at a sushi bar in SF for a client project). I built products for internal teams, which is where I realized I eventually wanted to become a product manager.',
     impact: [
       'Led a digital transformation for a global tech company: financial system upgrade for 5,000+ employees across 4 countries, on time',
       'Designed self-service HR tools (name/address changes, manager approvals) adopted by 10,000+ employees',
       'Implemented a JIRA-based case management system that improved ops for 500+ weekly inquiries',
     ],
-    screens: [
-      { label: 'Company', caption: 'Deloitte\'s consulting practice puts you in front of hard enterprise problems right away. The Business Technology team takes client requirements and turns them into working implementations — from vendor selection and system design through testing and launch.' },
-      { label: 'My role', caption: 'I interned in 2019 and joined full-time in February 2020. My work covered requirements gathering, vendor selection, testing, and launch coordination for multi-country deployments. Consulting gave me the discipline to structure messy problems and communicate clearly under pressure — skills I use every day as a PM.' },
-    ],
+    impactLabel: 'Selected Product Experience',
+    screens: [],
   },
   'ucla-overview': {
     tag: 'Education', title: 'UCLA', company: 'B.A. Business Economics · Graduated Dec 2019',
@@ -367,21 +389,6 @@ const careerData = {
       { label: 'Education', caption: 'B.A. in Business Economics, graduated December 2019. I focused on analytical frameworks, economic modeling, and business strategy — and got real consulting and leadership reps through clubs. UCLA built the foundation for how I think about data, decisions, and cross-functional work.' },
     ],
   },
-  'meta-ops': {
-    tag: 'Ops', title: 'Product Quality & Feedback Systems', company: 'Meta · Product Ops, SMX',
-    desc: 'I drove product quality and feedback infrastructure across Meta\'s Stories and Messaging Experience — user reporting, tracking, technical debt reduction, and a company-wide "Unship" initiative that cut over 50 features.',
-    impact: [
-      '300% increase in user feedback by redesigning reporting options while protecting privacy',
-      'Worked with eng to implement 100+ tracking capabilities, cutting debugging time by 50%',
-      'Led "Unship" and "Craft" — catalogued all SMX features and bugs, unshipping 50+',
-      'Cut infrastructure costs by $20M through a Stories Archive capacity analysis',
-    ],
-    screens: [
-      { label: 'Feedback', caption: 'I redesigned user reporting options that tripled feedback volume without touching privacy. The extra signal meant faster triage and better prioritization across SMX.' },
-      { label: 'Quality', caption: '"Unship" and "Craft" were org-wide quality pushes to catalog every feature and bug in SMX. I led the effort with eng — unshipping 50+ features to simplify the product surface.' },
-      { label: 'Infra',   caption: 'A capacity analysis of Stories Archive surfaced $20M in redundant storage costs. I led the optimization with data and infra teams — cut costs with zero user-facing impact.' },
-    ],
-  },
 };
 
 // ── Career: timeline sync ─────────────────────────────────
@@ -391,18 +398,29 @@ function setTimelineNode(companyId) {
   if (node) node.classList.add('ct-node-active');
 }
 
+// ── Career: open company (shared by timeline + accordion) ─
+function openCompany(companyId) {
+  const company = document.querySelector(`.cl-company[data-company="${companyId}"]`);
+  if (!company) return;
+  const isOpen = company.classList.contains('open');
+  document.querySelectorAll('.cl-company').forEach(c => c.classList.remove('open'));
+  if (!isOpen) {
+    company.classList.add('open');
+    setTimelineNode(companyId);
+    const firstProject = company.querySelector('.cl-project');
+    if (firstProject) {
+      document.querySelectorAll('.cl-project').forEach(b => b.classList.remove('active'));
+      firstProject.classList.add('active');
+      activeProject = firstProject.dataset.project;
+      renderDetail(activeProject);
+    }
+  }
+  positionDetailPanel();
+}
+
 // ── Career: timeline node click ───────────────────────────
 document.querySelectorAll('.ct-node[data-company]').forEach(node => {
-  node.addEventListener('click', () => {
-    const targetCo = node.dataset.company;
-    const co = document.querySelector(`.cl-company[data-company="${targetCo}"]`);
-    const isOpen = co && co.classList.contains('open');
-    document.querySelectorAll('.cl-company').forEach(c => c.classList.remove('open'));
-    if (!isOpen) {
-      if (co) co.classList.add('open');
-      setTimelineNode(targetCo);
-    }
-  });
+  node.addEventListener('click', () => openCompany(node.dataset.company));
 });
 
 // ── Career: detail panel positioning (mobile inline) ─────
@@ -457,21 +475,7 @@ function resetProjects() {
 
 document.querySelectorAll('.cl-co-header').forEach(header => {
   header.addEventListener('click', () => {
-    const company = header.closest('.cl-company');
-    const isOpen = company.classList.contains('open');
-    document.querySelectorAll('.cl-company').forEach(c => c.classList.remove('open'));
-    if (!isOpen) {
-      company.classList.add('open');
-      setTimelineNode(company.dataset.company);
-      const firstProject = company.querySelector('.cl-project');
-      if (firstProject) {
-        document.querySelectorAll('.cl-project').forEach(b => b.classList.remove('active'));
-        firstProject.classList.add('active');
-        activeProject = firstProject.dataset.project;
-        renderDetail(activeProject);
-      }
-    }
-    positionDetailPanel();
+    openCompany(header.closest('.cl-company').dataset.company);
   });
 });
 
@@ -519,6 +523,8 @@ function renderDetail(id) {
              <img src="${s.after}" class="cds-comp-img" alt="After">
            </div>
          </div>`;
+    } else if (s.img && s.imgHover) {
+      visual = `<div class="cds-single-img"><div class="cds-hover-wrap" style="max-width:${s.imgWidth || '180px'}"><img src="${s.img}" class="cds-comp-img" alt=""><img src="${s.imgHover}" class="cds-hover-img" style="top:${s.imgHoverPos || '8%'}" alt="detail"></div></div>`;
     } else if (s.img) {
       visual = `<div class="cds-single-img"><img src="${s.img}" class="cds-single-img-el" style="${s.imgWidth ? `max-width:${s.imgWidth}` : ''}" alt=""></div>`;
     } else if (s.gallery) {
@@ -573,9 +579,9 @@ function renderDetail(id) {
         ${data.highlights
           ? `<div class="cd-highlights">
                <div class="cd-highlights-label">Highlighted Experience</div>
-               <div class="cd-highlights-list">${data.highlights.map(h => `<button class="cd-highlight-chip" data-project="${h.project}">${h.label}</button>`).join('')}</div>
+               <div class="cd-highlights-list" style="grid-template-columns: repeat(${data.highlights.length === 3 ? 3 : 2}, 1fr)">${data.highlights.map(h => `<button class="cd-highlight-chip" data-project="${h.project}">${h.label}</button>`).join('')}</div>
              </div>`
-          : data.impact.length > 0 ? `<ul class="cd-proj-impact">${data.impact.map(i => `<li>${i}</li>`).join('')}</ul>` : ''
+          : data.impact.length > 0 ? `<div class="cd-highlights">${data.impactLabel ? `<div class="cd-highlights-label">${data.impactLabel}</div>` : ''}<ul class="cd-proj-impact">${data.impact.map(i => `<li>${i}</li>`).join('')}</ul></div>` : ''
         }
         ${screensHTML}
       </div>

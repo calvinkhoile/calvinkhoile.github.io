@@ -165,40 +165,6 @@ main { flex: 1; }
 
 .bio-body:last-of-type { margin-bottom: 2rem; }
 
-.bio-links {
-  display: flex;
-  gap: 1.75rem;
-  margin-bottom: 1.75rem;
-}
-
-.bio-links a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding-bottom: 3px;
-  border-bottom: 1px solid var(--hairline-strong);
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.bio-links a:hover {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.bio-email {
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding-bottom: 3px;
-  border-bottom: 1px solid var(--hairline-strong);
-  user-select: all;
-}
-
 /* Achievement badges — PlayStation pill style */
 .achievements {
   display: flex;
@@ -221,11 +187,22 @@ main { flex: 1; }
   white-space: nowrap;
 }
 
-.badge-peach,
-.badge-mint,
-.badge-blue,
-.badge-lavender,
-.badge-gold { background: var(--surface-raised); }
+.badge-icon {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.badge-icon:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.badge-email {
+  color: var(--muted);
+  cursor: text;
+  user-select: all;
+}
 
 .bio-model {
   width: 260px;
@@ -830,6 +807,7 @@ main { flex: 1; }
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .cd-highlights-label {
@@ -1147,6 +1125,7 @@ main { flex: 1; }
 .cds-single-img-el:hover {
   transform: scale(1.02);
 }
+
 
 .cds-gallery {
   display: grid;
@@ -1759,15 +1738,6 @@ footer a:hover { color: var(--ink); }
   .bio-kicker { font-size: 0.65rem; margin-bottom: 1rem; }
 
   .bio-body { font-size: 0.88rem; line-height: 1.65; }
-
-  .bio-links {
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .bio-links a { font-size: 0.72rem; }
-  .bio-email { font-size: 0.72rem; }
 
   .achievements { gap: 0.35rem; }
   .badge { font-size: 0.62rem; padding: 0.22rem 0.55rem; }
