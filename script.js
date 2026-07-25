@@ -375,18 +375,31 @@ const careerData = {
       'Implemented a JIRA-based case management system that improved ops for 500+ weekly inquiries',
     ],
     impactLabel: 'Selected Product Experience',
-    screens: [],
+    screens: [
+      { label: 'Photos', caption: '[Placeholder — send photos and I\'ll fill this in.]' },
+    ],
   },
   'ucla-overview': {
     tag: 'Education', title: 'UCLA', company: 'B.A. Business Economics · Graduated Dec 2019',
-    desc: 'I studied Business Economics at UCLA. The analytical frameworks, cross-functional instincts, and leadership reps from clubs and consulting projects are things I still pull from in product work today.',
-    impact: [
-      '2019 William Sharpe Fellow in Consulting, Dean\'s Honors List, UCLA Social Enterprise Academy',
-      'Project Lead, 180 Degrees Consulting — ran client engagements for nonprofits and social enterprises',
-      'VP of Professional Development, Pi Sigma Epsilon',
-    ],
+    desc: 'UCLA was my dream school and some of the best years of my life! I always get nostalgia thinking about it. Go Bruins!',
+    impact: [],
     screens: [
-      { label: 'Education', caption: 'B.A. in Business Economics, graduated December 2019. I focused on analytical frameworks, economic modeling, and business strategy — and got real consulting and leadership reps through clubs. UCLA built the foundation for how I think about data, decisions, and cross-functional work.' },
+      { label: 'Education', bullets: [
+        '2019 William Sharpe Fellow in Consulting. 1 of 20 students selected for the award, honoring the top Economics students each year.',
+        '1 of 50 selected for the Social Enterprise Academy, a full-year program where we partnered with nonprofits to help develop a social enterprise.',
+      ] },
+      { label: 'Clubs', bullets: [
+        '180 Degrees Consulting, Project Lead. Ran client engagements for nonprofits and social enterprises.',
+        'Pi Sigma Epsilon, VP of Professional Development.',
+        'Undergraduate Business Society (UBS) Consulting Workshop Participant: 1 of 25 selected for the 2-month program, which included private sessions with consulting firms and interview prep, ultimately landing my Deloitte internship.',
+      ] },
+      { label: 'Internships', split: true, caption: 'I took the unique approach of doing internships while taking classes. I\'d stack my classes into 2 days a week, then spend the other 2-3 days at the internship. It gave me invaluable experience and helped me understand the professional world a bit better.', timeline: [
+        { period: 'Sophomore Year', company: 'Watertower Ventures', role: 'Venture Capital Intern, full year' },
+        { period: 'Summer', company: 'Silicon Valley Bank', role: 'Summer Analyst' },
+        { period: 'Junior Year', company: 'Ordermark / Nextbite', role: 'Operations Intern, fall (4 mo).<br>Later raised $120M Series C from SoftBank.' },
+        { period: 'Summer', company: 'Deloitte', role: 'Summer Analyst. Received a full-time offer.' },
+        { period: 'Senior Year', company: 'VaynerMedia', role: 'Marketing & Biz Analytics Intern, fall (4 mo)' },
+      ] },
     ],
   },
 };
@@ -551,7 +564,25 @@ function renderDetail(id) {
            <button class="cds-flip-btn">See in-app ›</button>
          </div>`
       : visual;
-    return `<div class="cds-slide">${visualHTML}<p class="cds-caption">${s.caption}</p></div>`;
+    const captionHTML = s.caption ? `<p class="cds-caption">${s.caption}</p>` : '';
+    const bulletsHTML = s.bullets
+      ? `<ul class="cds-caption-list">${s.bullets.map(b => `<li>${b}</li>`).join('')}</ul>`
+      : '';
+    const timelineHTML = s.timeline
+      ? `<div class="cds-mini-timeline">${s.timeline.map((t, i) => `
+          <div class="mtl-node ${i % 2 === 0 ? 'mtl-left' : 'mtl-right'}">
+            <div class="mtl-dot-wrap"><div class="mtl-dot"></div></div>
+            <div class="mtl-content">
+              <div class="mtl-period">${t.period}</div>
+              <div class="mtl-company">${t.company}</div>
+              <div class="mtl-role">${t.role}</div>
+            </div>
+          </div>`).join('')}</div>`
+      : '';
+    const bodyHTML = s.split
+      ? `<div class="cds-slide-split"><div class="cds-slide-split-visual">${visualHTML}</div><div class="cds-slide-split-text">${captionHTML}${bulletsHTML}</div></div>${timelineHTML}`
+      : `${visualHTML}${captionHTML}${bulletsHTML}${timelineHTML}`;
+    return `<div class="cds-slide">${bodyHTML}</div>`;
   }).join('');
 
   const screensHTML = screens.length > 0 ? `
