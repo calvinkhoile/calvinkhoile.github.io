@@ -1,0 +1,5 @@
+# Raw third-party asset packs (large). Optimized outputs go to public/.
+assets-src/
+.DS_Store
+node_modules/
+dist/
