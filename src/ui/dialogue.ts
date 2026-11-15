@@ -36,7 +36,7 @@ export class DialogueBox {
       <div class="dialogue-speaker"></div>
       <p class="dialogue-text" aria-hidden="true"></p>
       <p class="visually-hidden" aria-live="polite"></p>
-      <span class="dialogue-more" aria-hidden="true">▼</span>
+      <span class="dialogue-more" aria-hidden="true"><span class="dialogue-hint"></span> ▼</span>
       <div class="dialogue-choices" role="group" aria-label="Choices"></div>`;
     root.appendChild(this.box);
     this.speaker = this.box.querySelector('.dialogue-speaker')!;
@@ -62,7 +62,8 @@ export class DialogueBox {
         e.preventDefault();
         const at = buttons.indexOf(document.activeElement as HTMLButtonElement);
         buttons[(at + (e.code === 'ArrowDown' ? 1 : buttons.length - 1)) % buttons.length].focus();
-      } else if ((e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') && !e.repeat && !onChoice) {
+      } else if (!e.repeat && !onChoice && !e.metaKey && !e.ctrlKey && !e.altKey && !['Tab', 'ShiftLeft', 'ShiftRight', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        // Any key continues.
         e.preventDefault();
         this.advance();
       }
@@ -133,6 +134,7 @@ export class DialogueBox {
       }
       (this.choices.firstElementChild as HTMLButtonElement).focus({ preventScroll: true });
     } else {
+      this.more.querySelector('.dialogue-hint')!.textContent = document.body.classList.contains('is-touch') ? 'Tap to continue' : 'Press any key to continue';
       this.more.hidden = false;
     }
   }

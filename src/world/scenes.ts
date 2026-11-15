@@ -15,5 +15,4 @@ export const SCENE_NAMES: Record<SceneId, string> = {
   'gym-deloitte': 'Deloitte Gym',
   'gym-meta': 'Meta Gym',
   'gym-betmgm': 'BetMGM Gym',
-  workshop: 'The Workshop',
 };

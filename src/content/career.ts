@@ -1,6 +1,7 @@
 // Career content, migrated verbatim from the classic site (public/classic/script.js `careerData` and the
-// career list in public/classic/index.html). Only two things changed: image paths point at the optimized
-// copies in /images, and em dashes became commas (CLAUDE.md writing rules).
+// career list in public/classic/index.html). Three things changed: image paths point at the optimized
+// copies in /images, em dashes became commas (CLAUDE.md writing rules), and the Loyalty APIs "Account Linking"
+// and "Real-Time Data" screens were merged into one comparison with A/B spots (captions unchanged).
 // The world, the cards, and the résumé page all read this file, so copy is edited in one place.
 
 export interface TimelineItem {
@@ -23,6 +24,8 @@ export interface Screen {
   leftHoverPos?: string;
   right?: string;
   rightLabel?: string;
+  /** Lettered spots (A, B, ...) on the left image. Picking one zooms into that detail and shows its caption. */
+  hotspots?: { title: string; detail: string; pos: string; caption: string }[];
   /** Single image, with an optional zoom spot. */
   img?: string;
   imgWidth?: string;
@@ -139,24 +142,26 @@ export const careerData: Record<string, CareerEntry> = {
         caption: 'Before, the Rewards Hub was a static basic account summary. I led the rebuild into a live loyalty dashboard with Tier Status, Tier Credits progress, and automated real time MGM account linking.',
       },
       {
-        label: 'Account Linking',
+        // Account Linking and Real-Time Data share one comparison. Each is a lettered spot on the BetMGM screen.
+        label: 'BetMGM + MGM',
         left: '/images/betmgm/rewards-hub-after.webp',
         leftLabel: 'BetMGM',
-        leftHover: '/images/betmgm/account-linking.webp',
-        leftHoverPos: '8%',
         right: '/images/betmgm/mgm-after-comparison.webp',
         rightLabel: 'MGM',
-        caption: 'Players now have the same MGM Rewards ID for both digital and physical properties. We automated matching on day 1.',
-      },
-      {
-        label: 'Real-Time Data',
-        left: '/images/betmgm/rewards-hub-after.webp',
-        leftLabel: 'BetMGM',
-        leftHover: '/images/betmgm/loyalty-info.webp',
-        leftHoverPos: '38%',
-        right: '/images/betmgm/mgm-after-comparison.webp',
-        rightLabel: 'MGM',
-        caption: 'With a shared rewards program, we focused on sharing this data real time and accurately. Players now see the same Tier Credit balance on both the BetMGM and MGM app.',
+        hotspots: [
+          {
+            title: 'Account Linking',
+            detail: '/images/betmgm/account-linking.webp',
+            pos: '8%',
+            caption: 'Players now have the same MGM Rewards ID for both digital and physical properties. We automated matching on day 1.',
+          },
+          {
+            title: 'Real-Time Data',
+            detail: '/images/betmgm/loyalty-info.webp',
+            pos: '38%',
+            caption: 'With a shared rewards program, we focused on sharing this data real time and accurately. Players now see the same Tier Credit balance on both the BetMGM and MGM app.',
+          },
+        ],
       },
     ],
   },

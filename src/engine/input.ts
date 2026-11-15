@@ -7,6 +7,8 @@ export interface InputState {
   sprint: boolean;
   /** True for one frame when the interact button/key goes down. */
   interact: boolean;
+  /** True when the visitor is on a keyboard and mouse. Desktop moves at one fast speed, no sprint key needed. */
+  desktop: boolean;
   /** Screen point of a click or tap this frame (click/tap-to-move), else null. */
   tap: { x: number; y: number } | null;
 }
@@ -34,6 +36,7 @@ export class Input {
   private keys = new Set<string>();
   private interactQueued = false;
   private tapQueued: { x: number; y: number } | null = null;
+  private lastWasTouch = false;
 
   private joyId: number | null = null;
   private joyBase = { x: 0, y: 0 };
@@ -93,7 +96,7 @@ export class Input {
       const len = Math.hypot(x, y);
       x /= len;
       y /= len;
-      sprint = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
+      this.lastWasTouch = false;
     } else if (this.joyId !== null) {
       const mag = Math.hypot(this.joyVec.x, this.joyVec.y);
       if (mag > JOY_DEADZONE) {
@@ -105,7 +108,7 @@ export class Input {
       }
     }
 
-    const state: InputState = { moveX: x, moveY: y, sprint, interact: this.interactQueued, tap: this.tapQueued };
+    const state: InputState = { moveX: x, moveY: y, sprint, desktop: !this.lastWasTouch, interact: this.interactQueued, tap: this.tapQueued };
     this.interactQueued = false;
     this.tapQueued = null;
     return state;
@@ -125,8 +128,6 @@ export class Input {
     if (KEY_DIRS[e.code]) {
       this.keys.add(e.code);
       e.preventDefault(); // arrows and space shouldn't scroll the page
-    } else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-      this.keys.add(e.code);
     } else if (INTERACT_KEYS.has(e.code) && !e.repeat && !onButton) {
       this.interactQueued = true;
       e.preventDefault();
@@ -154,6 +155,7 @@ export class Input {
 
   private onPointerDown = (e: PointerEvent): void => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    this.lastWasTouch = e.pointerType === 'touch';
     const center = e.pointerType === 'touch' && this.joyId === null ? this.joystickCenter() : null;
     if (center && Math.hypot(e.clientX - center.x, e.clientY - center.y) <= JOY_RADIUS * JOY_GRAB) {
       this.joyId = e.pointerId;

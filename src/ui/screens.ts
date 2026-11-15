@@ -7,7 +7,7 @@ import type { SelectStage } from './select-stage';
 const TIPS = [
   "Tip: there's a résumé button in the top right if you're in a hurry.",
   'Tip: tap or click the ground and you walk there.',
-  'Tip: hold Shift to sprint. On a phone, push the joystick all the way.',
+  'Tip: on a phone, push the joystick all the way to sprint.',
 ];
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;

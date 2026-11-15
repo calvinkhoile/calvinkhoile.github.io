@@ -1,7 +1,7 @@
 // Station registry: the glue between maps, content, progress, and (later) deep links.
 // Maps reference stations by id. Content is never referenced from a map directly.
 
-export type SceneId = 'exterior' | 'gym-ucla' | 'gym-deloitte' | 'gym-meta' | 'gym-betmgm' | 'workshop';
+export type SceneId = 'exterior' | 'gym-ucla' | 'gym-deloitte' | 'gym-meta' | 'gym-betmgm';
 
 export type StationContent =
   | { source: 'career'; key: string; tab?: number }
@@ -10,7 +10,7 @@ export type StationContent =
   | { source: 'side-builds'; key: string }
   | { source: 'hobbies'; key: string; slice?: string }
   /** A single photo, opened in the lightbox. */
-  | { source: 'photo'; src: string; alt: string }
+  | { source: 'photo'; src: string; alt: string; caption: string }
   /** A dialogue line (easter eggs, teasers). */
   | { source: 'dialogue'; key: string };
 
@@ -41,27 +41,22 @@ export const stations: Station[] = [
   { id: 'meta/external-feedback', scene: 'gym-meta', label: 'Feedback Kiosk', content: { source: 'career', key: 'external-feedback' }, counts: true },
   { id: 'meta/highlighted-features', scene: 'gym-meta', label: 'Feature Wall', content: { source: 'career', key: 'highlighted-features' }, counts: true },
   { id: 'meta/product-feedback', scene: 'gym-meta', label: 'Voice of the Customer', content: { source: 'career', key: 'product-feedback' }, counts: true },
-  { id: 'meta/hq-window', scene: 'gym-meta', label: 'HQ Window', content: { source: 'photo', src: '/images/meta/meta-hq.webp', alt: 'Meta headquarters' }, counts: false },
+  { id: 'meta/hq-window', scene: 'gym-meta', label: 'HQ Window', content: { source: 'photo', src: '/images/meta/meta-hq.webp', alt: 'Meta headquarters', caption: 'Meta HQ.' /* TODO(calvin): caption */ }, counts: false },
 
   // BetMGM (4 counted)
   { id: 'betmgm/rewards-store', scene: 'gym-betmgm', label: 'Rewards Store', content: { source: 'career', key: 'rewards-store' }, counts: true },
   { id: 'betmgm/loyalty-apis', scene: 'gym-betmgm', label: 'Loyalty APIs', content: { source: 'career', key: 'loyalty-apis' }, counts: true },
   { id: 'betmgm/enablement-wins', scene: 'gym-betmgm', label: 'Partnership Desk', content: { source: 'career', key: 'enablement-wins' }, counts: true },
   { id: 'betmgm/ai-betmgm', scene: 'gym-betmgm', label: 'AI Lab', content: { source: 'career', key: 'ai-betmgm' }, counts: true },
-  { id: 'betmgm/product-summit', scene: 'gym-betmgm', label: 'Product Summit Stage', content: { source: 'photo', src: '/images/betmgm/product-summit.webp', alt: 'Calvin on stage at the BetMGM Product Summit' }, counts: false },
+  { id: 'betmgm/product-summit', scene: 'gym-betmgm', label: 'Product Summit Stage', content: { source: 'photo', src: '/images/betmgm/product-summit.webp', alt: 'BetMGM Product Summit', caption: 'BetMGM Product Summit.' /* TODO(calvin): caption */ }, counts: false },
 
-  // The Workshop (both count toward Explorer)
-  { id: 'workshop/sports-betting', scene: 'workshop', label: 'Sportsbook Ticker', content: { source: 'side-builds', key: 'sports-betting' }, counts: true },
-  { id: 'workshop/ai-building', scene: 'workshop', label: 'Workbench', content: { source: 'side-builds', key: 'ai-building' }, counts: true },
-  { id: 'workshop/diorama', scene: 'workshop', label: 'You Are Here', content: { source: 'dialogue', key: 'workshop.diorama' }, counts: false },
-
-  // The Blacktop (outdoors, all five count toward Explorer)
-  { id: 'blacktop/la-marathon', scene: 'exterior', label: 'Mile Marker: LA', content: { source: 'hobbies', key: 'running', slice: 'la-marathon' }, counts: true },
-  { id: 'blacktop/huntington-beach', scene: 'exterior', label: 'Mile Marker: Huntington Beach', content: { source: 'hobbies', key: 'running', slice: 'huntington-beach' }, counts: true },
-  { id: 'blacktop/chess', scene: 'exterior', label: 'Chess Table', content: { source: 'hobbies', key: 'chess' }, counts: true },
-  { id: 'blacktop/coaching', scene: 'exterior', label: "Coach's Bench", content: { source: 'hobbies', key: 'basketball', slice: 'coaching' }, counts: true },
-  { id: 'blacktop/trophy-case', scene: 'exterior', label: 'Trophy Case', content: { source: 'hobbies', key: 'basketball', slice: 'record' }, counts: true },
-  { id: 'blacktop/chess-teaser', scene: 'exterior', label: 'Chess Table', content: { source: 'dialogue', key: 'blacktop.chessTeaser' }, counts: false },
+  // The Weightroom (outdoors, in the exterior scene). All five count toward the Explorer badge.
+  // One stop per hobby or side build, on purpose: Calvin asked to keep this area short so it doesn't read as a brag list.
+  { id: 'weightroom/sports-betting', scene: 'exterior', label: 'Sportsbook Ticker', content: { source: 'side-builds', key: 'sports-betting' }, counts: true },
+  { id: 'weightroom/ai-building', scene: 'exterior', label: 'Workbench', content: { source: 'side-builds', key: 'ai-building' }, counts: true },
+  { id: 'weightroom/running', scene: 'exterior', label: 'Sprint Lane', content: { source: 'hobbies', key: 'running' }, counts: true },
+  { id: 'weightroom/chess', scene: 'exterior', label: 'Chess Table', content: { source: 'hobbies', key: 'chess' }, counts: true },
+  { id: 'weightroom/basketball', scene: 'exterior', label: 'Hoop', content: { source: 'hobbies', key: 'basketball' }, counts: true },
 ];
 
 export const stationById = (id: string): Station | undefined => stations.find((s) => s.id === id);

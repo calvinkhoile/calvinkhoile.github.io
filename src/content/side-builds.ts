@@ -1,4 +1,4 @@
-// Side builds ("MyBadges" on the classic site), migrated verbatim. Shown at The Workshop.
+// Side builds ("MyBadges" on the classic site), migrated verbatim. Shown at The Weightroom.
 
 export interface SideBuild {
   id: string;

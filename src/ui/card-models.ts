@@ -54,7 +54,7 @@ export function sideBuildCard(key: string, opts: { id?: string; chip?: string } 
   const b = sideBuilds.find((s) => s.id === key)!;
   return {
     id: opts.id ?? key,
-    tag: 'The Workshop',
+    tag: 'The Weightroom',
     title: b.name,
     subtitle: b.tagline,
     chip: opts.chip,
@@ -69,7 +69,7 @@ export function hobbyCard(key: string, slice: string | undefined, opts: { id?: s
   const h = hobbies.find((x) => x.id === key)!;
   return {
     id: opts.id ?? key,
-    tag: 'The Blacktop',
+    tag: 'The Weightroom',
     title: h.name,
     chip: opts.chip,
     paragraphs: [],

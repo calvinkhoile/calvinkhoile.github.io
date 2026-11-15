@@ -105,9 +105,12 @@ describe('Exterior map', () => {
     }
   });
 
-  it('has a walkable route from spawn to the court and the Blacktop', () => {
-    expect(grid.findPath(exterior.spawn, { x: 66, z: 10 }, R)).not.toBeNull();
-    expect(grid.findPath(exterior.spawn, { x: 65, z: 32 }, R)).not.toBeNull();
+  it('has a walkable route from spawn to the court and to every station', () => {
+    expect(grid.findPath(exterior.spawn, { x: 38, z: 10 }, R)).not.toBeNull();
+    for (const i of exterior.interactables) {
+      expect(grid.circleBlocked(i.x, i.z, R), `${i.id} stand point is blocked`).toBe(false);
+      expect(grid.findPath(exterior.spawn, { x: i.x, z: i.z }, R), `no route to ${i.id}`).not.toBeNull();
+    }
   });
 
   it('is fully enclosed (no walkable tile on the map edge)', () => {

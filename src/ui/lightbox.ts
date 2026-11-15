@@ -11,7 +11,7 @@ export class Lightbox {
     this.el.setAttribute('role', 'dialog');
     this.el.setAttribute('aria-modal', 'true');
     this.el.setAttribute('aria-label', 'Photo');
-    this.el.innerHTML = `<button class="lightbox-close" type="button" aria-label="Close photo">✕</button><img class="lightbox-img" alt="" />`;
+    this.el.innerHTML = `<button class="lightbox-close" type="button" aria-label="Close photo">✕</button><figure class="lightbox-figure"><img class="lightbox-img" alt="" /><figcaption class="lightbox-caption"></figcaption></figure>`;
     root.appendChild(this.el);
     this.img = this.el.querySelector('img')!;
     this.el.addEventListener('click', () => this.close());
@@ -33,10 +33,15 @@ export class Lightbox {
     return !this.el.hidden;
   }
 
-  open(src: string, alt = ''): void {
+  open(src: string, alt = '', caption = ''): void {
     this.returnFocus = document.activeElement as HTMLElement | null;
     this.img.src = src;
     this.img.alt = alt;
+    const cap = this.el.querySelector('.lightbox-caption') as HTMLElement;
+    cap.textContent = caption;
+    cap.hidden = !caption;
+    // Captioned photos (station props) are shown a little smaller, like a framed print.
+    this.el.classList.toggle('lightbox--captioned', !!caption);
     this.el.hidden = false;
     (this.el.querySelector('.lightbox-close') as HTMLElement).focus({ preventScroll: true });
   }

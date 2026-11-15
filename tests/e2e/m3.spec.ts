@@ -72,9 +72,12 @@ test('signpost: prompt appears in range and its dialogue plays through', async (
   // First press completes the typewriter, second moves to the next line.
   await page.locator('.dialogue').click();
   await expect(page.locator('.dialogue-text')).toContainText('West: UCLA');
+  await expect(page.locator('.dialogue-hint')).toHaveText(isMobile ? 'Tap to continue' : 'Press any key to continue');
+  // Any key continues on desktop.
+  if (isMobile) await page.locator('.dialogue').click();
+  else await page.keyboard.press('x');
   await page.locator('.dialogue').click();
-  await page.locator('.dialogue').click();
-  await expect(page.locator('.dialogue-text')).toContainText('The Workshop');
+  await expect(page.locator('.dialogue-text')).toContainText('The Weightroom');
   await page.locator('.dialogue').click();
   await expect(page.locator('.dialogue')).toBeHidden();
   await idle(page);
@@ -134,9 +137,11 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
     await expectCardImagesLoad(page);
 
     if (i === 0) {
-      // Before/after slider follows the range input.
-      await page.locator('.card [data-tab="0"]').click();
-      const slider = page.locator('.card-panel:not([hidden]) .ba');
+      // All three before/afters are on screen at once, with a hint, and each slider follows its range input.
+      await expect(page.locator('.card .ba-row .ba')).toHaveCount(3);
+      await expect(page.locator('.card [data-tab]')).toHaveCount(0);
+      await expect(page.locator('.card-hint')).toContainText('Drag each slider');
+      const slider = page.locator('.card .ba-row .ba').first();
       await slider.locator('.ba-range').evaluate((el: HTMLInputElement) => {
         el.value = '80';
         el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -149,11 +154,16 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
       expect(await page.evaluate(() => window.__mypark!.guide)).toMatch(/^betmgm\//);
     } else {
       if (i === 1) {
-        // Side-by-side with a zoom spot that toggles on tap.
+        // Account Linking and Real-Time Data are one comparison with A/B spots.
+        await expect(page.locator('.card [data-tab]')).toHaveText(['Before / After', 'BetMGM + MGM']);
         await page.locator('.card [data-tab="1"]').click();
-        const zoom = page.locator('.card-panel:not([hidden]) .zoom');
-        await zoom.click();
-        await expect(zoom).toHaveClass(/is-zoomed/);
+        const panel = page.locator('.card-panel:not([hidden])');
+        await expect(panel.locator('.card-hint')).toContainText('A or B');
+        await expect(panel.locator('.spots-caption:not([hidden])')).toContainText('same MGM Rewards ID');
+        await panel.locator('.spots-pin', { hasText: 'B' }).click();
+        await expect(panel.locator('.spots-caption:not([hidden])')).toContainText('same Tier Credit balance');
+        await expect(panel.locator('.spots-detail.is-on')).toHaveAttribute('src', /loyalty-info/);
+        await page.screenshot({ path: `docs/progress/m3-${info.project.name}-card-spots.png` });
       }
       if (i === 2) {
         // Gallery pages with its arrows.
@@ -174,6 +184,7 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
   await interact(page, isMobile);
   await expect(page.locator('.lightbox')).toBeVisible();
   await expect.poll(() => page.locator('.lightbox-img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.locator('.lightbox-caption')).toHaveText('BetMGM Product Summit.');
   await page.locator('.lightbox-close').click();
   await expect(page.locator('.lightbox')).toBeHidden();
   await idle(page);
@@ -226,7 +237,7 @@ test('every station card renders with all of its images', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = await boot(page);
   const withCards = stations.filter((s) => s.content.source !== 'photo' && s.content.source !== 'dialogue');
-  expect(withCards.length).toBeGreaterThan(15);
+  expect(withCards.length).toBeGreaterThanOrEqual(15);
   for (const s of withCards) {
     expect(await page.evaluate((id) => window.__mypark!.openStationCard(id), s.id), s.id).toBe(true);
     await expect(page.locator('.card')).toHaveAttribute('data-card', s.id);
@@ -238,7 +249,7 @@ test('every station card renders with all of its images', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('card content: UCLA tabs and timeline, Deloitte impact, hobby slices', async ({ page }, info) => {
+test('card content: UCLA tabs and timeline, Deloitte impact, hobbies, side builds', async ({ page }, info) => {
   await boot(page);
   // UCLA internships: opens on its own tab and shows the five-step timeline.
   await page.evaluate(() => window.__mypark!.openStationCard('ucla/internships'));
@@ -253,15 +264,22 @@ test('card content: UCLA tabs and timeline, Deloitte impact, hobby slices', asyn
   await expect(page.locator('.card-desc')).toHaveText('Designed self-service HR tools (name/address changes, manager approvals) adopted by 10,000+ employees');
   await page.keyboard.press('Escape');
 
-  // Coach's bench opens the Basketball card on the Coaching slice.
-  await page.evaluate(() => window.__mypark!.openStationCard('blacktop/coaching'));
+  // One hoop covers all of basketball: three slices in one card.
+  await page.evaluate(() => window.__mypark!.openStationCard('weightroom/basketball'));
   await expect(page.locator('.card-title')).toHaveText('Basketball');
-  await expect(page.locator('.card-tab.is-on')).toHaveText('Coaching');
+  await expect(page.locator('.card-tab')).toHaveText(['Record', 'Playing', 'Coaching']);
+  await page.locator('.card-tab', { hasText: 'Coaching' }).click();
   await expect(page.locator('.card-panel:not([hidden]) .card-caption')).toContainText('Genesis Elite');
   await page.keyboard.press('Escape');
+  await expect(page.locator('.card')).toBeHidden();
 
-  // No em dashes anywhere in migrated copy.
-  await page.evaluate(() => window.__mypark!.openStationCard('workshop/ai-building'));
+  // One sprint lane covers both marathons.
+  await page.evaluate(() => window.__mypark!.openStationCard('weightroom/running'));
+  await expect(page.locator('.card-tab')).toHaveText(['LA Marathon', 'Huntington Beach']);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.card')).toBeHidden();
+
+  await page.evaluate(() => window.__mypark!.openStationCard('weightroom/ai-building'));
   await expect(page.locator('.card-wip')).toBeVisible();
   await expect(page.locator('.card-tags li')).toHaveCount(3);
 });

@@ -326,7 +326,7 @@ async function boot(): Promise<void> {
         lightbox.onClose = null;
         end();
       };
-      lightbox.open(content.src, content.alt);
+      lightbox.open(content.src, content.alt, content.caption);
       return;
     }
     if (content.source === 'dialogue') return say(content.key);
@@ -417,12 +417,7 @@ async function boot(): Promise<void> {
   });
 
   const hint = document.getElementById('hint') as HTMLElement;
-  let hintDismissed = false;
-  const dismissHint = () => {
-    if (hintDismissed) return;
-    hintDismissed = true;
-    hint.classList.add('is-hidden');
-  };
+  const HINT_AFTER_IDLE = 5; // seconds standing still before the how-to-move hint comes back
 
   // ----- pointer: click/tap to move or interact, hover cursor -----
   const raycaster = new THREE.Raycaster();
@@ -530,7 +525,8 @@ async function boot(): Promise<void> {
   };
 
   // ----- game loop -----
-  const idleInput: InputState = { moveX: 0, moveY: 0, sprint: false, interact: false, tap: null };
+  const idleInput: InputState = { moveX: 0, moveY: 0, sprint: false, desktop: true, interact: false, tap: null };
+  let stillFor = 0;
   let last = performance.now();
   let time = 0;
   let frozen = false;
@@ -558,16 +554,19 @@ async function boot(): Promise<void> {
     frozen = covered;
 
     const polled = input.poll();
+    let canAct = false;
     const playing = state === 'play' && busyCount === 0;
     // Scripted walks still move the player, but ignore the controls.
-    const active = playing ? polled : idleInput;
+    const active = playing ? polled : { ...idleInput, desktop: polled.desktop };
     if (active.tap) moveTo(active.tap.x, active.tap.y);
     if (active.moveX !== 0 || active.moveY !== 0) pending = null;
 
     player.update(dt, active, follow.basis(), current.grid);
     player.animate(dt);
     for (const npc of current.npcs) npc.update(dt, state === 'play' ? { x: player.x, z: player.z } : null);
-    if (player.moving) dismissHint();
+    // How-to-move hint: hidden while moving, back after a few seconds of standing still.
+    stillFor = player.moving || !playing ? 0 : stillFor + dt;
+    hint.classList.toggle('is-hidden', player.moving || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden')));
     if (marker.visible) {
       if (player.path.length === 0) marker.visible = false;
       else marker.scale.setScalar(1 + Math.sin(time * 8) * 0.12);
@@ -593,9 +592,13 @@ async function boot(): Promise<void> {
       } else {
         prompt.set(null);
       }
+      canAct = !!near;
     } else {
       prompt.set(null);
+      canAct = talk.isOpen;
     }
+    // Touch: the A button only shows up when there's something to press it for.
+    document.body.classList.toggle('can-act', canAct);
 
     sun.follow(player.x, player.z);
     current.fader.update(dt, follow.camera, player.x, player.z);
@@ -619,10 +622,6 @@ async function boot(): Promise<void> {
   const enterWorld = () => {
     state = 'play';
     document.body.classList.add('is-playing');
-    // Desktop: the hint fades after 30s. Touch: it keeps flashing until the visitor first moves.
-    setTimeout(() => {
-      if (!document.body.classList.contains('is-touch')) dismissHint();
-    }, 30_000);
   };
 
   if (save.look) {

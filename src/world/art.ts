@@ -101,6 +101,7 @@ export class Builder {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     mesh.castShadow = this.shadows;
+    mesh.receiveShadow = this.shadows; // same flags as box(), so merge() can batch them together
     return this.add(mesh);
   }
 
@@ -347,13 +348,15 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
   const shared = new Builder(shadows); // everything that never fades
   root.add(shared.group);
 
-  const building = (build: (b: Builder) => void): void => {
-    const b = new Builder(shadows);
+  // Each building is its own batch so it can fade as a unit. Batches are merged after everything is placed.
+  const buildings: Builder[] = [];
+  const building = (build: (b: Builder) => void, into?: Builder): Builder => {
+    const b = into ?? new Builder(shadows);
     build(b);
-    b.merge();
-    root.add(b.group);
-    occluders.push({ object: b.group, materials: b.materials(), opacity: 1 });
+    if (!into) buildings.push(b);
+    return b;
   };
+  let ucla: Builder | undefined;
 
   buildGround(root, map, shadows);
   for (const zone of map.zones) buildZone(shared, zone, map);
@@ -392,10 +395,11 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
         place('sign', cx, cz, 5, -Math.PI / 4);
         break;
       case 'gym-ucla':
-        building((b) => buildUcla(b, p));
+        ucla = building((b) => buildUcla(b, p));
         break;
       case 'gym-ucla-tower':
-        building((b) => buildUclaTower(b, p));
+        // The towers join the main building's batch: fewer draw calls, and the whole hall fades together.
+        building((b) => buildUclaTower(b, p), ucla);
         break;
       case 'gym-deloitte':
         building((b) => buildDeloitte(b, p, kit));
@@ -440,6 +444,21 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
       case 'chess-table':
         buildChessTable(shared, p);
         break;
+      case 'ticker-board':
+        buildTickerBoard(shared, p);
+        break;
+      case 'workbench':
+        buildWorkbench(shared, p);
+        break;
+      case 'squat-rack':
+        buildSquatRack(shared, p);
+        break;
+      case 'bench-press':
+        buildBenchPress(shared, p);
+        break;
+      case 'dumbbell-rack':
+        buildDumbbellRack(shared, p);
+        break;
       case 'coach-bench':
         shared.box(p.x + 0.1, 0.42, p.z + 0.25, p.w - 0.2, 0.1, 0.5, shared.mat(PALETTE.wood));
         shared.box(p.x + 0.1, 0.52, p.z + 0.2, p.w - 0.2, 0.5, 0.08, shared.mat(PALETTE.wood));
@@ -458,6 +477,11 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
   buildSigns(shared, map);
   if (q.ambientDetail) scatterDecor(map, place, shared);
   shared.merge();
+  for (const b of buildings) {
+    b.merge();
+    root.add(b.group);
+    occluders.push({ object: b.group, materials: b.materials(), opacity: 1 });
+  }
 
   for (const [model, transforms] of batches) {
     for (const o of kit.instances(model, transforms, shadows && !model.startsWith('flower') && !model.startsWith('skyline'))) root.add(o);
@@ -1027,15 +1051,108 @@ function buildDoor(b: Builder, d: Door): (time: number) => void {
 }
 
 function buildSigns(b: Builder, map: MapDef): void {
-  // Banner arch over the walk into the Blacktop. Posts sit just off the path, so nothing blocks.
+  // Banner arch over the walk into the Weightroom. Posts sit just off the path, so nothing blocks.
   const steel = b.mat(PALETTE.steel);
   const zone = map.zones.find((z) => z.kind === 'concrete');
-  if (zone) {
+  const walk = zone && map.zones.find((z) => z.kind === 'path' && z.z + z.d === zone.z);
+  if (zone && walk) {
     const z = zone.z + 0.3;
-    b.box(64.35, 0, z, 0.16, 3.6, 0.16, steel);
-    b.box(68.5, 0, z, 0.16, 3.6, 0.16, steel);
-    b.box(64.3, 2.8, z + 0.02, 4.4, 0.85, 0.12, b.mat(0x111827));
-    b.panel(66.5, 3.22, z + 0.14, 4.2, 0.7, 's', textSign('THE BLACKTOP', 0x111827, 0xffffff, 6), 0.02);
+    const x0 = walk.x - 0.65;
+    const x1 = walk.x + walk.w + 0.5;
+    b.box(x0, 0, z, 0.16, 3.6, 0.16, steel);
+    b.box(x1, 0, z, 0.16, 3.6, 0.16, steel);
+    b.box(x0 - 0.05, 2.8, z + 0.02, x1 - x0 + 0.26, 0.85, 0.12, b.mat(0x111827));
+    b.panel((x0 + x1) / 2 + 0.08, 3.22, z + 0.14, x1 - x0, 0.7, 's', textSign('THE WEIGHTROOM', 0x111827, 0xffffff, (x1 - x0) / 0.7), 0.02);
+  }
+}
+
+// ---------- Weightroom props ----------
+
+function tickerTexture(): THREE.CanvasTexture {
+  return canvasTexture(384, 192, (ctx) => {
+    ctx.fillStyle = '#05080f';
+    ctx.fillRect(0, 0, 384, 192);
+    ctx.font = '700 26px ui-monospace, Menlo, monospace';
+    ctx.textBaseline = 'middle';
+    // Made-up lines for a sportsbook board. Team cities only, no logos.
+    const rows: [string, string, string][] = [
+      ['LAL', '-110', '#22c55e'],
+      ['NYK', '+105', '#f87171'],
+      ['LAR', '-115', '#22c55e'],
+      ['SF', '+120', '#f87171'],
+      ['UCLA', '-3.5', '#fbbf24'],
+    ];
+    rows.forEach(([team, line, color], i) => {
+      ctx.fillStyle = '#e5e7eb';
+      ctx.fillText(team, 24, 26 + i * 35);
+      ctx.fillStyle = color;
+      ctx.fillText(line, 250, 26 + i * 35);
+    });
+  });
+}
+
+function buildTickerBoard(b: Builder, p: Prop): void {
+  const cx = p.x + p.w / 2;
+  for (const x of [p.x + 0.2, p.x + p.w - 0.36]) b.box(x, 0, p.z + 0.42, 0.16, p.h, 0.16, b.mat(PALETTE.steel));
+  b.box(p.x + 0.1, 0.9, p.z + 0.38, p.w - 0.2, 1.7, 0.24, b.mat(0x111827));
+  b.panel(cx, 1.75, p.z + 0.62, p.w - 0.4, 1.5, 's', new THREE.MeshBasicMaterial({ map: tickerTexture() }), 0.02);
+}
+
+function buildWorkbench(b: Builder, p: Prop): void {
+  const wood = b.mat(PALETTE.wood);
+  b.box(p.x + 0.05, p.h - 0.1, p.z + 0.15, p.w - 0.1, 0.1, 0.75, wood);
+  for (const [dx, dz] of [[0.1, 0.2], [p.w - 0.22, 0.2], [0.1, 0.75], [p.w - 0.22, 0.75]]) b.box(p.x + dx, 0, p.z + dz, 0.12, p.h - 0.1, 0.12, b.mat(0x5a3620));
+  // Two monitors, and a caution sign: this one is a work in progress.
+  const glow = new THREE.MeshBasicMaterial({ color: 0x7dd3fc });
+  for (const dx of [0.5, 1.3]) {
+    b.box(p.x + dx - 0.03, p.h, p.z + 0.4, 0.06, 0.18, 0.06, b.mat(0x374151));
+    b.box(p.x + dx - 0.32, p.h + 0.16, p.z + 0.38, 0.64, 0.44, 0.05, b.mat(0x0b0f17));
+    b.panel(p.x + dx, p.h + 0.38, p.z + 0.43, 0.58, 0.38, 's', glow, 0.01);
+  }
+  const sign = b.mesh(new THREE.ConeGeometry(0.42, 0.7, 3).rotateY(Math.PI), b.mat(0xfacc15, { emissive: 0x4a3a05 }), p.x + p.w + 0.55, 0.55, p.z + 0.7);
+  sign.scale.z = 0.18;
+  b.box(p.x + p.w + 0.52, 0, p.z + 0.68, 0.06, 0.25, 0.06, b.mat(PALETTE.steel));
+}
+
+function buildSquatRack(b: Builder, p: Prop): void {
+  const steel = b.mat(0x374151);
+  const plate = b.mat(0x111827);
+  for (const x of [p.x + 0.25, p.x + p.w - 0.37]) {
+    b.box(x, 0, p.z + 0.25, 0.12, p.h, 0.12, steel);
+    b.box(x, 0, p.z + 0.65, 0.12, 0.12, 0.3, steel);
+  }
+  b.box(p.x + 0.25, p.h - 0.12, p.z + 0.25, p.w - 0.5, 0.12, 0.12, steel);
+  const bar = b.mesh(new THREE.CylinderGeometry(0.035, 0.035, p.w + 0.5, 8).rotateZ(Math.PI / 2), b.mat(0xcbd5e1), p.x + p.w / 2, 1.45, p.z + 0.42);
+  bar.castShadow = false;
+  for (const x of [p.x - 0.05, p.x + p.w + 0.05]) b.mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 14).rotateZ(Math.PI / 2), plate, x, 1.45, p.z + 0.42);
+}
+
+function buildBenchPress(b: Builder, p: Prop): void {
+  const steel = b.mat(0x374151);
+  b.box(p.x + 0.3, 0.4, p.z + 0.2, 0.4, 0.12, p.d - 0.5, b.mat(0x7f1d1d));
+  b.box(p.x + 0.42, 0, p.z + 0.4, 0.16, 0.4, 0.16, steel);
+  b.box(p.x + 0.42, 0, p.z + p.d - 0.7, 0.16, 0.4, 0.16, steel);
+  for (const x of [p.x + 0.1, p.x + 0.8]) b.box(x, 0, p.z + 0.15, 0.1, p.h, 0.1, steel);
+  b.mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5, 8).rotateZ(Math.PI / 2), b.mat(0xcbd5e1), p.x + 0.5, p.h, p.z + 0.2);
+  for (const x of [p.x - 0.2, p.x + 1.2]) b.mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 14).rotateZ(Math.PI / 2), b.mat(0x111827), x, p.h, p.z + 0.2);
+}
+
+function buildDumbbellRack(b: Builder, p: Prop): void {
+  const steel = b.mat(0x374151);
+  b.box(p.x + 0.1, 0.35, p.z + 0.3, p.w - 0.2, 0.06, 0.45, steel);
+  b.box(p.x + 0.1, 0.75, p.z + 0.3, p.w - 0.2, 0.06, 0.45, steel);
+  for (const x of [p.x + 0.1, p.x + p.w - 0.18]) b.box(x, 0, p.z + 0.3, 0.08, p.h, 0.45, steel);
+  const head = new THREE.CylinderGeometry(0.1, 0.1, 0.12, 8).rotateX(Math.PI / 2);
+  const colors = [0x111827, 0x1d4ed8, 0xb91c1c];
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 5; i++) {
+      const x = p.x + 0.3 + i * ((p.w - 0.6) / 4);
+      const y = 0.5 + row * 0.4;
+      const m = b.mat(colors[(i + row) % 3]);
+      b.mesh(head, m, x, y, p.z + 0.38);
+      b.mesh(head, m, x, y, p.z + 0.68);
+      b.box(x - 0.025, y - 0.025, p.z + 0.38, 0.05, 0.05, 0.3, b.mat(0xcbd5e1));
+    }
   }
 }
 
@@ -1089,7 +1206,7 @@ function scatterDecor(map: MapDef, place: (model: string, x: number, z: number, 
   // Skyline past the north and west hedges (the directions the camera looks).
   const sky = ['skyline-a', 'skyline-b', 'skyline-c', 'skyline-d'];
   for (let i = 0; i < 16; i++) place(sky[i % 4], -14 - rand() * 26, -8 + i * 5 + rand() * 2, 7 + rand() * 6, Math.floor(rand() * 4) * (Math.PI / 2));
-  for (let i = 0; i < 20; i++) place(sky[(i + 1) % 4], -6 + i * 5 + rand() * 2, -14 - rand() * 26, 7 + rand() * 6, Math.floor(rand() * 4) * (Math.PI / 2));
+  for (let i = 0; i < 15; i++) place(sky[(i + 1) % 4], -6 + i * 5 + rand() * 2, -14 - rand() * 26, 7 + rand() * 6, Math.floor(rand() * 4) * (Math.PI / 2));
   void b;
 }
 

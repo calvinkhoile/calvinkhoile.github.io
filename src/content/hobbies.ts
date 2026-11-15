@@ -1,5 +1,5 @@
 // Hobbies ("Off the Court" on the classic site), migrated verbatim (one em dash replaced with a colon).
-// Each hobby has one or more slices: a photo, a tab label, and its own description. Shown at The Blacktop.
+// Each hobby has one or more slices: a photo, a tab label, and its own description. Shown at The Weightroom.
 
 export interface HobbySlice {
   id: string;

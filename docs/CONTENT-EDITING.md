@@ -36,8 +36,6 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | `betmgm.leader` | BetMGM gym leader, first talk | "Welcome to BetMGM. This is where I work now, on the rewards program." / "Four stations in here. Hit them all, then come back and see me." |
 | `betmgm.leaderDone` | BetMGM gym leader, all stations visited | "That's all four. You know this place better than most new hires." |
 | `door.locked` | Doors to gyms not built yet | "Still under construction. This one opens in the next build." (temporary, goes away in M4) |
-| `blacktop.chessTeaser` | Second chess table | Points the visitor at the finale |
-| `workshop.diorama` | Workshop easter egg | **Placeholder. Needs a few sentences from you on how this site was built** |
 | `toasts.welcomeBack` | Returning visitors | "Welcome back. Your progress is saved." |
 
 `deloitte.sushi` is your own sentence from the Deloitte overview, not a draft.
@@ -49,4 +47,6 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | Trainer names | `src/world/looks.ts` | Rookie, Playmaker, Sixth Man, Sharpshooter |
 | Loading tips | `src/ui/screens.ts` | Three tips about the résumé button, tap-to-walk, and sprinting |
 | Station labels | `src/content/stations.ts` | Prompt names such as "Partnership Desk", "AI Lab", "Voice of the Customer" |
+| Photo captions | `src/content/stations.ts` | "BetMGM Product Summit." and "Meta HQ." are placeholders. Write the captions you want |
+| Card hints | `src/ui/card.ts` | "Drag the slider to compare before and after", "Tap A or B to zoom in" |
 | Card footer lines | `src/main.ts` | "Next station →", "Talk to Calvin for your badge." |

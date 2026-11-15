@@ -64,10 +64,48 @@ function zoomWrap(base: string, hover: string, pos: string | undefined, alt: str
   </button>`;
 }
 
+function baHTML(s: Screen): string {
+  return `<div class="ba" style="--pos:50%" data-ba>
+      <img class="ba-img" src="${esc(s.after!)}" alt="After" loading="lazy" />
+      <div class="ba-clip"><img class="ba-img" src="${esc(s.before!)}" alt="Before" loading="lazy" /></div>
+      <div class="ba-handle" aria-hidden="true"><span></span></div>
+      <span class="ba-tag ba-tag-before" aria-hidden="true">Before</span>
+      <span class="ba-tag ba-tag-after" aria-hidden="true">After</span>
+      <input class="ba-range" type="range" min="0" max="100" value="50" aria-label="Drag to compare before and after" />
+    </div>`;
+}
+
+const hintHTML = (text: string) => `<p class="card-hint"><span aria-hidden="true">↔</span> ${esc(text)}</p>`;
+const LETTERS = 'ABCDEF';
+
+/** Side-by-side with lettered spots on the left image. Picking a spot zooms into it and swaps the caption. */
+function hotspotsHTML(s: Screen): string {
+  const spots = s.hotspots!;
+  return `<div class="spots" data-spots>
+    ${hintHTML(document.body.classList.contains('is-touch') ? 'Tap A or B to zoom in' : 'Hover or click A or B to zoom in')}
+    <div class="compare">
+      <figure class="compare-side"><figcaption>${esc(s.leftLabel ?? 'Left')}</figcaption>
+        <div class="spots-stage">
+          <img class="card-photo" src="${esc(s.left!)}" alt="${esc(s.leftLabel ?? '')}" loading="lazy" />
+          ${spots.map((h, i) => `<img class="spots-detail" data-detail="${i}" src="${esc(h.detail)}" style="top:${esc(h.pos)}" alt="${esc(h.title)} detail" loading="lazy" />`).join('')}
+          ${spots.map((h, i) => `<button type="button" class="spots-pin" data-spot="${i}" style="top:${esc(h.pos)}" aria-label="${LETTERS[i]}: ${esc(h.title)}">${LETTERS[i]}</button>`).join('')}
+        </div>
+      </figure>
+      <figure class="compare-side"><figcaption>${esc(s.rightLabel ?? 'Right')}</figcaption>${photo(s.right!, s.rightLabel ?? '')}</figure>
+    </div>
+    <div class="spots-tabs" role="group" aria-label="Details">
+      ${spots.map((h, i) => `<button type="button" class="spots-tab" data-spot="${i}"><b>${LETTERS[i]}</b> ${esc(h.title)}</button>`).join('')}
+    </div>
+    ${spots.map((h, i) => `<p class="card-caption spots-caption" data-caption="${i}" hidden>${esc(h.caption)}</p>`).join('')}
+  </div>`;
+}
+
 function screenHTML(s: Screen): string {
   let visual = '';
-  if (s.before && s.after) {
-    visual = `<div class="ba" style="--pos:50%" data-ba>
+  if (s.hotspots && s.left && s.right) {
+    return hotspotsHTML(s);
+  } else if (s.before && s.after) {
+    visual = `${hintHTML('Drag the slider to compare before and after')}<div class="ba" style="--pos:50%" data-ba>
       <img class="ba-img" src="${esc(s.after)}" alt="After" loading="lazy" />
       <div class="ba-clip"><img class="ba-img" src="${esc(s.before)}" alt="Before" loading="lazy" /></div>
       <div class="ba-handle" aria-hidden="true"><span></span></div>
@@ -138,6 +176,11 @@ export class CardOverlay {
       }
     });
     this.card.addEventListener('click', (e) => this.onClick(e));
+    this.card.addEventListener('pointerover', (e) => {
+      // Desktop: hovering a lettered pin picks it.
+      const pin = e.pointerType === 'mouse' ? (e.target as HTMLElement).closest<HTMLElement>('.spots-pin') : null;
+      if (pin) this.pickSpot(pin.closest<HTMLElement>('[data-spots]')!, Number(pin.dataset.spot));
+    });
     this.card.addEventListener('input', (e) => {
       const range = e.target as HTMLInputElement;
       if (range.classList.contains('ba-range')) (range.closest('[data-ba]') as HTMLElement).style.setProperty('--pos', `${range.value}%`);
@@ -167,11 +210,31 @@ export class CardOverlay {
     return new Promise((resolve) => (this.resolve = resolve));
   }
 
+  /** Close. On phones the sheet slides back down first. */
   close(): void {
-    if (this.model) this.finish();
+    if (!this.model || this.closing) return;
+    if (!this.isSheet() || matchMedia('(prefers-reduced-motion: reduce)').matches) return this.finish();
+    this.closing = true;
+    this.card.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1)';
+    this.card.style.transform = 'translateY(105%)';
+    this.overlay.classList.add('is-closing');
+    this.closeTimer = window.setTimeout(() => this.finish(), 220);
+  }
+
+  private closing = false;
+  private closeTimer = 0;
+  private isSheet(): boolean {
+    return matchMedia('(max-width: 700px)').matches;
   }
 
   private finish(): void {
+    if (!this.model) return;
+    // A card opened mid-close must not be torn down by the old close timer.
+    window.clearTimeout(this.closeTimer);
+    this.closing = false;
+    this.card.style.transition = '';
+    this.card.style.transform = '';
+    this.overlay.classList.remove('is-closing');
     this.model = null;
     this.overlay.hidden = true;
     this.card.replaceChildren();
@@ -188,15 +251,23 @@ export class CardOverlay {
       : m.sideGallery
         ? `<div class="card-side">${galleryHTML(m.sideGallery)}</div>`
         : '';
+    // When every screen is a before/after, show them all at once instead of hiding two behind tabs.
+    const allBa = m.screens.length > 1 && m.screens.every((s) => s.before && s.after);
     const tabs =
-      m.screens.length > 1
+      allBa
+        ? ''
+        : m.screens.length > 1
         ? `<div class="card-tabs" role="tablist" aria-label="Sections">${m.screens
             .map((s, i) => `<button type="button" role="tab" class="card-tab" id="card-tab-${i}" data-tab="${i}" aria-controls="card-panel-${i}">${esc(s.label)}</button>`)
             .join('')}</div>`
         : '';
-    const panels = m.screens
-      .map((s, i) => `<div class="card-panel" role="tabpanel" id="card-panel-${i}" aria-labelledby="card-tab-${i}" data-panel="${i}" hidden>${screenHTML(s)}</div>`)
-      .join('');
+    const panels = allBa
+      ? `${hintHTML('Drag each slider to compare before and after')}<div class="ba-row">${m.screens
+          .map((s) => `<figure class="ba-item"><figcaption class="ba-item-label">${esc(s.label)}</figcaption>${baHTML(s)}${s.caption ? `<p class="card-caption">${esc(s.caption)}</p>` : ''}</figure>`)
+          .join('')}</div>`
+      : m.screens
+          .map((s, i) => `<div class="card-panel" role="tabpanel" id="card-panel-${i}" aria-labelledby="card-tab-${i}" data-panel="${i}" hidden>${screenHTML(s)}</div>`)
+          .join('');
 
     this.card.dataset.card = m.id;
     this.card.innerHTML = `
@@ -239,7 +310,18 @@ export class CardOverlay {
             }</footer>`
           : ''
       }`;
-    if (m.screens.length) this.showTab(Math.min(m.initialTab ?? 0, m.screens.length - 1));
+    if (m.screens.length && !allBa) this.showTab(Math.min(m.initialTab ?? 0, m.screens.length - 1));
+    this.card.querySelectorAll<HTMLElement>('[data-spots]').forEach((el) => this.pickSpot(el, 0));
+  }
+
+  private pickSpot(group: HTMLElement, i: number): void {
+    group.querySelectorAll<HTMLElement>('[data-spot]').forEach((b) => {
+      const on = Number(b.dataset.spot) === i;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    group.querySelectorAll<HTMLElement>('[data-detail]').forEach((d) => d.classList.toggle('is-on', Number(d.dataset.detail) === i));
+    group.querySelectorAll<HTMLElement>('[data-caption]').forEach((c) => (c.hidden = Number(c.dataset.caption) !== i));
   }
 
   private showTab(i: number): void {
@@ -284,6 +366,9 @@ export class CardOverlay {
       if (target.closest('.gallery-next')) return this.galleryGo(gallery, this.galleryIndex(gallery) + 1);
     }
 
+    const pin = target.closest<HTMLElement>('[data-spot]');
+    if (pin) return this.pickSpot(pin.closest<HTMLElement>('[data-spots]')!, Number(pin.dataset.spot));
+
     const spot = target.closest<HTMLElement>('[data-zoomspot]');
     if (spot) {
       spot.classList.toggle('is-zoomed');
@@ -305,34 +390,56 @@ export class CardOverlay {
     g.querySelectorAll('.gallery-dot').forEach((d, k) => d.classList.toggle('is-on', k === i));
   }
 
-  /** Swipe left/right on a gallery to page it. Swipe down on the header to dismiss the sheet. */
+  /** Swipe left/right on a gallery to page it. Drag the header down to pull the sheet away, like a native bottom sheet. */
   private bindSwipes(): void {
-    let start: { x: number; y: number; gallery: HTMLElement | null; header: boolean } | null = null;
+    let start: { x: number; y: number; t: number; gallery: HTMLElement | null; header: boolean } | null = null;
+    let dragging = false;
     this.card.addEventListener(
       'touchstart',
       (e) => {
         const t = e.target as HTMLElement;
-        const header = !!t.closest('[data-swipe]') && !t.closest('button');
-        start = { x: e.touches[0].clientX, y: e.touches[0].clientY, gallery: t.closest<HTMLElement>('[data-gallery]'), header };
+        const header = this.isSheet() && !!t.closest('[data-swipe]') && !t.closest('button');
+        start = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: performance.now(), gallery: t.closest<HTMLElement>('[data-gallery]'), header };
+        dragging = false;
       },
       { passive: true },
     );
     this.card.addEventListener(
-      'touchend',
+      'touchmove',
       (e) => {
-        if (!start) return;
-        const dx = e.changedTouches[0].clientX - start.x;
-        const dy = e.changedTouches[0].clientY - start.y;
-        const s = start;
-        start = null;
-        if (s.gallery && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-          this.galleryGo(s.gallery, this.galleryIndex(s.gallery) + (dx < 0 ? 1 : -1));
-        } else if (s.header && dy > 70 && Math.abs(dy) > Math.abs(dx)) {
-          this.close();
+        if (!start?.header || this.closing) return;
+        const dy = e.touches[0].clientY - start.y;
+        if (!dragging && dy > 6) dragging = true;
+        if (dragging) {
+          // The sheet follows the finger.
+          this.card.style.transition = 'none';
+          this.card.style.transform = `translateY(${Math.max(0, dy)}px)`;
         }
       },
       { passive: true },
     );
+    const release = (e: TouchEvent) => {
+      if (!start) return;
+      const dx = e.changedTouches[0].clientX - start.x;
+      const dy = e.changedTouches[0].clientY - start.y;
+      const s = start;
+      start = null;
+      if (s.gallery && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        this.galleryGo(s.gallery, this.galleryIndex(s.gallery) + (dx < 0 ? 1 : -1));
+      } else if (s.header && dragging) {
+        dragging = false;
+        const velocity = dy / Math.max(1, performance.now() - s.t); // px per ms
+        if (dy > 120 || (dy > 30 && velocity > 0.5)) {
+          this.close();
+        } else {
+          // Not far enough: spring back.
+          this.card.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+          this.card.style.transform = '';
+        }
+      }
+    };
+    this.card.addEventListener('touchend', release, { passive: true });
+    this.card.addEventListener('touchcancel', release, { passive: true });
   }
 
   private trapFocus(e: KeyboardEvent): void {

@@ -5,8 +5,10 @@ import type { Character } from './character';
 
 export const WALK_SPEED = 4;
 export const SPRINT_SPEED = 6.5;
+/** Keyboard and mouse always move at this speed. No sprint key: Calvin wanted desktop to just be fast. */
+export const DESKTOP_SPEED = 7.5;
 export const PLAYER_RADIUS = 0.35;
-const ACCEL = SPRINT_SPEED / 0.08; // ~80ms to full speed, no ice-skating
+const ACCEL = DESKTOP_SPEED / 0.08; // ~80ms to full speed, no ice-skating
 const TURN_RATE = 14; // rad/s the model turns toward its heading
 const AUTO_SPRINT_DISTANCE = 12; // click/tap-to-move sprints on long trips
 
@@ -63,12 +65,12 @@ export class Player {
     const mag = Math.hypot(input.moveX, input.moveY);
     if (mag > 0) {
       this.path = [];
-      const top = input.sprint ? SPRINT_SPEED : WALK_SPEED;
+      const top = input.desktop ? DESKTOP_SPEED : input.sprint ? SPRINT_SPEED : WALK_SPEED;
       wantX = (basis.rx * input.moveX + basis.fx * input.moveY) * top;
       wantZ = (basis.rz * input.moveX + basis.fz * input.moveY) * top;
     } else if (this.path.length > 0) {
       const remaining = this.remainingPathLength();
-      const top = remaining > AUTO_SPRINT_DISTANCE || input.sprint ? SPRINT_SPEED : WALK_SPEED;
+      const top = input.desktop ? DESKTOP_SPEED : remaining > AUTO_SPRINT_DISTANCE ? SPRINT_SPEED : WALK_SPEED;
       // Drop waypoints we've reached.
       while (this.path.length > 0 && Math.hypot(this.path[0].x - this.x, this.path[0].z - this.z) < 0.12) this.path.shift();
       const next = this.path[0];

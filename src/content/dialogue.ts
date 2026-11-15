@@ -58,7 +58,7 @@ export const dialogue: Record<string, DialogueNode> = {
   'plaza.signpost': {
     lines: [
       { speaker: 'Signpost', text: 'West: UCLA. North along the path: Deloitte, Meta, BetMGM.' },
-      { speaker: 'Signpost', text: "East: The Workshop and The Blacktop. Far corner: Calvin's Court." },
+      { speaker: 'Signpost', text: "Straight north of here: The Weightroom. Past that: Calvin's Court." },
     ],
   },
 
@@ -82,13 +82,6 @@ export const dialogue: Record<string, DialogueNode> = {
   // Source copy (deloitte-overview.desc).
   'deloitte.sushi': {
     lines: [{ speaker: CALVIN, text: 'When the world shut down in 2020, I was at a sushi bar in SF for a client project.' }],
-  },
-  'workshop.diorama': {
-    // TODO(calvin): write a few sentences on how this site was built.
-    lines: [{ speaker: 'Diorama', text: 'A tiny model of the park. (Calvin is still writing the story of how this site got built.)' }],
-  },
-  'blacktop.chessTeaser': {
-    lines: [{ speaker: 'Chess Table', text: "A game is set up, mid-position. Calvin plays for real at his court. Find him there when you're ready." }],
   },
 };
 

@@ -1,10 +1,11 @@
 import type { Door, Interactable, MapDef, Prop, Zone } from './types';
 
-// Exterior map, 80 x 60 tiles. Layout follows docs/mypark-world-plan.md section 5.1:
-// gyms run south to north up the west side, spawn plaza in the south-west,
-// Workshop mid-map, Blacktop on the east side, Calvin's Court in the north-east.
+// Exterior map, 52 x 60 tiles. Gyms run south to north up the west side with the main path beside them.
+// Calvin's Court sits at the top of the path next to BetMGM, the Weightroom (side builds and hobbies, outdoors)
+// is in the middle, and the spawn plaza is at the bottom. Everything is one short loop.
+// (Shrunk from the plan's 80 x 60 after Calvin's M3 review: the court was too far and the side areas were easy to miss.)
 
-const W = 80;
+const W = 52;
 const H = 60;
 
 const C = {
@@ -21,7 +22,6 @@ const C = {
   metaBlue: 0x0866ff,
   betmgm: 0x15130f,
   betmgmGold: 0xc5a15a,
-  workshop: 0x8a8f98,
   fence: 0x6b7280,
   wood: 0x9a6b3f,
   kiosk: 0x38bdf8,
@@ -29,9 +29,9 @@ const C = {
 };
 
 const zones: Zone[] = [
-  // Main path: south to north past every gym, then east along the top to the court.
+  // Main path: south to north past every gym, then a short run east to the court.
   { kind: 'path', x: 18, z: 7, w: 3, d: 45 },
-  { kind: 'path', x: 21, z: 7, w: 37, d: 3 },
+  { kind: 'path', x: 21, z: 7, w: 9, d: 3 },
   // Gym door aprons.
   { kind: 'path', x: 15, z: 48, w: 3, d: 3 }, // UCLA
   { kind: 'path', x: 14, z: 36, w: 4, d: 3 }, // Deloitte
@@ -40,19 +40,17 @@ const zones: Zone[] = [
   // Plaza and its link to the main path.
   { kind: 'plaza', x: 26, z: 43, w: 14, d: 12 },
   { kind: 'path', x: 21, z: 48, w: 5, d: 3 },
-  // Workshop spur (runs along the Workshop's south face).
-  { kind: 'path', x: 21, z: 29, w: 28, d: 3 },
-  // Calvin's Court and the walk down to the Blacktop.
-  { kind: 'court', x: 58, z: 3, w: 16, d: 14 },
-  { kind: 'path', x: 65, z: 17, w: 3, d: 7 },
-  // The Blacktop with its running track loop.
-  { kind: 'concrete', x: 54, z: 24, w: 22, d: 18 },
-  { kind: 'track', x: 56, z: 26, w: 18, d: 2 },
-  { kind: 'track', x: 56, z: 38, w: 18, d: 2 },
-  { kind: 'track', x: 56, z: 28, w: 2, d: 10 },
-  { kind: 'track', x: 72, z: 28, w: 2, d: 10 },
+  // Loop: plaza north to the Weightroom, Weightroom north to the court, and a spur from the main path.
+  { kind: 'path', x: 32, z: 38, w: 3, d: 5 },
+  { kind: 'path', x: 37, z: 17, w: 3, d: 6 },
+  { kind: 'path', x: 21, z: 29, w: 7, d: 3 },
+  // Calvin's Court.
+  { kind: 'court', x: 30, z: 3, w: 16, d: 14 },
+  // The Weightroom: rubber floor with a sprint lane along its south edge.
+  { kind: 'concrete', x: 28, z: 23, w: 18, d: 15 },
+  { kind: 'track', x: 29, z: 35, w: 16, d: 2 },
   // Pond (edge feature, blocks).
-  { kind: 'water', x: 45, z: 44, w: 9, d: 8, blocks: true },
+  { kind: 'water', x: 43, z: 44, w: 7, d: 8, blocks: true },
 ];
 
 const props: Prop[] = [
@@ -84,27 +82,26 @@ const props: Prop[] = [
   { model: 'signpost', x: 28, z: 45, w: 1, d: 1, h: 2.4, color: C.wood, blocks: true },
   { model: 'resume-kiosk', x: 37, z: 45, w: 1, d: 1, h: 1.8, color: C.kiosk, blocks: true },
 
-  // The Workshop (door faces south, onto the spur, so the camera can see it).
-  { model: 'workshop', x: 40, z: 22, w: 8, d: 7, h: 4, color: C.workshop, blocks: true, fades: true, label: 'THE WORKSHOP' },
-
   // Calvin's Court: fence with gaps at the west path and the south walk, bleachers, hoop.
-  { model: 'fence', x: 57, z: 2, w: 18, d: 1, h: 2, color: C.fence, blocks: true },
-  { model: 'fence', x: 57, z: 3, w: 1, d: 4, h: 2, color: C.fence, blocks: true },
-  { model: 'fence', x: 57, z: 10, w: 1, d: 8, h: 2, color: C.fence, blocks: true },
-  { model: 'fence', x: 74, z: 3, w: 1, d: 15, h: 2, color: C.fence, blocks: true },
-  { model: 'fence', x: 58, z: 17, w: 7, d: 1, h: 2, color: C.fence, blocks: true },
-  { model: 'fence', x: 68, z: 17, w: 6, d: 1, h: 2, color: C.fence, blocks: true },
-  { model: 'bleachers', x: 60, z: 3, w: 12, d: 1, h: 1.6, color: C.bleacher, blocks: true, label: "CALVIN'S COURT" },
-  { model: 'hoop', x: 73, z: 9, w: 1, d: 2, h: 3.6, color: 0xe5e7eb, rotation: -Math.PI / 2, blocks: true },
+  { model: 'fence', x: 29, z: 2, w: 18, d: 1, h: 2, color: C.fence, blocks: true },
+  { model: 'fence', x: 29, z: 3, w: 1, d: 4, h: 2, color: C.fence, blocks: true },
+  { model: 'fence', x: 29, z: 10, w: 1, d: 8, h: 2, color: C.fence, blocks: true },
+  { model: 'fence', x: 46, z: 3, w: 1, d: 15, h: 2, color: C.fence, blocks: true },
+  { model: 'fence', x: 30, z: 17, w: 7, d: 1, h: 2, color: C.fence, blocks: true },
+  { model: 'fence', x: 40, z: 17, w: 6, d: 1, h: 2, color: C.fence, blocks: true },
+  { model: 'bleachers', x: 32, z: 3, w: 12, d: 1, h: 1.6, color: C.bleacher, blocks: true, label: "CALVIN'S COURT" },
+  { model: 'hoop', x: 45, z: 9, w: 1, d: 2, h: 3.6, color: 0xe5e7eb, rotation: -Math.PI / 2, blocks: true },
 
-  // The Blacktop.
-  { model: 'mile-marker', x: 60, z: 25, w: 1, d: 1, h: 1.4, color: 0xf59e0b, blocks: true },
-  { model: 'mile-marker', x: 69, z: 40, w: 1, d: 1, h: 1.4, color: 0xf59e0b, blocks: true },
-  { model: 'chess-table', x: 61, z: 31, w: 1, d: 1, h: 0.9, color: C.stone, blocks: true },
-  { model: 'chess-table', x: 61, z: 34, w: 1, d: 1, h: 0.9, color: C.stone, blocks: true },
-  { model: 'coach-bench', x: 65, z: 35, w: 3, d: 1, h: 0.8, color: C.wood, blocks: true },
-  { model: 'trophy-case', x: 68, z: 30, w: 2, d: 1, h: 2, color: 0xfacc15, blocks: true, label: 'THE BLACKTOP' },
-  { model: 'hoop', x: 65, z: 29, w: 1, d: 1, h: 3.6, color: 0xe5e7eb, blocks: true },
+  // The Weightroom (outdoors). Five stops: two side builds along the north edge, three hobbies below.
+  { model: 'ticker-board', x: 30, z: 24, w: 3, d: 1, h: 2.6, color: 0x111827, blocks: true },
+  { model: 'workbench', x: 42, z: 24, w: 2, d: 1, h: 0.9, color: C.wood, blocks: true },
+  { model: 'chess-table', x: 30, z: 30, w: 1, d: 1, h: 0.9, color: C.stone, blocks: true },
+  { model: 'hoop', x: 44, z: 30, w: 1, d: 1, h: 3.6, color: 0xe5e7eb, rotation: -Math.PI / 2, blocks: true },
+  { model: 'mile-marker', x: 37, z: 34, w: 1, d: 1, h: 1.4, color: 0xf59e0b, blocks: true },
+  // Weights, so it reads as a weightroom.
+  { model: 'squat-rack', x: 36, z: 27, w: 2, d: 1, h: 2.3, color: 0x374151, blocks: true },
+  { model: 'bench-press', x: 34, z: 30, w: 1, d: 2, h: 1.1, color: 0x374151, blocks: true },
+  { model: 'dumbbell-rack', x: 39, z: 31, w: 2, d: 1, h: 0.9, color: 0x374151, blocks: true },
 ];
 
 const doors: Door[] = [
@@ -112,7 +109,6 @@ const doors: Door[] = [
   { id: 'door-deloitte', x: 14, z: 37, facing: 'e', to: 'gym-deloitte', color: C.deloitteGreen },
   { id: 'door-meta', x: 15, z: 23, facing: 'e', to: 'gym-meta', color: C.metaBlue },
   { id: 'door-betmgm', x: 15, z: 8, facing: 'e', to: 'gym-betmgm', color: C.betmgmGold },
-  { id: 'door-workshop', x: 44, z: 29, facing: 's', to: 'workshop', color: 0xf97316 },
 ];
 
 const interactables: Interactable[] = [
@@ -120,13 +116,12 @@ const interactables: Interactable[] = [
   // TODO(M7): point at /resume once it exists.
   { id: 'plaza/resume-kiosk', kind: 'kiosk', label: 'Résumé Kiosk', x: 37.5, z: 46.7, radius: 1.3, href: '/classic/' },
 
-  // The Blacktop: hobby stations, outdoors.
-  { id: 'blacktop/la-marathon', kind: 'station', label: 'Mile Marker: LA', x: 61.8, z: 25.5, radius: 1.2, station: 'blacktop/la-marathon' },
-  { id: 'blacktop/huntington-beach', kind: 'station', label: 'Mile Marker: Huntington Beach', x: 70.8, z: 40.5, radius: 1.2, station: 'blacktop/huntington-beach' },
-  { id: 'blacktop/chess', kind: 'station', label: 'Chess Table', x: 61.5, z: 30.2, radius: 1.2, station: 'blacktop/chess' },
-  { id: 'blacktop/chess-teaser', kind: 'station', label: 'Chess Table', x: 61.5, z: 35.8, radius: 1.2, station: 'blacktop/chess-teaser' },
-  { id: 'blacktop/coaching', kind: 'station', label: "Coach's Bench", x: 66.5, z: 36.8, radius: 1.2, station: 'blacktop/coaching' },
-  { id: 'blacktop/trophy-case', kind: 'station', label: 'Trophy Case', x: 69, z: 31.8, radius: 1.2, station: 'blacktop/trophy-case' },
+  // The Weightroom.
+  { id: 'weightroom/sports-betting', kind: 'station', label: 'Sportsbook Ticker', x: 31.5, z: 26, radius: 1.2, station: 'weightroom/sports-betting' },
+  { id: 'weightroom/ai-building', kind: 'station', label: 'Workbench', x: 43, z: 26, radius: 1.2, station: 'weightroom/ai-building' },
+  { id: 'weightroom/chess', kind: 'station', label: 'Chess Table', x: 30.5, z: 32, radius: 1.2, station: 'weightroom/chess' },
+  { id: 'weightroom/basketball', kind: 'station', label: 'Hoop', x: 42.6, z: 30.5, radius: 1.2, station: 'weightroom/basketball' },
+  { id: 'weightroom/running', kind: 'station', label: 'Sprint Lane', x: 37.5, z: 36, radius: 1.2, station: 'weightroom/running' },
 ];
 
 // Trees: deterministic scatter on open grass, kept clear of paths, zones, and props.
@@ -158,7 +153,7 @@ export const exterior: MapDef = {
   height: H,
   groundColor: C.grass,
   zones,
-  props: [...props, ...scatterTrees(60)],
+  props: [...props, ...scatterTrees(42)],
   doors,
   interactables,
   npcs: [{ id: 'calvin-plaza', label: 'Calvin', x: 30, z: 51, role: 'plaza', dialogue: 'plaza', faceX: 33.5, faceZ: 52.5 }],

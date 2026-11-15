@@ -6,9 +6,8 @@ const STOPS: [string, number, number][] = [
   ['deloitte', 19.5, 37.5],
   ['meta', 19.5, 23.5],
   ['betmgm', 19.5, 9],
-  ['workshop', 44.5, 31],
-  ['court', 66, 10.5],
-  ['blacktop', 65.5, 33],
+  ['court', 38, 10.5],
+  ['weightroom', 37.5, 30],
 ];
 
 test('tour: every area renders and is reachable', async ({ page }, info) => {

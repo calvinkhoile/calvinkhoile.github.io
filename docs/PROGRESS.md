@@ -134,6 +134,20 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 - Hover outline glow on interactables (desktop shows a pointer cursor for now).
 - Gym leader outfits per era (every Calvin wears the plaza look until the M5 avatar pass).
 
+### Calvin's M3 review (Nov 15) and what changed
+
+1. **Desktop speed:** keyboard and mouse now always move at 7.5 units/s. No sprint key. Phone speeds are unchanged.
+2. **Smaller park:** the map went from 80 x 60 to 52 x 60. Calvin's Court moved next to BetMGM at the top of the main path. The Workshop and the Blacktop merged into **The Weightroom**, one outdoor area between the plaza and the court with five stops: Sportsbook Ticker, Workbench, Sprint Lane (both marathons in one card), Chess Table, Hoop (all of basketball in one card). The second chess table, the coach's bench, the trophy case, the second mile marker, and the Workshop easter egg were cut so the area doesn't read as a brag list.
+3. **Cards:**
+   - Rewards Store shows its three before/afters together (a row on desktop, a swipeable row on phones) instead of behind tabs.
+   - Loyalty APIs: "Account Linking" and "Real-Time Data" are one comparison with lettered A and B spots. Hover, click, or tap a letter to zoom in and swap the caption. Captions are unchanged.
+   - Hints tell people what to do: "Drag the slider to compare before and after", "Tap A or B to zoom in".
+   - Phone sheet: rounded top with a strip of the world above it, slides up with an iOS-style curve, follows the finger when dragged by the header, and springs back or slides away on release.
+   - Photo props (Product Summit, Meta HQ) show smaller, framed, with a caption. The captions are placeholders for Calvin.
+4. **Idle hint:** the how-to-move hint hides while moving and returns after 5 seconds of standing still.
+5. **A button:** hidden by default on touch. It appears, translucent, only when there is something in range to use or a dialogue to advance.
+6. **Dialogue:** shows "Press any key to continue" (desktop) or "Tap to continue" (touch), and any key continues.
+
 ---
 
 ## Decisions and deviations from the plan
@@ -154,6 +168,8 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 | `.nojekyll` | Include in the artifact | Included, with `include-hidden-files: true` | `upload-pages-artifact` v4+ drops dotfiles by default |
 | Before/after | "A before/after comparison slider" | Built as a slider (the classic site shows the two side by side) | The plan asked for it, and each before/after pair has matching dimensions, so the overlay lines up |
 | Gym doors | Interact to enter | Walking onto the door tile enters, and so does the prompt | Feels like a Pokémon door. The prompt is there for click/tap and keyboard users |
+| Map size and areas | 80 x 60 with a separate Workshop interior and Blacktop | 52 x 60 with one outdoor Weightroom | Calvin's call after M3: the court was too far and the side areas were easy to miss |
+| Workshop easter egg | "You are here" diorama | Cut | Fewer stops in the Weightroom, at Calvin's request |
 | `deploy.yml` on `world` | Changed to build + `dist/` at M8 | Left as the M0 version for now | It only triggers on `main`, so it's inert here. Swapped at M8 as planned |
 
 ## Open issues

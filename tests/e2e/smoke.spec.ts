@@ -108,24 +108,16 @@ async function settle(page: Page): Promise<Pos> {
 test.describe('keyboard', () => {
   test.skip(({ isMobile }) => !!isMobile, 'desktop only');
 
-  test('WASD moves, Shift sprints, and movement stops on release', async ({ page }) => {
+  test('WASD moves at the fast desktop speed with no sprint key, and stops on release', async ({ page }) => {
     // yaw=0 makes W point straight at map north, which keeps the assertions simple.
     await boot(page, '?yaw=0');
     const start = await pos(page);
     await page.keyboard.down('KeyD');
     await expect.poll(async () => (await pos(page)).x - start.x, { timeout: 20_000 }).toBeGreaterThan(1.2);
-    expect(await speed(page)).toBeCloseTo(4, 1); // walk speed
+    expect(await speed(page)).toBeCloseTo(7.5, 1);
     await page.keyboard.up('KeyD');
-    const walked = await settle(page);
-    expect(Math.abs(walked.z - start.z)).toBeLessThan(0.01);
-
-    await page.keyboard.down('Shift');
-    await page.keyboard.down('KeyA');
-    await expect.poll(async () => walked.x - (await pos(page)).x, { timeout: 20_000 }).toBeGreaterThan(1.2);
-    expect(await speed(page)).toBeCloseTo(6.5, 1); // sprint speed
-    await page.keyboard.up('KeyA');
-    await page.keyboard.up('Shift');
-    await settle(page);
+    const stopped = await settle(page);
+    expect(Math.abs(stopped.z - start.z)).toBeLessThan(0.01);
   });
 
   test('walking into the fountain stops, then slides along it', async ({ page }) => {
@@ -150,7 +142,7 @@ test.describe('keyboard', () => {
     await page.keyboard.down('KeyD');
     await page.keyboard.down('KeyS');
     await expect.poll(async () => dist(await pos(page), start), { timeout: 20_000 }).toBeGreaterThan(1.2);
-    expect(await speed(page)).toBeCloseTo(4, 1);
+    expect(await speed(page)).toBeCloseTo(7.5, 1);
     await page.keyboard.up('KeyD');
     await page.keyboard.up('KeyS');
   });
@@ -194,12 +186,27 @@ test.describe('touch', () => {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   });
 
-  test('A button is visible and clears the home indicator area', async ({ page }) => {
+  test('A button only appears when there is something to use, and clears the home indicator area', async ({ page }) => {
     await boot(page);
+    await expect(page.locator('#a-button')).toBeHidden();
+    await page.evaluate(() => window.__mypark!.teleport(28.7, 46.9)); // beside the signpost
+    await expect(page.locator('#a-button')).toBeVisible();
     const box = (await page.locator('#a-button').boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(64);
     expect(box.y + box.height).toBeLessThanOrEqual(844 - 24);
+    await page.evaluate(() => window.__mypark!.teleport(33.5, 52.5));
+    await expect(page.locator('#a-button')).toBeHidden();
   });
+});
+
+test('the how-to-move hint hides while moving and comes back after standing still', async ({ page }) => {
+  await boot(page);
+  const hint = page.locator('#hint');
+  await expect(hint).not.toHaveClass(/is-hidden/);
+  const target = await page.evaluate(() => window.__mypark!.project(36.5, 49.5));
+  await page.mouse.click(target.x, target.y);
+  await expect(hint).toHaveClass(/is-hidden/);
+  await expect(hint).not.toHaveClass(/is-hidden/, { timeout: 30_000 });
 });
 
 test('classic site still works at /classic/', async ({ page }) => {
