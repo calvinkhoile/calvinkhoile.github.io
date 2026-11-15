@@ -1,0 +1,52 @@
+name: Deploy site to GitHub Pages
+
+# Ships the current static site unchanged (no build step).
+# Only the files listed in the "Stage site files" step are ever served.
+# docs/, CLAUDE.md, assets-src/, and everything else stay in the repo only.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Stage site files
+        run: |
+          mkdir _site
+          cp index.html style.css script.js _site/
+          cp -R assets _site/assets
+          touch _site/.nojekyll
+          echo "Staged files:"
+          find _site -maxdepth 1 | sort
+          du -sh _site
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+          include-hidden-files: true
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
