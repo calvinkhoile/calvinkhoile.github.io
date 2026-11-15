@@ -102,19 +102,24 @@ export class Grid {
     return a + delta * lo;
   }
 
-  /** Nearest non-blocked tile to (tx, tz), searching outward in rings. */
-  nearestWalkable(tx: number, tz: number, maxRadius = 12): { tx: number; tz: number } | null {
+  /**
+   * Nearest non-blocked tile to (tx, tz), searching outward in rings.
+   * With `prefer`, candidates on the side facing that point win, so clicking a building
+   * walks you to the wall in front of you, not around the back.
+   */
+  nearestWalkable(tx: number, tz: number, maxRadius = 12, prefer?: Point): { tx: number; tz: number } | null {
     if (!this.isBlocked(tx, tz)) return { tx, tz };
     for (let rad = 1; rad <= maxRadius; rad++) {
       let best: { tx: number; tz: number } | null = null;
-      let bestD = Infinity;
+      let bestScore = Infinity;
       for (let dz = -rad; dz <= rad; dz++) {
         for (let dx = -rad; dx <= rad; dx++) {
           if (Math.max(Math.abs(dx), Math.abs(dz)) !== rad) continue;
           if (this.isBlocked(tx + dx, tz + dz)) continue;
-          const d = dx * dx + dz * dz;
-          if (d < bestD) {
-            bestD = d;
+          let score = Math.hypot(dx, dz);
+          if (prefer) score += 0.25 * Math.hypot(tx + dx + 0.5 - prefer.x, tz + dz + 0.5 - prefer.z);
+          if (score < bestScore) {
+            bestScore = score;
             best = { tx: tx + dx, tz: tz + dz };
           }
         }
@@ -144,7 +149,7 @@ export class Grid {
    */
   findPath(from: Point, to: Point, r = 0.35): Point[] | null {
     const start = this.nearestWalkable(Math.floor(from.x), Math.floor(from.z), 2);
-    const goal = this.nearestWalkable(Math.floor(to.x), Math.floor(to.z));
+    const goal = this.nearestWalkable(Math.floor(to.x), Math.floor(to.z), 12, from);
     if (!start || !goal) return null;
 
     const W = this.width;

@@ -41,7 +41,7 @@ test('click or tap on open ground walks the player there', async ({ page }, info
   const screen = await page.evaluate((t) => window.__mypark!.project(t.x, t.z), target);
   if (info.project.name === 'mobile') await page.touchscreen.tap(screen.x, screen.y);
   else await page.mouse.click(screen.x, screen.y);
-  await expect.poll(async () => dist(await pos(page), target), { timeout: 8000 }).toBeLessThan(0.3);
+  await expect.poll(async () => dist(await pos(page), target), { timeout: 20_000 }).toBeLessThan(0.3);
 });
 
 test('clicking a building walks to the nearest open tile instead', async ({ page }, info) => {
@@ -51,7 +51,7 @@ test('clicking a building walks to the nearest open tile instead', async ({ page
   const screen = await page.evaluate(() => window.__mypark!.project(33.5, 48.5));
   if (info.project.name === 'mobile') await page.touchscreen.tap(screen.x, screen.y);
   else await page.mouse.click(screen.x, screen.y);
-  await expect.poll(async () => (await page.evaluate(() => window.__mypark!.player.pathLength)) === 0 && dist(await pos(page), start) > 1, { timeout: 8000 }).toBe(true);
+  await expect.poll(async () => (await page.evaluate(() => window.__mypark!.player.pathLength)) === 0 && dist(await pos(page), start) > 1, { timeout: 20_000 }).toBe(true);
   const end = await pos(page);
   expect(await page.evaluate((p) => window.__mypark!.isBlocked(p.x, p.z), end)).toBe(false);
 });
@@ -60,7 +60,7 @@ const speed = (page: Page): Promise<number> => page.evaluate(() => window.__mypa
 
 /** Wait until the player has stopped, then return where. Frame-rate independent (headless WebGL is slow). */
 async function settle(page: Page): Promise<Pos> {
-  await expect.poll(() => speed(page), { timeout: 5000 }).toBeLessThan(0.01);
+  await expect.poll(() => speed(page), { timeout: 15_000 }).toBeLessThan(0.01);
   return pos(page);
 }
 
@@ -72,7 +72,7 @@ test.describe('keyboard', () => {
     await boot(page, '?yaw=0');
     const start = await pos(page);
     await page.keyboard.down('KeyD');
-    await expect.poll(async () => (await pos(page)).x - start.x, { timeout: 8000 }).toBeGreaterThan(1.2);
+    await expect.poll(async () => (await pos(page)).x - start.x, { timeout: 20_000 }).toBeGreaterThan(1.2);
     expect(await speed(page)).toBeCloseTo(4, 1); // walk speed
     await page.keyboard.up('KeyD');
     const walked = await settle(page);
@@ -80,7 +80,7 @@ test.describe('keyboard', () => {
 
     await page.keyboard.down('Shift');
     await page.keyboard.down('KeyA');
-    await expect.poll(async () => walked.x - (await pos(page)).x, { timeout: 8000 }).toBeGreaterThan(1.2);
+    await expect.poll(async () => walked.x - (await pos(page)).x, { timeout: 20_000 }).toBeGreaterThan(1.2);
     expect(await speed(page)).toBeCloseTo(6.5, 1); // sprint speed
     await page.keyboard.up('KeyA');
     await page.keyboard.up('Shift');
@@ -91,11 +91,11 @@ test.describe('keyboard', () => {
     await boot(page, '?yaw=0');
     // Spawn is just south of the fountain (x 32..35, z 47..50).
     await page.keyboard.down('KeyW');
-    await expect.poll(async () => (await pos(page)).z, { timeout: 8000 }).toBeLessThan(50.4);
+    await expect.poll(async () => (await pos(page)).z, { timeout: 20_000 }).toBeLessThan(50.4);
     const stopped = await settle(page);
     expect(stopped.z).toBeGreaterThan(50.34);
     await page.keyboard.down('KeyD');
-    await expect.poll(async () => (await pos(page)).x - stopped.x, { timeout: 8000 }).toBeGreaterThan(1);
+    await expect.poll(async () => (await pos(page)).x - stopped.x, { timeout: 20_000 }).toBeGreaterThan(1);
     await page.keyboard.up('KeyD');
     await page.keyboard.up('KeyW');
     const slid = await settle(page);
@@ -108,7 +108,7 @@ test.describe('keyboard', () => {
     const start = await pos(page);
     await page.keyboard.down('KeyD');
     await page.keyboard.down('KeyS');
-    await expect.poll(async () => dist(await pos(page), start), { timeout: 8000 }).toBeGreaterThan(1.2);
+    await expect.poll(async () => dist(await pos(page), start), { timeout: 20_000 }).toBeGreaterThan(1.2);
     expect(await speed(page)).toBeCloseTo(4, 1);
     await page.keyboard.up('KeyD');
     await page.keyboard.up('KeyS');
@@ -131,14 +131,14 @@ test.describe('touch', () => {
     await expect(page.locator('.joystick')).toHaveClass(/is-active/);
     // Light push: analog walk, slower than full walk speed.
     await touch('touchMove', 90, 680);
-    await expect.poll(async () => dist(await pos(page), start), { timeout: 8000 }).toBeGreaterThan(0.4);
+    await expect.poll(async () => dist(await pos(page), start), { timeout: 20_000 }).toBeGreaterThan(0.4);
     const slow = await speed(page);
     expect(slow).toBeGreaterThan(0.5);
     expect(slow).toBeLessThan(3.9);
     // Full push: sprint.
     await touch('touchMove', 90, 620);
     await expect(page.locator('.joystick')).toHaveClass(/is-sprint/);
-    await expect.poll(() => speed(page), { timeout: 8000 }).toBeCloseTo(6.5, 1);
+    await expect.poll(() => speed(page), { timeout: 20_000 }).toBeCloseTo(6.5, 1);
     await touch('touchEnd');
     await expect(page.locator('.joystick')).not.toHaveClass(/is-active/);
     await settle(page);

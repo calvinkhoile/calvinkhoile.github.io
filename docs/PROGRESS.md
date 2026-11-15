@@ -47,14 +47,14 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 - Capsule player. Walk 4 u/s, sprint 6.5 u/s, about 80ms to full speed.
 - Keyboard: WASD / arrows, normalized diagonals, Shift sprints.
 - Touch: joystick spawns under the thumb in the bottom-left zone (left 45%, bottom 50%), analog walk on a light push, sprint past 85%. The base drags along if the thumb goes past the rim.
-- Click / tap-to-move: A* on the grid with string-pulling. A blocked target (building, tree) retargets to the nearest open tile.
+- Click / tap-to-move: A* on the grid with string-pulling. A blocked target (building, tree) retargets to the nearest open tile on the side facing the player.
 - Collision: circle vs grid, axis-separated, slides along walls, sub-stepped so nothing tunnels.
 - Camera: perspective, 30° FOV, 50° down, 45° yaw, critically damped follow (0.15s) with a small lead. Clamped to map bounds. Portrait phones auto zoom out. Buildings between camera and player fade to 30%.
 - Debug overlay at `?debug=1`.
 - A button (touch only), safe-area aware. Nothing to interact with until M3, so it only pulses and buzzes.
 
 **Tests**
-- Vitest: 12 passing (collision, sliding, no tunneling, A*, string-pulling, every door and area reachable from spawn, map fully enclosed).
+- Vitest: 13 passing (collision, sliding, no tunneling, A*, string-pulling, every door and area reachable from spawn, map fully enclosed).
 - Playwright: 16 passing across desktop and mobile (boot with zero console errors, debug overlay, click/tap-to-move, blocked-target retarget, keyboard walk/sprint/stop, wall slide, diagonal speed, joystick walk/sprint/release, A button placement, classic site).
 
 **Screenshots**

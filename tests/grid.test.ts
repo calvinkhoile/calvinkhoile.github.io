@@ -74,6 +74,15 @@ describe('Grid pathfinding', () => {
     expect(g.isBlocked(Math.floor(end.x), Math.floor(end.z))).toBe(false);
   });
 
+  it('retargets to the side of an obstacle that faces the player', () => {
+    const g = new Grid(12, 12);
+    g.stampRect(4, 4, 3, 3, TILE_BLOCKED); // 3x3 block, center tile (5, 5)
+    const fromSouth = g.findPath({ x: 5.5, z: 10.5 }, { x: 5.5, z: 5.5 }, R)!;
+    expect(Math.floor(fromSouth[fromSouth.length - 1].z)).toBe(7);
+    const fromNorth = g.findPath({ x: 5.5, z: 1.5 }, { x: 5.5, z: 5.5 }, R)!;
+    expect(Math.floor(fromNorth[fromNorth.length - 1].z)).toBe(3);
+  });
+
   it('returns null when the goal is sealed off', () => {
     const g = new Grid(10, 10);
     for (let z = 0; z < 10; z++) g.setFlag(5, z, TILE_BLOCKED);
