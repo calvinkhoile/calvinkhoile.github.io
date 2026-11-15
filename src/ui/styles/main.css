@@ -95,10 +95,18 @@ body {
   text-align: center;
   pointer-events: none !important;
   transition: opacity 0.6s ease;
+  animation: hint-flash 1.3s ease-in-out infinite;
+}
+
+@keyframes hint-flash {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .hint.is-hidden {
   opacity: 0;
+  animation: none;
 }
 
 .hint-touch,
@@ -113,34 +121,46 @@ body {
 .is-touch .hint {
   bottom: auto;
   top: calc(16px + var(--safe-top));
+  border-radius: 18px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-/* Virtual joystick: spawns where the thumb lands */
+/* Virtual joystick: fixed bottom-left, faint and smaller until the thumb is on it */
 .joystick {
   position: absolute;
-  left: 0;
-  top: 0;
+  left: calc(84px + var(--safe-left));
+  bottom: calc(96px + var(--safe-bottom));
   width: 0;
   height: 0;
-  opacity: 0;
+  display: none;
+  opacity: 0.4;
+  transform: scale(0.82);
   pointer-events: none !important;
-  transition: opacity 0.12s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.is-touch .joystick {
+  display: block;
 }
 
 .joystick.is-active {
   opacity: 1;
+  transform: none;
 }
 
 .joystick::before {
   content: '';
   position: absolute;
-  left: -56px;
-  top: -56px;
-  width: 112px;
-  height: 112px;
-  border: 2px solid rgba(255, 255, 255, 0.55);
+  left: -48px;
+  top: -48px;
+  width: 96px;
+  height: 96px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.22);
 }
 
 .joystick.is-sprint::before {
@@ -150,10 +170,10 @@ body {
 
 .joystick-knob {
   position: absolute;
-  left: -26px;
-  top: -26px;
-  width: 52px;
-  height: 52px;
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
 }
@@ -260,6 +280,7 @@ body {
   .hint,
   .joystick {
     transition: none;
+    animation: none;
   }
   .a-button.is-pulse {
     animation: none;

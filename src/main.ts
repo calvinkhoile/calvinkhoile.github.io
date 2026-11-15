@@ -97,7 +97,10 @@ function boot(): void {
     hintDismissed = true;
     hint.classList.add('is-hidden');
   };
-  setTimeout(dismissHint, 30_000);
+  // Desktop: the hint fades after 30s. Touch: it keeps flashing until the visitor first moves.
+  setTimeout(() => {
+    if (!document.body.classList.contains('is-touch')) dismissHint();
+  }, 30_000);
 
   const raycaster = new THREE.Raycaster();
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);

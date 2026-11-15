@@ -11,7 +11,8 @@ export interface InputState {
   tap: { x: number; y: number } | null;
 }
 
-const JOY_RADIUS = 56; // px
+const JOY_RADIUS = 48; // px
+const JOY_GRAB = 1.8; // a touch within this many radii of the stick grabs it
 const JOY_DEADZONE = 0.14;
 const JOY_SPRINT = 0.85;
 const TAP_SLOP = 12; // px a touch can drift and still count as a tap
@@ -132,19 +133,33 @@ export class Input {
     }
   };
 
-  private inJoystickZone(x: number, y: number): boolean {
-    const r = this.canvas.getBoundingClientRect();
-    return x - r.left < r.width * 0.45 && y - r.top > r.height * 0.5;
+  /** The stick sits at a fixed spot (placed by CSS). Returns its center, or null when it's hidden. */
+  private joystickCenter(): { x: number; y: number } | null {
+    const r = this.joyEl.getBoundingClientRect();
+    if (getComputedStyle(this.joyEl).display === 'none') return null;
+    return { x: r.left, y: r.top };
+  }
+
+  private setJoystick(clientX: number, clientY: number): void {
+    let dx = clientX - this.joyBase.x;
+    let dy = clientY - this.joyBase.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > JOY_RADIUS) {
+      dx = (dx / dist) * JOY_RADIUS;
+      dy = (dy / dist) * JOY_RADIUS;
+    }
+    this.joyVec = { x: dx / JOY_RADIUS, y: dy / JOY_RADIUS };
+    this.drawJoystick();
   }
 
   private onPointerDown = (e: PointerEvent): void => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (e.pointerType === 'touch' && this.joyId === null && this.inJoystickZone(e.clientX, e.clientY)) {
+    const center = e.pointerType === 'touch' && this.joyId === null ? this.joystickCenter() : null;
+    if (center && Math.hypot(e.clientX - center.x, e.clientY - center.y) <= JOY_RADIUS * JOY_GRAB) {
       this.joyId = e.pointerId;
-      this.joyBase = { x: e.clientX, y: e.clientY };
-      this.joyVec = { x: 0, y: 0 };
+      this.joyBase = center;
       this.canvas.setPointerCapture(e.pointerId);
-      this.drawJoystick();
+      this.setJoystick(e.clientX, e.clientY);
       return;
     }
     this.pending.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), moved: false });
@@ -152,19 +167,7 @@ export class Input {
 
   private onPointerMove = (e: PointerEvent): void => {
     if (e.pointerId === this.joyId) {
-      let dx = e.clientX - this.joyBase.x;
-      let dy = e.clientY - this.joyBase.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > JOY_RADIUS) {
-        // Past the rim, drag the base along so the thumb never "falls off" the stick.
-        const over = dist - JOY_RADIUS;
-        this.joyBase.x += (dx / dist) * over;
-        this.joyBase.y += (dy / dist) * over;
-        dx = (dx / dist) * JOY_RADIUS;
-        dy = (dy / dist) * JOY_RADIUS;
-      }
-      this.joyVec = { x: dx / JOY_RADIUS, y: dy / JOY_RADIUS };
-      this.drawJoystick();
+      this.setJoystick(e.clientX, e.clientY);
       return;
     }
     const p = this.pending.get(e.pointerId);
@@ -191,12 +194,12 @@ export class Input {
   private endJoystick(): void {
     this.joyId = null;
     this.joyVec = { x: 0, y: 0 };
-    this.joyEl.classList.remove('is-active');
+    this.joyEl.classList.remove('is-active', 'is-sprint');
+    this.knobEl.style.transform = '';
   }
 
   private drawJoystick(): void {
     this.joyEl.classList.add('is-active');
-    this.joyEl.style.transform = `translate(${this.joyBase.x}px, ${this.joyBase.y}px)`;
     this.knobEl.style.transform = `translate(${this.joyVec.x * JOY_RADIUS}px, ${this.joyVec.y * JOY_RADIUS}px)`;
     this.joyEl.classList.toggle('is-sprint', Math.hypot(this.joyVec.x, this.joyVec.y) >= JOY_SPRINT);
   }

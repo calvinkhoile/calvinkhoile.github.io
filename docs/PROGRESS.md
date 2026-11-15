@@ -6,8 +6,8 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 
 | # | Milestone | State |
 |---|---|---|
-| M0 | Project setup | Done (Nov 15, 2026). Waiting on Calvin: switch Pages source to GitHub Actions |
-| M1 | Graybox movement ★ | Built, tests green. **Waiting on Calvin's phone review** |
+| M0 | Project setup | Done (Nov 15, 2026). Pages source switched to GitHub Actions and verified: only site files are served |
+| M1 | Graybox movement ★ | Done. Approved by Calvin on his phone (Nov 15, 2026) |
 | M2–M8 | | Not started |
 
 ## How to run
@@ -40,13 +40,18 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 - `npm run assets` pipeline in place (meshopt + WebP). Manifest is empty until M2. The CLI was verified on a Kenney building: 120 KB to 20 KB.
 - `CLAUDE.md` updated for the new stack.
 
-## M1: Graybox movement ★ (ready for review)
+## M1: Graybox movement ★ (approved)
+
+**Calvin's review (Nov 15):** movement, speed, and collision are right. Changes made from his feedback:
+- Joystick is now fixed bottom-left and always visible on touch: smaller and 40% opacity at rest, full size and opacity under the thumb. A touch within reach of the stick grabs it; taps anywhere else are tap-to-move.
+- Camera pulled back about 28% (distance 36 to 46, portrait minimum width 13 to 17 units).
+- The controls hint flashes until the visitor first moves (touch) or for 30s (desktop).
 
 **What's in**
 - Gray-box exterior, 80 x 60 tiles, every area at its planned position: four gyms up the west side, Spawn Plaza, Workshop, Blacktop with track loop, Calvin's Court (fenced, two openings), hedged edges, 60 placeholder trees.
 - Capsule player. Walk 4 u/s, sprint 6.5 u/s, about 80ms to full speed.
 - Keyboard: WASD / arrows, normalized diagonals, Shift sprints.
-- Touch: joystick spawns under the thumb in the bottom-left zone (left 45%, bottom 50%), analog walk on a light push, sprint past 85%. The base drags along if the thumb goes past the rim.
+- Touch: fixed joystick bottom-left, analog walk on a light push, sprint past 85%.
 - Click / tap-to-move: A* on the grid with string-pulling. A blocked target (building, tree) retargets to the nearest open tile on the side facing the player.
 - Collision: circle vs grid, axis-separated, slides along walls, sub-stepped so nothing tunnels.
 - Camera: perspective, 30° FOV, 50° down, 45° yaw, critically damped follow (0.15s) with a small lead. Clamped to map bounds. Portrait phones auto zoom out. Buildings between camera and player fade to 30%.
@@ -64,13 +69,6 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 | ![desktop](progress/m1-desktop.png) | ![mobile](progress/m1-mobile.png) |
 | ![desktop debug](progress/m1-desktop-debug.png) | ![mobile debug](progress/m1-mobile-debug.png) |
 
-**What Calvin should judge on his phone**
-1. Joystick: does it land where your thumb expects, and is the 85% sprint threshold right? (My read: most thumbs rest at the rim, so you'll sprint almost all the time. Raising it or making sprint a toggle are both cheap.)
-2. Speed: walk 4, sprint 6.5. Too slow to cross the map, or about right?
-3. Camera: default 45° yaw vs `?yaw=0`. At 45° the main path runs diagonally on screen, so on a keyboard you hold two keys to follow it. Also try `?zoom=1.3`.
-4. Tap-to-move: does the route it picks look sane, and is auto-sprint on long trips welcome?
-5. Collision: scrape along the fountain, the gyms, and the court fence. Anything sticky?
-
 ---
 
 ## Decisions and deviations from the plan
@@ -83,7 +81,7 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 | TypeScript version | TypeScript (strict) | 5.9.3, not 7.x | 7 is a new major. 5.9 is the safe choice with the rest of the toolchain |
 | three.js version | r165+, pinned | 0.187.0 for the world. Classic keeps 0.165.0 from its CDN import map | Classic is frozen as-is |
 | Classic asset paths | "Fix its asset paths to `/classic/assets/...` or a shared `/images/`" | Moved `assets/` to `public/classic/assets/`. Classic's relative paths work with zero edits | The classic files stay byte-identical. The world gets its own optimized copies in `public/images/` at M3 |
-| Joystick | nipplejs or custom | Custom (in `src/engine/input.ts`) | One less dependency, and the spawn-under-thumb zone rule is easier to own |
+| Joystick | nipplejs or custom; spawns where the thumb lands | Custom (in `src/engine/input.ts`), fixed position | One less dependency. Calvin preferred a fixed stick after testing on his phone |
 | Tap-to-move speed | Not specified | Walks, auto-sprints when the trip is over 12 units | Crossing an 80-tile map at walk speed by tap is a slog |
 | Camera tuning | Fixed 45° yaw | 45° default, plus `?yaw=` and `?zoom=` knobs | So the M1 feel review can compare options without a rebuild |
 | Pond | "hedges, water, or fences" at edges | Added a small pond east of the plaza | Fills the empty south-middle. Easy to cut |
@@ -94,4 +92,3 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 ## Open issues
 
 - **LAN preview not verified from this laptop.** The dev server listens on all interfaces, but a connection from the laptop to its own LAN IP times out. The laptop runs CrowdStrike, FortiClient, and Tailscale network extensions, and one of them may filter LAN traffic. If the phone can't load the LAN URL, the plan's fallback is a temporary `cloudflared` tunnel (not installed here).
-- **Pushing the M0 workflow also pushed commit `2d8ae5d`** (CLAUDE.md, this plan, `.gitignore`), which was local-only. Until the Pages source is switched to GitHub Actions, the branch deploy serves `/docs/mypark-world-plan.md` and `/CLAUDE.md` at the site URL. Switching the source fixes it.

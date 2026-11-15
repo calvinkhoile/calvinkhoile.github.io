@@ -118,7 +118,7 @@ test.describe('keyboard', () => {
 test.describe('touch', () => {
   test.skip(({ isMobile }) => !isMobile, 'mobile only');
 
-  test('joystick spawns under the thumb, moves the player, and releases cleanly', async ({ page }) => {
+  test('fixed joystick moves the player and releases cleanly', async ({ page }) => {
     await boot(page);
     const cdp = await page.context().newCDPSession(page);
     const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number, y?: number) =>
@@ -127,16 +127,17 @@ test.describe('touch', () => {
         touchPoints: x === undefined ? [] : [{ x, y: y!, id: 1 }],
       });
     const start = await pos(page);
-    await touch('touchStart', 90, 700);
+    await expect(page.locator('.joystick-knob')).toBeVisible(); // fixed stick, always on screen
+    await touch('touchStart', 84, 748);
     await expect(page.locator('.joystick')).toHaveClass(/is-active/);
     // Light push: analog walk, slower than full walk speed.
-    await touch('touchMove', 90, 680);
+    await touch('touchMove', 84, 728);
     await expect.poll(async () => dist(await pos(page), start), { timeout: 20_000 }).toBeGreaterThan(0.4);
     const slow = await speed(page);
     expect(slow).toBeGreaterThan(0.5);
     expect(slow).toBeLessThan(3.9);
     // Full push: sprint.
-    await touch('touchMove', 90, 620);
+    await touch('touchMove', 84, 690);
     await expect(page.locator('.joystick')).toHaveClass(/is-sprint/);
     await expect.poll(() => speed(page), { timeout: 20_000 }).toBeCloseTo(6.5, 1);
     await touch('touchEnd');
@@ -144,7 +145,7 @@ test.describe('touch', () => {
     await settle(page);
   });
 
-  test('a touch outside the joystick zone does not spawn the joystick', async ({ page }) => {
+  test('a touch away from the joystick does not grab it', async ({ page }) => {
     await boot(page);
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 300, y: 300, id: 1 }] });

@@ -20,8 +20,8 @@ export interface CameraOptions {
 
 const SMOOTH_TIME = 0.15; // critically damped follow
 const LEAD = 1.4; // world units the camera looks ahead at full walk speed
-const BASE_DISTANCE = 36;
-const MIN_VISIBLE_WIDTH = 13; // world units across the screen, so portrait phones zoom out
+const BASE_DISTANCE = 46;
+const MIN_VISIBLE_WIDTH = 17; // world units across the screen, so portrait phones zoom out
 
 /** Fixed-angle follow camera: narrow FOV, high and angled down, for an isometric feel with some depth. */
 export class FollowCamera {
