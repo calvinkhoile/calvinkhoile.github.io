@@ -1,3 +1,84 @@
 {
-  "models": []
+  "kits": [
+    {
+      "out": "exterior.glb",
+      "textureSize": 256,
+      "recolor": {
+        "leafsGreen": "#3f9e4d",
+        "leafsDark": "#2f7d46",
+        "grass": "#4aa858",
+        "woodBark": "#8a5a3a",
+        "woodBarkDark": "#7a4a2e",
+        "dirt": "#9a9388",
+        "wood": "#a9743f",
+        "woodDark": "#7d5230"
+      },
+      "models": {
+        "palm-a": "assets-src/kenney-nature/Models/GLTF format/tree_palmTall.glb",
+        "palm-b": "assets-src/kenney-nature/Models/GLTF format/tree_palmDetailedTall.glb",
+        "palm-c": "assets-src/kenney-nature/Models/GLTF format/tree_palmBend.glb",
+        "tree-oak": "assets-src/kenney-nature/Models/GLTF format/tree_oak.glb",
+        "tree-round": "assets-src/kenney-nature/Models/GLTF format/tree_detailed.glb",
+        "bush": "assets-src/kenney-nature/Models/GLTF format/plant_bushLarge.glb",
+        "bush-detailed": "assets-src/kenney-nature/Models/GLTF format/plant_bushDetailed.glb",
+        "rock-large": "assets-src/kenney-nature/Models/GLTF format/rock_largeA.glb",
+        "rock-small": "assets-src/kenney-nature/Models/GLTF format/rock_smallA.glb",
+        "flower-red": "assets-src/kenney-nature/Models/GLTF format/flower_redA.glb",
+        "flower-yellow": "assets-src/kenney-nature/Models/GLTF format/flower_yellowA.glb",
+        "flower-purple": "assets-src/kenney-nature/Models/GLTF format/flower_purpleA.glb",
+        "lily": "assets-src/kenney-nature/Models/GLTF format/lily_large.glb",
+        "sign": "assets-src/kenney-nature/Models/GLTF format/sign.glb",
+        "pot": "assets-src/kenney-nature/Models/GLTF format/pot_large.glb",
+        "lamp": "assets-src/kenney-city-roads/Models/GLB format/light-square.glb",
+        "cone": "assets-src/kenney-city-roads/Models/GLB format/construction-cone.glb",
+        "planter": "assets-src/kenney-city-suburban/Models/GLB format/planter.glb",
+        "tower": "assets-src/kenney-city-commercial/Models/GLB format/building-skyscraper-a.glb",
+        "parasol": "assets-src/kenney-city-commercial/Models/GLB format/detail-parasol-a.glb",
+        "skyline-a": "assets-src/kenney-city-commercial/Models/GLB format/low-detail-building-a.glb",
+        "skyline-b": "assets-src/kenney-city-commercial/Models/GLB format/low-detail-building-c.glb",
+        "skyline-c": "assets-src/kenney-city-commercial/Models/GLB format/low-detail-building-f.glb",
+        "skyline-d": "assets-src/kenney-city-commercial/Models/GLB format/low-detail-building-wide-a.glb"
+      }
+    }
+  ],
+  "characters": [
+    {
+      "out": "trainer-a.glb",
+      "body": "male",
+      "hair": "Hair_SimpleParted"
+    },
+    {
+      "out": "trainer-b.glb",
+      "body": "female",
+      "hair": "Hair_Long"
+    },
+    {
+      "out": "trainer-c.glb",
+      "body": "male",
+      "hair": "Hair_Buzzed"
+    },
+    {
+      "out": "trainer-d.glb",
+      "body": "female",
+      "hair": "Hair_Buns"
+    }
+  ],
+  "animations": {
+    "out": "trainer-anims.glb",
+    "src": "assets-src/quaternius-animations/Unreal-Godot/UAL1_Standard.glb",
+    "clips": [
+      "Idle_Loop",
+      "Walk_Loop",
+      "Jog_Fwd_Loop",
+      "Sprint_Loop",
+      "Idle_Talking_Loop",
+      "Interact"
+    ]
+  },
+  "logos": {
+    "ucla.webp": "public/classic/assets/logos/UCLA-Logo-transparent.png",
+    "deloitte.webp": "public/classic/assets/logos/deloitte.png",
+    "betmgm.webp": "public/classic/assets/logos/betmgm.png",
+    "meta.svg": "public/classic/assets/logos/meta.svg"
+  }
 }

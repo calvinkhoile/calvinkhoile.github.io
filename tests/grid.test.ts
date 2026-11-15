@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Grid, TILE_BLOCKED } from '../src/engine/grid';
-import { buildGrid } from '../src/world/graybox';
+import { buildGrid } from '../src/world/collision';
 import { exterior } from '../src/world/maps/exterior';
 
 const R = 0.35;

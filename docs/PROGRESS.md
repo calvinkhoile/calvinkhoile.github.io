@@ -8,7 +8,8 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 |---|---|---|
 | M0 | Project setup | Done (Nov 15, 2026). Pages source switched to GitHub Actions and verified: only site files are served |
 | M1 | Graybox movement ★ | Done. Approved by Calvin on his phone (Nov 15, 2026) |
-| M2–M8 | | Not started |
+| M2 | Exterior art pass | Built, tests green. A few items open (see M2 section) |
+| M3–M8 | | Not started |
 
 ## How to run
 
@@ -68,6 +69,38 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 |---|---|
 | ![desktop](progress/m1-desktop.png) | ![mobile](progress/m1-mobile.png) |
 | ![desktop debug](progress/m1-desktop-debug.png) | ![mobile debug](progress/m1-mobile-debug.png) |
+
+## M2: Exterior art pass (built, a few items open)
+
+**What's in**
+- Asset pipeline (`npm run assets`): one scenery kit GLB (24 Kenney models, 110 KB), four trainers (65 to 73 KB each, about 4,500 triangles, one material), shared animations (118 KB, 6 clips), signage logos (62 KB). 492 KB of models total.
+- Exterior art: UCLA (brick, twin towers), Deloitte (glass tower), Meta (white campus, rooftop logo), BetMGM (black and gold, chasing marquee bulbs), Workshop, Blacktop (track, chess tables, bench, trophy case, hoop), Calvin's Court (painted lines, chain-link fence, bleachers), fountain, résumé kiosk, palms, flowers, pond, skyline.
+- Sun with soft shadows, sky fill, fog. Quality tiers (high / medium / low) picked on boot, with an automatic step down under 30fps. `?quality=low` forces one.
+- Four trainer looks, animated (idle, walk, jog, sprint), sharing one skeleton and one animation file. A look is 8 palette colors, so outfits cost nothing extra to download.
+- Loading screen, title screen, character select (arrows, swipe, Enter). The choice is saved, and returning visitors skip the title.
+- Résumé button top-right (points at `/classic/` until `/resume` ships in M7).
+
+**Measured**
+- Draw calls: about 110 on high and medium, about 46 on low (budget: under 150).
+- First playable download: about 0.85 MB uncompressed for JS + models (budget: 3 MB). JS is 192 KB gzipped.
+- Tests: 13 unit, 22 smoke (desktop + mobile), including a tour that visits every area.
+
+**Screenshots**
+
+| | |
+|---|---|
+| ![title](progress/m2-desktop-title.png) | ![select](progress/m2-desktop-select.png) |
+| ![ucla](progress/m2-desktop-ucla.png) | ![betmgm](progress/m2-desktop-betmgm.png) |
+| ![court](progress/m2-desktop-court.png) | ![blacktop](progress/m2-desktop-blacktop.png) |
+| ![workshop](progress/m2-desktop-workshop.png) | ![mobile](progress/m2-mobile-ucla.png) |
+
+**Still open in M2**
+- Frame rate on a real phone is unmeasured. Headless tests can't tell us; Calvin's phone can.
+- `docs/ASSETS.md` (license log for every third-party file) is not written yet. Everything used so far is CC0 (Kenney, Quaternius).
+- Trainers have bare feet colored as shoes, and the base body is muscular. Real shoes and looser clothes need Blender modeling (planned for the M5 avatar pass).
+- Gym exteriors are built from primitives plus one Kenney tower, not from kit buildings. The kit's apartment blocks didn't give each gym its own identity.
+- Stadium lights at the court and path footprint decals are not built.
+- Trainer names (Rookie, Playmaker, Sixth Man, Sharpshooter) and loading tips are drafts for Calvin to review.
 
 ---
 

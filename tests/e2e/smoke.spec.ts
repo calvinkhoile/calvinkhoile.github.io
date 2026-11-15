@@ -1,18 +1,22 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// M1 smoke test: the graybox world boots and the player moves with every input method.
+// Smoke tests: the world boots, the title flow works, and the player moves with every input method.
 // Runs at 1440x900 desktop and 390x844 mobile (touch emulation).
 
 type Pos = { x: number; z: number };
 
-async function boot(page: Page, query = ''): Promise<string[]> {
+/** Boot straight into the world as a returning visitor (saved look), which skips the title screen. */
+async function boot(page: Page, query = '', opts: { fresh?: boolean } = {}): Promise<string[]> {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  if (!opts.fresh) {
+    await page.addInitScript(() => localStorage.setItem('mypark:v1', JSON.stringify({ look: 'a' })));
+  }
   await page.goto('/' + query);
-  await page.waitForFunction(() => window.__mypark?.ready === true);
+  if (!opts.fresh) await page.waitForFunction(() => window.__mypark?.ready === true);
   return errors;
 }
 
@@ -23,8 +27,39 @@ test('world boots without errors', async ({ page }, info) => {
   const errors = await boot(page);
   await expect(page.locator('canvas#world')).toBeVisible();
   await page.waitForTimeout(400);
-  await page.screenshot({ path: `docs/progress/m1-${info.project.name}.png` });
+  await page.screenshot({ path: `docs/progress/m2-${info.project.name}.png` });
   expect(errors).toEqual([]);
+});
+
+test('fresh visit: title, character select, then into the park with the look saved', async ({ page }, info) => {
+  const errors = await boot(page, '', { fresh: true });
+  await expect(page.locator('#title')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('.title-name')).toHaveText('CALVIN LE');
+  await expect(page.locator('#title a')).toHaveAttribute('href', /classic|resume/);
+  expect(await page.evaluate(() => window.__mypark!.ready)).toBe(false);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `docs/progress/m2-${info.project.name}-title.png` });
+
+  await page.locator('#title-start').click();
+  await expect(page.locator('#select')).toBeVisible();
+  await expect(page.locator('#select-name')).toHaveText('Rookie');
+  await page.locator('#select-next').click();
+  await expect(page.locator('#select-name')).toHaveText('Playmaker');
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: `docs/progress/m2-${info.project.name}-select.png` });
+  await page.locator('#select-confirm').click();
+
+  await page.waitForFunction(() => window.__mypark?.ready === true);
+  expect(await page.evaluate(() => window.__mypark!.look)).toBe('b');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mypark:v1')!).look)).toBe('b');
+  await expect(page.locator('.resume-link')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('exterior stays inside the draw-call budget', async ({ page }) => {
+  await boot(page, '?quality=high');
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => window.__mypark!.drawCalls)).toBeLessThan(150);
 });
 
 test('debug overlay shows the grid and an FPS counter', async ({ page }, info) => {
@@ -32,7 +67,7 @@ test('debug overlay shows the grid and an FPS counter', async ({ page }, info) =
   await expect(page.locator('.debug-panel')).toContainText('fps');
   await page.waitForTimeout(700);
   await expect(page.locator('.debug-panel')).toContainText(/pos \d+\.\d+, \d+\.\d+/);
-  await page.screenshot({ path: `docs/progress/m1-${info.project.name}-debug.png` });
+  await page.screenshot({ path: `docs/progress/m2-${info.project.name}-debug.png` });
 });
 
 test('click or tap on open ground walks the player there', async ({ page }, info) => {

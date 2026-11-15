@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Lilita+One&display=swap" rel="stylesheet" />
 </head>
 <body>
   <!-- Points at the classic site until /resume ships in M7. -->
@@ -18,11 +18,42 @@
   <canvas id="world" aria-label="MyPark, a 3D world you can walk around"></canvas>
 
   <div id="ui">
+    <!-- Points at the classic site until /resume ships in M7. -->
+    <a class="resume-link" href="/classic/" target="_blank" rel="noopener">Résumé</a>
     <div id="hint" class="hint" role="note">
       <span class="hint-desktop">WASD or arrow keys to move · Shift to sprint · Click to walk there</span>
       <span class="hint-touch">Use the joystick to move<br />or tap the ground to walk there</span>
     </div>
     <button id="a-button" class="a-button" type="button" aria-label="Interact">A</button>
+  </div>
+
+  <div id="select" class="screen select" hidden>
+    <h2 class="select-title">Pick your trainer</h2>
+    <div class="select-controls">
+      <button id="select-prev" class="select-arrow" type="button" aria-label="Previous trainer">‹</button>
+      <div class="select-label">
+        <span id="select-name" class="select-name" aria-live="polite"></span>
+        <span id="select-dots" class="select-dots" aria-hidden="true"></span>
+      </div>
+      <button id="select-next" class="select-arrow" type="button" aria-label="Next trainer">›</button>
+    </div>
+    <button id="select-confirm" class="btn btn-primary" type="button">Let's go</button>
+  </div>
+
+  <div id="title" class="screen title" hidden>
+    <h1 class="title-name">CALVIN LE</h1>
+    <p class="title-role">Sr. Product Manager · BetMGM</p>
+    <div class="title-actions">
+      <button id="title-start" class="btn btn-primary" type="button">Press Start</button>
+      <a class="btn" href="/classic/">View Résumé</a>
+    </div>
+  </div>
+
+  <div id="loading" class="screen loading" role="progressbar" aria-label="Loading MyPark" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <img class="loading-icon" src="/favicon.png" alt="" width="72" height="72" />
+    <div class="loading-track"><div id="loading-bar" class="loading-bar"></div></div>
+    <p id="loading-tip" class="loading-tip"></p>
+    <a class="loading-link" href="/classic/">Skip to the résumé</a>
   </div>
 
   <div id="fallback" class="fallback" hidden>

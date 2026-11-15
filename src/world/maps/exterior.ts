@@ -40,8 +40,8 @@ const zones: Zone[] = [
   // Plaza and its link to the main path.
   { kind: 'plaza', x: 26, z: 43, w: 14, d: 12 },
   { kind: 'path', x: 21, z: 48, w: 5, d: 3 },
-  // Workshop spur.
-  { kind: 'path', x: 21, z: 29, w: 19, d: 3 },
+  // Workshop spur (runs along the Workshop's south face).
+  { kind: 'path', x: 21, z: 29, w: 28, d: 3 },
   // Calvin's Court and the walk down to the Blacktop.
   { kind: 'court', x: 58, z: 3, w: 16, d: 14 },
   { kind: 'path', x: 65, z: 17, w: 3, d: 7 },
@@ -64,8 +64,8 @@ const props: Prop[] = [
 
   // Gyms (doors face east, onto the main path).
   { model: 'gym-ucla', x: 5, z: 45, w: 10, d: 8, h: 5, color: C.uclaBrick, blocks: true, fades: true, label: 'UCLA GYM' },
-  { model: 'gym-ucla-tower', x: 5, z: 45, w: 2, d: 2, h: 8, color: C.uclaBrick, blocks: true, fades: true },
-  { model: 'gym-ucla-tower', x: 5, z: 51, w: 2, d: 2, h: 8, color: C.uclaBrick, blocks: true, fades: true },
+  { model: 'gym-ucla-tower', x: 13, z: 45, w: 2, d: 2, h: 8, color: C.uclaBrick, blocks: true, fades: true },
+  { model: 'gym-ucla-tower', x: 13, z: 51, w: 2, d: 2, h: 8, color: C.uclaBrick, blocks: true, fades: true },
   { model: 'gym-deloitte', x: 6, z: 33, w: 8, d: 8, h: 13, color: C.deloitte, blocks: true, fades: true, label: 'DELOITTE GYM' },
   { model: 'gym-meta', x: 4, z: 20, w: 11, d: 7, h: 3.5, color: C.meta, blocks: true, fades: true, label: 'META GYM' },
   { model: 'gym-betmgm', x: 4, z: 3, w: 11, d: 10, h: 6, color: C.betmgm, blocks: true, fades: true, label: 'BETMGM GYM' },
@@ -81,8 +81,8 @@ const props: Prop[] = [
   { model: 'signpost', x: 28, z: 45, w: 1, d: 1, h: 2.4, color: C.wood, blocks: true },
   { model: 'resume-kiosk', x: 37, z: 45, w: 1, d: 1, h: 1.8, color: C.kiosk, blocks: true },
 
-  // The Workshop (door faces west, onto the spur).
-  { model: 'workshop', x: 40, z: 27, w: 8, d: 7, h: 4, color: C.workshop, blocks: true, fades: true, label: 'THE WORKSHOP' },
+  // The Workshop (door faces south, onto the spur, so the camera can see it).
+  { model: 'workshop', x: 40, z: 22, w: 8, d: 7, h: 4, color: C.workshop, blocks: true, fades: true, label: 'THE WORKSHOP' },
 
   // Calvin's Court: fence with gaps at the west path and the south walk, bleachers, hoop.
   { model: 'fence', x: 57, z: 2, w: 18, d: 1, h: 2, color: C.fence, blocks: true },
@@ -92,7 +92,7 @@ const props: Prop[] = [
   { model: 'fence', x: 58, z: 17, w: 7, d: 1, h: 2, color: C.fence, blocks: true },
   { model: 'fence', x: 68, z: 17, w: 6, d: 1, h: 2, color: C.fence, blocks: true },
   { model: 'bleachers', x: 60, z: 3, w: 12, d: 1, h: 1.6, color: C.bleacher, blocks: true, label: "CALVIN'S COURT" },
-  { model: 'hoop', x: 73, z: 9, w: 1, d: 2, h: 3.6, color: 0xe5e7eb, blocks: true },
+  { model: 'hoop', x: 73, z: 9, w: 1, d: 2, h: 3.6, color: 0xe5e7eb, rotation: -Math.PI / 2, blocks: true },
 
   // The Blacktop.
   { model: 'mile-marker', x: 60, z: 25, w: 1, d: 1, h: 1.4, color: 0xf59e0b, blocks: true },
@@ -109,7 +109,7 @@ const doors: Door[] = [
   { id: 'door-deloitte', x: 14, z: 37, facing: 'e', to: 'gym-deloitte', color: C.deloitteGreen },
   { id: 'door-meta', x: 15, z: 23, facing: 'e', to: 'gym-meta', color: C.metaBlue },
   { id: 'door-betmgm', x: 15, z: 8, facing: 'e', to: 'gym-betmgm', color: C.betmgmGold },
-  { id: 'door-workshop', x: 39, z: 30, facing: 'w', to: 'workshop', color: 0xf97316 },
+  { id: 'door-workshop', x: 44, z: 29, facing: 's', to: 'workshop', color: 0xf97316 },
 ];
 
 const interactables: Interactable[] = [

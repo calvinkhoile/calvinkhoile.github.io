@@ -16,12 +16,12 @@ export interface Renderer {
   canvas: HTMLCanvasElement;
   /** Calls back with the new aspect ratio whenever the canvas size changes. */
   onResize(cb: (aspect: number, width: number, height: number) => void): void;
+  setPixelRatioCap(cap: number): void;
 }
 
-export function createRenderer(canvas: HTMLCanvasElement): Renderer {
-  const three = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  // Pixel-ratio cap: 2 on desktop, 1.5 on phones.
-  const cap = isCoarsePointer() ? 1.5 : 2;
+export function createRenderer(canvas: HTMLCanvasElement, opts: { antialias: boolean; pixelRatioCap: number }): Renderer {
+  const three = new THREE.WebGLRenderer({ canvas, antialias: opts.antialias, powerPreference: 'high-performance' });
+  let cap = opts.pixelRatioCap;
   const listeners: ((aspect: number, w: number, h: number) => void)[] = [];
 
   const resize = () => {
@@ -38,6 +38,10 @@ export function createRenderer(canvas: HTMLCanvasElement): Renderer {
   return {
     three,
     canvas,
+    setPixelRatioCap(next) {
+      cap = next;
+      resize();
+    },
     onResize(cb) {
       listeners.push(cb);
       cb(canvas.clientWidth / canvas.clientHeight, canvas.clientWidth, canvas.clientHeight);

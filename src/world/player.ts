@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Grid, Point } from '../engine/grid';
 import type { InputState } from '../engine/input';
+import type { Character } from './character';
 
 export const WALK_SPEED = 4;
 export const SPRINT_SPEED = 6.5;
@@ -18,29 +19,12 @@ export class Player {
   facing = 0;
   path: Point[] = [];
   private stuckTime = 0;
+  private character: Character | null = null;
 
   constructor(x: number, z: number) {
     this.x = x;
     this.z = z;
 
-    // Graybox trainer: a capsule with a visor so facing is readable.
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(PLAYER_RADIUS, 1.8 - PLAYER_RADIUS * 2, 4, 12),
-      new THREE.MeshLambertMaterial({ color: 0xff6b35 }),
-    );
-    body.position.y = 0.9;
-    const visor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.42, 0.16, 0.2),
-      new THREE.MeshLambertMaterial({ color: 0x1f2937 }),
-    );
-    visor.position.set(0, 1.45, PLAYER_RADIUS - 0.04);
-    const shadow = new THREE.Mesh(
-      new THREE.CircleGeometry(PLAYER_RADIUS * 1.25, 20),
-      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false }),
-    );
-    shadow.rotation.x = -Math.PI / 2;
-    shadow.position.y = 0.04;
-    this.object.add(body, visor, shadow);
     this.sync();
   }
 
@@ -50,6 +34,13 @@ export class Player {
 
   get moving(): boolean {
     return this.speed > 0.05;
+  }
+
+  /** Swap the visible body (used when the visitor picks a look). */
+  setCharacter(character: Character): void {
+    if (this.character) this.object.remove(this.character.object);
+    this.character = character;
+    this.object.add(character.object);
   }
 
   setPath(path: Point[] | null): void {
@@ -141,6 +132,12 @@ export class Player {
       pz = p.z;
     }
     return len;
+  }
+
+  /** Advance the body's animation. Separate from update() so it keeps idling while input is paused. */
+  animate(dt: number): void {
+    this.character?.locomote(this.speed);
+    this.character?.update(dt);
   }
 
   private sync(): void {
