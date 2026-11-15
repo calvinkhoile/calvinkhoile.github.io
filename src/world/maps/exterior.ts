@@ -70,6 +70,9 @@ const props: Prop[] = [
   { model: 'gym-meta', x: 4, z: 20, w: 11, d: 7, h: 3.5, color: C.meta, blocks: true, fades: true, label: 'META GYM' },
   { model: 'gym-betmgm', x: 4, z: 3, w: 11, d: 10, h: 6, color: C.betmgm, blocks: true, fades: true, label: 'BETMGM GYM' },
 
+  // Meta's monument sign on the lawn by its entrance.
+  { model: 'meta-sign', x: 16, z: 26, w: 1, d: 3, h: 2.6, color: C.metaBlue, blocks: true },
+
   // Lamp posts at each gym entrance.
   { model: 'lamp', x: 17, z: 47, w: 1, d: 1, h: 3.2, color: C.lamp, blocks: true },
   { model: 'lamp', x: 17, z: 35, w: 1, d: 1, h: 3.2, color: C.lamp, blocks: true },

@@ -113,6 +113,27 @@ class Builder {
     return this.add(mesh);
   }
 
+  /** Round-topped opening or window on a wall. (x, z) is its center on the wall line, y0 its sill. */
+  arch(x: number, y0: number, z: number, w: number, h: number, facing: Facing, material: THREE.Material, lift = 0.05): void {
+    const r = w / 2;
+    this.panel(x, y0 + (h - r) / 2, z, w, h - r, facing, material, lift);
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(r, 12, 0, Math.PI), material);
+    const out = FACE_OUT[facing];
+    cap.position.set(x + out[0] * lift, y0 + h - r, z + out[1] * lift);
+    cap.rotation.y = FACE_ROT[facing];
+    this.add(cap);
+  }
+
+  /** Gable roof: a triangular prism sitting on (x, z, w, d) at height y. The ridge runs along the longer side unless told otherwise. */
+  gable(x: number, y: number, z: number, w: number, d: number, rise: number, material: THREE.Material, ridgeAlongX = w >= d): THREE.Mesh {
+    const span = ridgeAlongX ? d : w;
+    const len = ridgeAlongX ? w : d;
+    const shape = new THREE.Shape([new THREE.Vector2(-span / 2, 0), new THREE.Vector2(span / 2, 0), new THREE.Vector2(0, rise)]);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: len, bevelEnabled: false }).translate(0, 0, -len / 2);
+    if (ridgeAlongX) geo.rotateY(Math.PI / 2);
+    return this.mesh(geo, material, x + w / 2, y, z + d / 2);
+  }
+
   /** A grid of windows on one wall of a box-shaped building. */
   windows(p: { x: number; z: number; w: number; d: number }, facing: 'e' | 's', y0: number, rows: number, cols: number, size: [number, number], color: number, inset = 1): void {
     const span = (facing === 'e' ? p.d : p.w) - inset * 2;
@@ -379,8 +400,15 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
       case 'gym-deloitte':
         building((b) => buildDeloitte(b, p, kit));
         break;
-      case 'gym-meta':
+      case 'gym-meta': {
         building((b) => buildMeta(b, p));
+        // Roof garden on the lower roof, in front of the upper volume.
+        const ry = p.h + 0.2;
+        for (let i = 0; i < 7; i++) place(i % 3 === 0 ? 'tree-oak' : 'bush', p.x + 6.9 + (i % 4) * 1.0 + rand() * 0.3, p.z + 0.8 + ((i * 1.7) % (p.d - 1.6)), i % 3 === 0 ? 1.7 : 2.6, rand() * 6.28, ry);
+        break;
+      }
+      case 'meta-sign':
+        building((b) => buildMetaSign(b, p));
         break;
       case 'gym-betmgm':
         building((b) => animated.push(buildBetmgm(b, p, q)));
@@ -515,45 +543,119 @@ function buildZone(b: Builder, zone: Zone, map: MapDef): void {
 
 // ---------- gyms ----------
 
+const TOWER_W = 2.3;
+
+/** UCLA: a nod to Royce Hall. Banded brick, a gabled nave, an arched portico, and a rose window between twin towers. */
 function buildUcla(b: Builder, p: Prop): void {
   const brick = b.mat(PALETTE.brick);
-  b.box(p.x, 0, p.z, p.w, p.h, p.d, brick);
-  // Pitched tile roof running north-south, plus a stone base course.
-  // Hip roof: a four-sided pyramid stretched to the footprint, with a small overhang.
-  const roof = b.mesh(new THREE.ConeGeometry((p.w / 2) * Math.SQRT2 * 1.05, 2.4, 4).rotateY(Math.PI / 4), b.mat(0xb5553a), p.x + p.w / 2, p.h + 1.2, p.z + p.d / 2);
-  roof.scale.z = p.d / p.w;
-  b.box(p.x - 0.1, 0, p.z - 0.1, p.w + 0.2, 0.5, p.d + 0.2, b.mat(PALETTE.stone));
-  // Arched entrance between the towers (east face).
+  const cream = b.mat(0xe9dcc3);
+  const tile = b.mat(0xb5553a);
+  const dark = b.mat(0x2b2118);
+  const glass = b.mat(0x35506e, { emissive: 0x0a1626 });
   const ex = p.x + p.w;
   const cz = p.z + p.d / 2;
-  b.panel(ex, 1.5, cz, 2.6, 3, 'e', b.mat(PALETTE.brickDark));
-  const arch = b.add(new THREE.Mesh(new THREE.CircleGeometry(1.3, 16, 0, Math.PI), b.mat(PALETTE.brickDark)));
-  arch.position.set(ex + 0.04, 3, cz);
-  arch.rotation.y = Math.PI / 2;
-  b.panel(ex, 4.25, cz, 3.4, 1.1, 'e', logoSign('/images/logos/ucla.webp', 0xffffff, 3.4 / 1.1), 0.08);
-  // Blue and gold banners on the south wall.
-  for (let i = 0; i < 4; i++) {
-    b.panel(p.x + 1.5 + i * 2.2, 2.6, p.z + p.d, 0.8, 2.4, 's', b.mat(i % 2 ? PALETTE.uclaGold : PALETTE.uclaBlue));
+
+  // Tall nave down the middle, lower aisles along both sides.
+  b.box(p.x, 0, p.z + 1.4, p.w - 0.5, 5.4, p.d - 2.8, brick);
+  b.gable(p.x - 0.2, 5.4, p.z + 1.2, p.w - 0.3, p.d - 2.4, 1.9, tile, true);
+  for (const z of [p.z, p.z + p.d - 1.5]) {
+    b.box(p.x, 0, z, p.w - TOWER_W + 0.2, 3.3, 1.5, brick);
+    b.box(p.x - 0.1, 3.3, z - 0.1, p.w - TOWER_W + 0.3, 0.22, 1.7, tile);
   }
+  b.box(p.x - 0.1, 0, p.z - 0.1, p.w + 0.2, 0.45, p.d + 0.2, cream);
+
+  // South aisle: a row of arched windows with cream sills, and the brick banding Royce is known for.
+  const sz = p.z + p.d;
+  for (let i = 0; i < 5; i++) {
+    const x = p.x + 0.9 + i * 1.45;
+    b.arch(x, 0.95, sz, 0.85, 1.75, 's', cream, 0.04);
+    b.arch(x, 1.05, sz, 0.62, 1.5, 's', glass, 0.07);
+  }
+  b.panel(p.x + (p.w - TOWER_W) / 2, 2.95, sz, p.w - TOWER_W, 0.16, 's', cream);
+  // Clerestory windows on the nave, above the aisle roof.
+  for (let i = 0; i < 5; i++) b.arch(p.x + 0.9 + i * 1.45, 3.85, p.z + p.d - 1.4, 0.55, 1.1, 's', glass, 0.05);
+
+  // Front between the towers: gabled wall, three-arch portico, rose window.
+  const fz = cz;
+  const fw = p.d - TOWER_W * 2 + 0.2;
+  b.box(ex - 0.7, 0, fz - fw / 2, 0.6, 5.6, fw, brick);
+  b.gable(ex - 0.7, 5.6, fz - fw / 2, 0.6, fw, 1.5, brick, true);
+  const fx = ex - 0.1;
+  for (const dz of [-1.12, 0, 1.12]) {
+    b.arch(fx, 0.45, fz + dz, 1.0, 2.5, 'e', cream, 0.03);
+    b.arch(fx, 0.45, fz + dz, 0.76, 2.3, 'e', dark, 0.06);
+  }
+  b.panel(fx, 3.5, fz, 3.1, 0.95, 'e', logoSign('/images/logos/ucla.webp', 0xffffff, 3.1 / 0.95), 0.07);
+  const rose = (r: number, mat: THREE.Material, lift: number) => {
+    const m = b.add(new THREE.Mesh(new THREE.CircleGeometry(r, 16), mat));
+    m.position.set(fx + lift, 4.85, fz);
+    m.rotation.y = Math.PI / 2;
+  };
+  rose(0.62, cream, 0.03);
+  rose(0.46, b.mat(PALETTE.uclaBlue, { emissive: 0x0d2a44 }), 0.06);
+  rose(0.16, b.mat(PALETTE.uclaGold, { emissive: 0x4a3c00 }), 0.09);
+  b.panel(fx, 5.75, fz, fw - 0.3, 0.14, 'e', cream);
 }
 
 function buildUclaTower(b: Builder, p: Prop): void {
   const brick = b.mat(PALETTE.brick);
-  // Slightly proud of the main wall so the towers read as towers.
-  b.box(p.x + 0.1, 0, p.z - 0.1, p.w + 0.25, p.h, p.d + 0.2, brick);
-  b.box(p.x, p.h, p.z - 0.2, p.w + 0.45, 0.3, p.d + 0.4, b.mat(PALETTE.stone));
-  b.mesh(new THREE.ConeGeometry(1.75, 2, 4).rotateY(Math.PI / 4), b.mat(PALETTE.roofTile), p.x + p.w / 2 + 0.22, p.h + 1.3, p.z + p.d / 2);
-  const win = b.mat(0x2b3440, { emissive: 0x0a1626 });
-  for (const y of [5.6, 6.9]) {
-    b.panel(p.x + p.w + 0.35, y, p.z + p.d / 2, 0.7, 0.9, 'e', win);
-    b.panel(p.x + p.w / 2 + 0.2, y, p.z + p.d + 0.1, 0.7, 0.9, 's', win);
+  const cream = b.mat(0xe9dcc3);
+  const dark = b.mat(0x2b2118);
+  // The towers stand slightly proud of the walls, and the north one is a touch taller, like the real pair.
+  const north = p.z < 48;
+  const h = p.h + (north ? 0.9 : 0);
+  const x = p.x - 0.15;
+  const z = north ? p.z - 0.12 : p.z - 0.18;
+  const w = TOWER_W;
+  b.box(x, 0, z, w, h, w, brick);
+  const ex = x + w;
+  const sz = z + w;
+  const cx = x + w / 2;
+  const mz = z + w / 2;
+  // Cream bands, then an open belfry with paired arches on the two faces the camera sees.
+  for (const y of [2.9, 5.2, h - 2.25]) {
+    b.panel(ex, y, mz, w, 0.16, 'e', cream, 0.03);
+    b.panel(cx, y, sz, w, 0.16, 's', cream, 0.03);
   }
+  for (const d of [-0.5, 0.5]) {
+    b.arch(ex, h - 2.05, mz + d, 0.62, 1.55, 'e', cream, 0.04);
+    b.arch(ex, h - 2.0, mz + d, 0.44, 1.4, 'e', dark, 0.07);
+    b.arch(cx + d, h - 2.05, sz, 0.62, 1.55, 's', cream, 0.04);
+    b.arch(cx + d, h - 2.0, sz, 0.44, 1.4, 's', dark, 0.07);
+  }
+  b.arch(ex, 3.4, mz, 0.5, 1.3, 'e', dark, 0.05);
+  b.arch(cx, 3.4, sz, 0.5, 1.3, 's', dark, 0.05);
+  b.box(x - 0.15, h, z - 0.15, w + 0.3, 0.3, w + 0.3, cream);
+  b.mesh(new THREE.ConeGeometry((w / 2 + 0.2) * Math.SQRT2, 1.9, 4).rotateY(Math.PI / 4), b.mat(0xb5553a), cx, h + 1.25, mz);
 }
 
+/** Wordmark sign: white type with the green dot. Drawn here so the dot can be its own color. */
+function deloitteWordmark(aspect: number): THREE.MeshBasicMaterial {
+  const h = 160;
+  const w = Math.round(h * aspect);
+  const tex = canvasTexture(w, h, (ctx) => {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = '800 104px Inter, system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    const text = 'Deloitte';
+    const tw = ctx.measureText(text).width;
+    const x0 = (w - tw - 30) / 2;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(text, x0, h / 2 + 4);
+    ctx.fillStyle = hex(PALETTE.deloitteGreen);
+    ctx.beginPath();
+    ctx.arc(x0 + tw + 16, h / 2 + 34, 13, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  return new THREE.MeshBasicMaterial({ map: tex });
+}
+
+/** Deloitte: corporate HQ. Dark glass tower, a glazed lobby under a canopy, green accent lines, wordmark up top. */
 function buildDeloitte(b: Builder, p: Prop, kit: Kit): void {
-  // Glass office tower from the kit, darkened, on a black podium with the green dot.
-  const tower = kit.single('tower', 0x8b9299);
+  const tower = kit.single('tower', 0x7d858d);
   const scale = (p.w - 0.6) / 1.36;
+  const height = 2.88 * scale;
   tower.scale.setScalar(scale);
   tower.rotation.y = Math.PI / 2;
   tower.position.set(p.x + p.w / 2, 0, p.z + p.d / 2);
@@ -561,68 +663,219 @@ function buildDeloitte(b: Builder, p: Prop, kit: Kit): void {
     o.castShadow = true;
   });
   b.add(tower);
+
+  const black = b.mat(0x0d0d0d);
+  const green = b.mat(PALETTE.deloitteGreen, { emissive: 0x3d5a0c });
   const ex = p.x + p.w;
   const cz = p.z + p.d / 2;
-  b.box(ex - 0.5, 3.1, cz - 2.6, 0.7, 1.5, 5.2, b.mat(0x0d0d0d));
-  b.panel(ex + 0.2, 3.85, cz, 4.6, 1.2, 'e', logoSign('/images/logos/deloitte.webp', 0x000000, 4.6 / 1.2), 0.02);
-  b.box(ex - 0.52, 2.95, cz - 2.62, 0.74, 0.15, 5.24, b.mat(PALETTE.deloitteGreen, { emissive: 0x2c4a05 }));
+  // Double-height glazed lobby with mullions, under a thin black canopy with a green edge.
+  b.box(ex - 0.45, 0, p.z + 0.5, 0.5, 3.4, p.d - 1.0, black);
+  b.panel(ex + 0.05, 1.6, cz, p.d - 1.6, 2.7, 'e', b.mat(0x8fc7e6, { emissive: 0x16384d }), 0.02);
+  for (let i = 0; i <= 6; i++) b.box(ex + 0.05, 0.25, p.z + 0.8 + (i * (p.d - 1.7)) / 6, 0.06, 2.7, 0.1, black);
+  b.box(ex - 0.3, 3.05, cz - 3.0, 1.25, 0.16, 6.0, black);
+  b.box(ex + 0.9, 3.05, cz - 3.0, 0.08, 0.16, 6.0, green);
+  b.box(ex - 0.35, 3.4, cz - 2.9, 0.4, 1.3, 5.8, black);
+  b.panel(ex + 0.05, 4.05, cz, 5.4, 1.1, 'e', deloitteWordmark(5.4 / 1.1), 0.02);
+  // Green light lines up the corners the camera sees, and a rooftop wordmark for the long view.
+  for (const [x, z] of [[ex - 0.36, cz + 3.4], [ex - 0.36, cz - 3.52]] as const) {
+    b.box(x, 3.4, z, 0.12, height - 4.2, 0.12, green);
+  }
+  b.box(ex - 1.1, height - 0.4, cz - 2.9, 0.3, 1.5, 5.8, black);
+  b.panel(ex - 0.8, height + 0.35, cz, 5.6, 1.2, 'e', deloitteWordmark(5.6 / 1.2), 0.02);
+  // Granite planters squaring off the forecourt.
+  for (const dz of [-3.2, 3.2]) b.box(ex + 0.1, 0, cz + dz - 0.5, 0.7, 0.5, 1.0, b.mat(0x3a3d42));
 }
 
+/** Meta: low tech campus. Stacked white volumes, long glass walls, blue fascia, and a roof garden (planted by the caller). */
 function buildMeta(b: Builder, p: Prop): void {
   const white = b.mat(PALETTE.white);
-  b.box(p.x, 0, p.z, p.w, p.h, p.d, white);
-  // Flat overhanging roof with a Meta-blue fascia.
-  b.box(p.x - 0.4, p.h, p.z - 0.4, p.w + 1.1, 0.25, p.d + 1.1, white);
-  b.box(p.x - 0.42, p.h - 0.35, p.z - 0.42, p.w + 1.14, 0.35, p.d + 1.14, b.mat(PALETTE.metaBlue));
-  // Long glass walls.
+  const blue = b.mat(PALETTE.metaBlue, { emissive: 0x02164a });
   const glass = b.mat(PALETTE.glass, { emissive: 0x16384d });
-  b.panel(p.x + p.w, 1.55, p.z + 1.7, 2.6, 2.3, 'e', glass);
-  b.panel(p.x + p.w, 1.55, p.z + p.d - 1.4, 2.0, 2.3, 'e', glass);
-  b.panel(p.x + p.w / 2, 1.55, p.z + p.d, p.w - 1.6, 2.3, 's', glass);
-  for (let i = 1; i < 5; i++) b.box(p.x + (p.w / 5) * i - 0.06, 0.3, p.z + p.d, 0.12, 2.5, 0.08, white);
-  // Rooftop sign.
-  const cz = p.z + 3.5;
-  b.box(p.x + p.w - 0.3, p.h + 0.25, cz - 2.2, 0.3, 2.3, 4.4, white);
-  b.panel(p.x + p.w, p.h + 1.4, cz, 4.2, 2.0, 'e', logoSign('/images/logos/meta.svg', 0xffffff, 2.1), 0.02);
+  const ex = p.x + p.w;
+  const sz = p.z + p.d;
+  // Main single-storey floor plate with a deep overhanging roof.
+  b.box(p.x, 0, p.z, p.w, p.h, p.d, white);
+  b.box(p.x - 0.5, p.h, p.z - 0.5, p.w + 1.3, 0.22, p.d + 1.3, white);
+  b.box(p.x - 0.52, p.h - 0.3, p.z - 0.52, p.w + 1.34, 0.3, p.d + 1.34, blue);
+  // A second, set-back volume makes it read as a campus, not a box.
+  b.box(p.x + 0.8, p.h + 0.22, p.z + 0.6, 5.2, 2.2, p.d - 2.4, white);
+  b.box(p.x + 0.6, p.h + 2.42, p.z + 0.4, 5.6, 0.2, p.d - 2.0, white);
+  b.panel(p.x + 3.4, p.h + 1.35, sz - 1.8, 4.6, 1.5, 's', glass);
+  b.panel(p.x + 6.0, p.h + 1.35, p.z + p.d / 2 - 0.6, p.d - 3.2, 1.5, 'e', glass);
+  // Floor-to-ceiling glass on the ground floor, split by slim white fins.
+  b.panel(ex, 1.6, p.z + 1.6, 2.4, 2.5, 'e', glass);
+  b.panel(ex, 1.6, sz - 1.5, 2.2, 2.5, 'e', glass);
+  b.panel(p.x + p.w / 2, 1.6, sz, p.w - 1.2, 2.5, 's', glass);
+  for (let i = 1; i < 7; i++) b.box(p.x + (p.w / 7) * i - 0.05, 0.3, sz, 0.1, 2.65, 0.1, white);
+  // Blue entry portal with the logo above the door (door tile is at z = 23).
+  const dz = 23.5;
+  b.box(ex, 0, dz - 1.3, 0.25, 3.0, 0.25, blue);
+  b.box(ex, 0, dz + 1.05, 0.25, 3.0, 0.25, blue);
+  b.box(ex, 2.75, dz - 1.3, 0.25, 0.3, 2.6, blue);
+  b.panel(ex + 0.3, 3.75, dz, 2.6, 1.3, 'e', logoSign('/images/logos/meta.svg', 0xffffff, 2), 0.02);
+  b.box(ex + 0.02, 3.05, dz - 1.4, 0.25, 1.45, 2.8, white);
 }
 
+/** The entrance sign every visitor photographs: a big board on the lawn with the logo. */
+function buildMetaSign(b: Builder, p: Prop): void {
+  const cx = p.x + p.w / 2;
+  const cz = p.z + p.d / 2;
+  b.box(cx - 0.22, 0, p.z + 0.15, 0.44, 0.35, p.d - 0.3, b.mat(0x9aa0a8));
+  b.box(cx - 0.14, 0.35, p.z + 0.1, 0.28, p.h - 0.35, p.d - 0.2, b.mat(PALETTE.white));
+  b.panel(cx + 0.14, p.h / 2 + 0.2, cz, p.d - 0.5, p.h - 0.7, 'e', logoSign('/images/logos/meta.svg', 0xffffff, (p.d - 0.5) / (p.h - 0.7)), 0.02);
+  b.box(cx - 0.16, p.h, p.z + 0.08, 0.32, 0.1, p.d - 0.16, b.mat(PALETTE.metaBlue));
+}
+
+function chipTexture(): THREE.CanvasTexture {
+  return canvasTexture(256, 256, (ctx) => {
+    ctx.fillStyle = '#15130f';
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.translate(128, 128);
+    ctx.fillStyle = hex(PALETTE.betGold);
+    ctx.beginPath();
+    ctx.arc(0, 0, 126, 0, Math.PI * 2);
+    ctx.fill();
+    // Edge inserts.
+    ctx.fillStyle = '#15130f';
+    for (let i = 0; i < 8; i++) {
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-16, -126, 32, 30);
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 84, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = hex(PALETTE.betGold);
+    ctx.lineWidth = 6;
+    ctx.setLineDash([14, 10]);
+    ctx.beginPath();
+    ctx.arc(0, 0, 70, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = hex(PALETTE.betGold);
+    ctx.font = '800 72px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('13', 0, 6);
+  });
+}
+
+function verticalSign(text: string, bg: number, fg: number): THREE.MeshBasicMaterial {
+  const cell = 96;
+  const tex = canvasTexture(cell, cell * text.length, (ctx) => {
+    ctx.fillStyle = hex(bg);
+    ctx.fillRect(0, 0, cell, cell * text.length);
+    ctx.fillStyle = hex(fg);
+    ctx.font = '800 76px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    [...text].forEach((ch, i) => ctx.fillText(ch, cell / 2, cell * i + cell / 2 + 4));
+  });
+  return new THREE.MeshBasicMaterial({ map: tex });
+}
+
+/** BetMGM: Vegas casino. Stepped black-and-gold block, marquee billboard, pylon sign, a giant chip, red carpet, chasing bulbs. */
 function buildBetmgm(b: Builder, p: Prop, q: QualitySettings): (time: number) => void {
   const black = b.mat(PALETTE.betBlack);
   const gold = b.mat(PALETTE.betGold, { emissive: 0x3a2c0c });
+  const neon = b.mat(0xffd76a, { emissive: 0xb8860b });
+  const ex = p.x + p.w;
+  const sz = p.z + p.d;
+  const cz = 8.5; // the door tile is at z = 8
+
+  // Stepped massing: main block, a set-back crown, gold cornices on both.
   b.box(p.x, 0, p.z, p.w, p.h - 0.05, p.d, black);
   b.box(p.x - 0.15, p.h - 0.5, p.z - 0.15, p.w + 0.3, 0.5, p.d + 0.3, gold);
-  b.box(p.x + 0.35, p.h - 0.05, p.z + 0.35, p.w - 0.7, 0.12, p.d - 0.7, b.mat(0x24211b));
   b.box(p.x - 0.1, 0, p.z - 0.1, p.w + 0.2, 0.35, p.d + 0.2, gold);
-  // Gold pilasters on the visible faces.
-  for (let i = 0; i <= 4; i++) {
-    b.box(p.x + p.w, 0.35, p.z + 0.3 + (i * (p.d - 0.9)) / 4, 0.12, p.h - 0.85, 0.3, gold);
-    b.box(p.x + 0.3 + (i * (p.w - 0.9)) / 4, 0.35, p.z + p.d, 0.3, p.h - 0.85, 0.12, gold);
+  b.box(p.x + 1.6, p.h, p.z + 1.6, p.w - 3.2, 1.6, p.d - 3.2, black);
+  b.box(p.x + 1.45, p.h + 1.6, p.z + 1.45, p.w - 2.9, 0.3, p.d - 2.9, gold);
+  // Gold pilasters with neon strips between them on both visible faces.
+  for (let i = 0; i <= 5; i++) {
+    const t = i / 5;
+    b.box(ex, 0.35, p.z + 0.2 + t * (p.d - 0.7), 0.14, p.h - 0.85, 0.3, gold);
+    b.box(p.x + 0.2 + t * (p.w - 0.7), 0.35, sz, 0.3, p.h - 0.85, 0.14, gold);
+    if (i < 5) {
+      b.box(p.x + 1.25 + t * (p.w - 0.7), 0.9, sz, 0.1, p.h - 2.0, 0.05, neon);
+      if (Math.abs(p.z + 1.25 + t * (p.d - 0.7) - cz) > 3) b.box(ex, 0.9, p.z + 1.25 + t * (p.d - 0.7), 0.05, p.h - 2.0, 0.1, neon);
+    }
   }
-  // Canopy and marquee over the door (door tile is at z = 8, so the entrance centers on 8.5).
-  const cz = 8.5;
-  const ex = p.x + p.w;
-  b.box(ex, 2.7, cz - 2.4, 1.5, 0.3, 4.8, gold);
-  b.box(ex + 0.1, 3.0, cz - 2.2, 0.35, 1.7, 4.4, black);
-  b.panel(ex + 0.45, 3.85, cz, 4.2, 1.5, 'e', logoSign('/images/logos/betmgm.webp', 0x000000, 4.2 / 1.5), 0.02);
+  // Porte-cochère canopy, entrance surround, and a red carpet out to the path.
+  b.box(ex, 2.9, cz - 3.0, 2.3, 0.35, 6.0, gold);
+  b.box(ex, 2.75, cz - 2.85, 2.15, 0.15, 5.7, black);
+  b.box(ex, 0.35, cz - 1.7, 0.2, 2.4, 0.35, gold);
+  b.box(ex, 0.35, cz + 1.35, 0.2, 2.4, 0.35, gold);
+  flat(b, ex, cz - 0.75, 3.0, 1.5, 0.04, b.mat(0xb3121f));
 
-  if (!q.ambientDetail) return () => {};
-  // Chasing marquee bulbs: two interleaved sets that swap brightness.
+  // Marquee billboard on the crown, facing the path.
+  b.box(ex - 1.5, p.h + 0.2, cz - 3.6, 0.4, 3.1, 7.2, black);
+  b.box(ex - 1.55, p.h + 0.1, cz - 3.7, 0.5, 0.2, 7.4, gold);
+  b.box(ex - 1.55, p.h + 3.2, cz - 3.7, 0.5, 0.2, 7.4, gold);
+  b.panel(ex - 1.1, p.h + 1.75, cz, 6.6, 2.6, 'e', logoSign('/images/logos/betmgm.webp', 0x000000, 6.6 / 2.6), 0.02);
+
+  // Pylon sign on the corner, lettered down both faces, with a star on top.
+  const px = ex - 0.2;
+  const pz = sz - 0.2;
+  const ph = 10.5;
+  b.box(px, 0, pz, 1.0, ph, 1.0, black);
+  b.box(px - 0.08, ph, pz - 0.08, 1.16, 0.25, 1.16, gold);
+  const letters = verticalSign('BETMGM', PALETTE.betBlack, 0xffd76a);
+  b.panel(px + 1.0, ph - 3.2, pz + 0.5, 0.86, 5.6, 'e', letters, 0.02);
+  b.panel(px + 0.5, ph - 3.2, pz + 1.0, 0.86, 5.6, 's', letters, 0.02);
+  const star = b.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.55), new THREE.MeshBasicMaterial({ color: 0xffd76a })));
+  star.position.set(px + 0.5, ph + 1.0, pz + 0.5);
+  star.userData.dynamic = true;
+
+  // Giant chip standing on the crown, slowly turning.
+  const chip = new THREE.Group();
+  const chipMat = new THREE.MeshLambertMaterial({ map: chipTexture() });
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.36, 28).rotateX(Math.PI / 2), gold);
+  rim.castShadow = true;
+  rim.userData.dynamic = true;
+  chip.add(rim);
+  for (const side of [1, -1]) {
+    const face = new THREE.Mesh(new THREE.CircleGeometry(1.48, 28), chipMat);
+    face.position.z = side * 0.19;
+    if (side < 0) face.rotation.y = Math.PI;
+    face.userData.dynamic = true;
+    chip.add(face);
+  }
+  chip.position.set(p.x + 4.2, p.h + 3.7, sz - 3.6);
+  b.box(p.x + 4.1, p.h + 1.9, sz - 3.7, 0.2, 0.5, 0.2, gold);
+  b.add(chip);
+
+  const spin = (time: number) => {
+    chip.rotation.y = time * 0.6;
+    star.rotation.y = time * 1.5;
+  };
+  if (!q.ambientDetail) return spin;
+
+  // Chasing bulbs: two interleaved sets that swap brightness.
   const sets = [0, 1].map(() => new THREE.MeshBasicMaterial({ color: PALETTE.bulb }));
   const geo = new THREE.SphereGeometry(0.11, 6, 4);
   const spots: THREE.Vector3[] = [];
-  for (let z = cz - 2.3; z <= cz + 2.31; z += 0.46) spots.push(new THREE.Vector3(ex + 1.5, 2.85, z), new THREE.Vector3(ex + 0.5, 4.75, z));
-  for (let z = p.z + 0.3; z <= p.z + p.d; z += 0.8) spots.push(new THREE.Vector3(ex + 0.18, p.h - 0.25, z));
-  for (let x = p.x + 0.3; x <= p.x + p.w; x += 0.8) spots.push(new THREE.Vector3(x, p.h - 0.25, p.z + p.d + 0.18));
+  const run = (from: THREE.Vector3, to: THREE.Vector3, step = 0.45) => {
+    const n = Math.max(1, Math.round(from.distanceTo(to) / step));
+    for (let i = 0; i <= n; i++) spots.push(from.clone().lerp(to, i / n));
+  };
+  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+  run(v(ex + 2.32, 3.08, cz - 3.0), v(ex + 2.32, 3.08, cz + 3.0)); // canopy edge
+  run(v(ex - 1.05, p.h + 0.45, cz - 3.5), v(ex - 1.05, p.h + 0.45, cz + 3.5)); // billboard border
+  run(v(ex - 1.05, p.h + 3.05, cz - 3.5), v(ex - 1.05, p.h + 3.05, cz + 3.5));
+  run(v(ex - 1.05, p.h + 0.9, cz - 3.5), v(ex - 1.05, p.h + 2.6, cz - 3.5));
+  run(v(ex - 1.05, p.h + 0.9, cz + 3.5), v(ex - 1.05, p.h + 2.6, cz + 3.5));
+  run(v(ex + 0.18, p.h - 0.25, p.z + 0.3), v(ex + 0.18, p.h - 0.25, sz - 0.5), 0.7); // cornice
+  run(v(p.x + 0.3, p.h - 0.25, sz + 0.18), v(ex - 0.5, p.h - 0.25, sz + 0.18), 0.7);
+  run(v(px + 1.06, ph - 6.2, pz + 0.02), v(px + 1.06, ph - 0.2, pz + 0.02), 0.5); // pylon edges
+  run(v(px + 0.02, ph - 6.2, pz + 1.06), v(px + 0.02, ph - 0.2, pz + 1.06), 0.5);
   const m = new THREE.Matrix4();
   [0, 1].forEach((k) => {
     const mine = spots.filter((_, i) => i % 2 === k);
     const inst = new THREE.InstancedMesh(geo, sets[k], mine.length);
-    mine.forEach((v, i) => inst.setMatrixAt(i, m.makeTranslation(v.x, v.y, v.z)));
+    mine.forEach((s, i) => inst.setMatrixAt(i, m.makeTranslation(s.x, s.y, s.z)));
     b.add(inst);
   });
   const on = new THREE.Color(PALETTE.bulb);
   const off = new THREE.Color(0x6b5a2e);
   return (time) => {
+    spin(time);
     const phase = Math.floor(time * 2.5) % 2;
     sets[0].color.copy(phase ? on : off);
     sets[1].color.copy(phase ? off : on);
