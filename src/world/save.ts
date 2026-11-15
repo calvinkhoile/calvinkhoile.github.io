@@ -27,6 +27,14 @@ export function loadSave(): SaveData {
   }
 }
 
+export function clearSave(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* nothing to clear */
+  }
+}
+
 export function writeSave(data: SaveData): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(data));

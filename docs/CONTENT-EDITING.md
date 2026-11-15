@@ -33,9 +33,11 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | `plaza.tourStart` | Choosing "Show me around" | "Follow me. First stop is where it all started." |
 | `plaza.tourEnd` | Arriving at the UCLA door | "UCLA. Best years of my life. Head in, I'll be back at the plaza." |
 | `plaza.signpost` | The plaza signpost | Directions to every area |
-| `betmgm.leader` | BetMGM gym leader, first talk | "Welcome to BetMGM. This is where I work now, on the rewards program." / "Four stations in here. Hit them all, then come back and see me." |
-| `betmgm.leaderDone` | BetMGM gym leader, all stations visited | "That's all four. You know this place better than most new hires." |
-| `door.locked` | Doors to gyms not built yet | "Still under construction. This one opens in the next build." (temporary, goes away in M4) |
+| `<gym>.leader` | Gym leader, first talk (ucla, deloitte, meta, betmgm) | Two lines each: a welcome and what's in the room. Example: "Deloitte. First real job, and where I figured out I wanted to build products." |
+| `<gym>.leaderDone` | Gym leader, every station visited (awards the badge) | One line each. Example: "That's all of UCLA. Go Bruins. This one's yours." |
+| `<gym>.leaderAgain` | Gym leader, after the badge | One line each, pointing at the next gym. Example: "Ship-It Badge is yours. BetMGM is at the top of the path." |
+| `toasts.twoBadges`, `toasts.fourBadges` | "Text from Calvin" at two and four badges | The two lines from the plan |
+| `door.locked` | Safety net for a door with no room behind it | Not reachable now that all four gyms exist |
 | `toasts.welcomeBack` | Returning visitors | "Welcome back. Your progress is saved." |
 
 `deloitte.sushi` is your own sentence from the Deloitte overview, not a draft.
@@ -44,6 +46,7 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 
 | What | Where | Draft |
 |---|---|---|
+| Badge names and how-to-earn lines | `src/content/badges.ts` | Bruin, Consultant, Ship-It, High Roller, Explorer, Park Legend (names from the plan) |
 | Trainer names | `src/world/looks.ts` | Rookie, Playmaker, Sixth Man, Sharpshooter |
 | Loading tips | `src/ui/screens.ts` | Three tips about the résumé button, tap-to-walk, and sprinting |
 | Station labels | `src/content/stations.ts` | Prompt names such as "Partnership Desk", "AI Lab", "Voice of the Customer" |

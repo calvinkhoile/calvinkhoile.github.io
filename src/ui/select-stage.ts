@@ -11,7 +11,7 @@ export class SelectStage {
   private spin = 0;
 
   constructor(reducedMotion: boolean) {
-    this.scene.background = new THREE.Color(0x0b1220);
+    // No background: the stage is drawn over the live park, so the world stays in view while picking.
     this.scene.add(new THREE.HemisphereLight(0xdbeafe, 0x1e293b, 1.6));
     const key = new THREE.DirectionalLight(0xfff1d6, 2.2);
     key.position.set(2, 4, 5);

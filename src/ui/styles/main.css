@@ -82,31 +82,91 @@ body {
 body:not(.is-playing) .hint,
 body:not(.is-playing) .joystick,
 body:not(.is-playing) .a-button,
-body:not(.is-playing) .resume-link {
+body:not(.is-playing) .hud-links,
+body.has-card .hud-links {
   display: none;
 }
 
-.resume-link {
+.hud-links {
   position: absolute;
   top: calc(14px + var(--safe-top));
   right: calc(14px + var(--safe-right));
-  padding: 9px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hud-socials {
+  display: flex;
+  gap: 8px;
+}
+
+.hud-btn {
+  display: inline-block;
+  padding: 9px 14px;
   border: 1px solid var(--hairline);
   border-radius: 999px;
   background: var(--surface);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
+  font: 600 14px/1.2 var(--font-body);
   text-decoration: none;
+  cursor: pointer;
 }
 
-.resume-link:hover {
+.hud-btn:hover {
   background: var(--accent);
 }
 
-.resume-link:focus-visible,
+.hud-resume {
+  border-color: transparent;
+  background: var(--accent);
+}
+
+.hud-resume:hover {
+  filter: brightness(1.15);
+}
+
+.hud-contact {
+  display: none;
+}
+
+/* Phones: Résumé stays out, the four socials fold into a Contact menu. */
+@media (max-width: 700px) {
+  .hud-contact {
+    display: inline-block;
+  }
+
+  .hud-socials {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 150px;
+    padding: 8px;
+    border: 1px solid var(--hairline);
+    border-radius: 16px;
+    background: rgba(8, 12, 20, 0.95);
+  }
+
+  .hud-links.is-open .hud-socials {
+    display: flex;
+  }
+
+  .hud-socials .hud-btn {
+    border-color: transparent;
+    background: transparent;
+    text-align: left;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.hud-btn:focus-visible,
+
 .btn:focus-visible,
 .select-arrow:focus-visible,
 .loading-link:focus-visible {
@@ -228,6 +288,7 @@ body:not(.is-playing) .resume-link {
 
 .select {
   justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(5, 8, 14, 0.82) 0, rgba(5, 8, 14, 0.25) 22%, rgba(5, 8, 14, 0.25) 62%, rgba(5, 8, 14, 0.88) 100%);
   pointer-events: auto;
   touch-action: none;
 }
@@ -1456,32 +1517,68 @@ body.is-talking .prompt {
   text-align: center;
 }
 
-.ba-row {
+.card-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 18px;
   align-items: start;
 }
 
-.ba-item {
+.card-row-item {
   margin: 0;
+  min-width: 0;
 }
 
-.ba-item .ba {
-  width: min(100%, 22vh);
-}
-
-.ba-item-label {
+.card-row-label {
   margin-bottom: 8px;
   font-size: 13px;
   font-weight: 800;
   text-align: center;
 }
 
-.ba-item .card-caption {
+.card-row-visual {
+  display: grid;
+  place-items: center;
+}
+
+/* Sized by viewport height so a whole row, captions included, fits on screen without scrolling. */
+.card-row .ba,
+.card-row .zoom {
+  width: min(100%, 20vh);
+}
+
+.card-row-visual > .card-photo,
+.card-row .gallery-slide .card-photo {
+  width: auto;
+  max-width: 100%;
+  max-height: 42vh;
+}
+
+.card-row-item .card-caption {
   margin-top: 10px;
   font-size: 13.5px;
   line-height: 1.5;
+}
+
+.card-panel:not([hidden]) {
+  animation: panel-in 0.18s ease;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.card-overlay {
+  animation: overlay-in 0.2s ease;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
 }
 
 .spots .compare {
@@ -1668,8 +1765,8 @@ body.is-talking .prompt {
     font-size: 13px;
   }
 
-  /* Before/afters sit in a swipeable row, sized so one fits the screen with its caption. */
-  .ba-row {
+  /* Combined rows become a swipeable strip, sized so one item fits the screen with its caption and the next peeks in. */
+  .card-row {
     display: flex;
     gap: 14px;
     margin: 0 -16px;
@@ -1680,13 +1777,17 @@ body.is-talking .prompt {
     scrollbar-width: none;
   }
 
-  .ba-row::-webkit-scrollbar {
+  .card-row::-webkit-scrollbar {
     display: none;
   }
 
-  .ba-item {
-    flex: 0 0 64%;
+  .card-row-item {
+    flex: 0 0 58%;
     scroll-snap-align: center;
+  }
+
+  .card-row-item--wide {
+    flex-basis: 84%;
   }
 
   .ba,
@@ -1694,12 +1795,14 @@ body.is-talking .prompt {
     width: min(100%, 24vh);
   }
 
-  .ba-item .ba {
+  .card-row .ba,
+  .card-row .zoom {
     width: min(100%, 17vh);
   }
 
-  .ba-item {
-    flex-basis: 58%;
+  .card-row-visual > .card-photo,
+  .card-row .gallery-slide .card-photo {
+    max-height: 34vh;
   }
 
   .card-title {
@@ -1743,5 +1846,250 @@ body.is-talking .prompt {
   .card-overlay,
   .spots-detail {
     transition: none;
+    animation: none;
+  }
+  .card-panel:not([hidden]) {
+    animation: none;
+  }
+}
+
+/* ---------- badges ---------- */
+.medal {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: transparent;
+  font: 800 13px/1 var(--font-body);
+}
+
+.medal.is-earned {
+  border-color: var(--medal-accent);
+  background: var(--medal);
+  color: var(--medal-accent);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+.medal--big {
+  width: 132px;
+  height: 132px;
+  border-width: 7px;
+  font-size: 64px;
+}
+
+body:not(.is-playing) .badge-case,
+body.has-card .badge-case,
+body.is-talking .badge-case {
+  display: none;
+}
+
+.badge-case {
+  position: absolute;
+  top: calc(14px + var(--safe-top));
+  left: calc(14px + var(--safe-left));
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.badge-case:hover {
+  border-color: var(--ink);
+}
+
+.badge-case:focus-visible,
+.badge-reset:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.station-counter {
+  top: calc(62px + var(--safe-top));
+}
+
+.badge-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlay-in 0.2s ease;
+}
+
+.badge-panel[hidden] {
+  display: none;
+}
+
+.badge-sheet {
+  width: min(440px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  background: #0b0d12;
+  animation: card-in 0.22s ease;
+}
+
+.badge-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.badge-panel-head h2 {
+  margin: 0;
+  font: 400 26px/1 var(--font-display);
+}
+
+.badge-panel-head h2 span {
+  margin-left: 8px;
+  font: 600 14px/1 var(--font-body);
+  opacity: 0.7;
+}
+
+.badge-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.badge-row .medal {
+  width: 40px;
+  height: 40px;
+  font-size: 19px;
+}
+
+.badge-row strong {
+  font-size: 15px;
+}
+
+.badge-row p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.72;
+}
+
+.badge-row.is-earned p {
+  color: #86efac;
+  opacity: 1;
+}
+
+.badge-reset {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1 var(--font-body);
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.badge-reset[data-armed] {
+  border-color: #f87171;
+  color: #fca5a5;
+  opacity: 1;
+}
+
+.ceremony {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  overflow: hidden;
+  animation: overlay-in 0.25s ease;
+}
+
+.ceremony[hidden] {
+  display: none;
+}
+
+.ceremony-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.ceremony .medal--big {
+  animation: medal-in 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes medal-in {
+  from {
+    opacity: 0;
+    transform: translateY(60px) rotateY(540deg) scale(0.3);
+  }
+}
+
+.ceremony-kicker {
+  margin: 14px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.ceremony-name {
+  margin: 0 0 14px;
+  font: 400 clamp(34px, 8vw, 54px) / 1 var(--font-display);
+}
+
+.ceremony-confetti i {
+  position: absolute;
+  top: -20px;
+  left: var(--x);
+  width: 9px;
+  height: 15px;
+  background: var(--c);
+  transform: rotate(var(--r));
+  animation: confetti 2.4s var(--d) cubic-bezier(0.3, 0.6, 0.6, 1) both;
+}
+
+@keyframes confetti {
+  to {
+    top: 105%;
+    transform: rotate(calc(var(--r) + 540deg)) translateX(40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ceremony .medal--big,
+  .badge-sheet,
+  .badge-panel,
+  .ceremony {
+    animation: none;
   }
 }

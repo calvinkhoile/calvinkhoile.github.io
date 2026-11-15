@@ -9,8 +9,9 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M0 | Project setup | Done (Nov 15, 2026). Pages source switched to GitHub Actions and verified: only site files are served |
 | M1 | Graybox movement ★ | Done. Approved by Calvin on his phone (Nov 15, 2026) |
 | M2 | Exterior art pass | Done, with small items deferred (see M2 section) |
-| M3 | Interaction + dialogue + cards ★ | Built, tests green. **Waiting on Calvin's review** |
-| M4–M8 | | Not started |
+| M3 | Interaction + dialogue + cards ★ | Done. Reviewed by Calvin twice (Nov 15), changes applied |
+| M4 | All gyms + badges | Done (Nov 15, 2026) |
+| M5–M8 | | Not started. M5 (Calvin's avatar) is next and ends at a ★ checkpoint |
 
 ## How to run
 
@@ -148,6 +149,39 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 5. **A button:** hidden by default on touch. It appears, translucent, only when there is something in range to use or a dialogue to advance.
 6. **Dialogue:** shows "Press any key to continue" (desktop) or "Tap to continue" (touch), and any key continues.
 
+### Calvin's second round of feedback (Nov 15) and what changed
+
+1. **Résumé:** every résumé link (HUD button, title screen, loading screen, plaza kiosk, skip link, no-WebGL fallback) now opens his real résumé PDF at `/resume.pdf` instead of the classic site. **The PDF is not committed yet**: it has his phone number on it, and this repo is public, so it stays local (gitignored) until he confirms. See Open issues.
+2. **Socials:** LinkedIn, GitHub, Twitter, and Email sit next to the Résumé button, top-right, always visible. Email copies the address and shows a toast, with a `mailto:` fallback. On phones the four fold into a Contact menu.
+3. **Trainer select over the park:** the four trainers are drawn on top of the live world instead of a blank stage, so the park stays in view from the title screen through the pick.
+4. **Ground arrows:** small chevrons run from the plaza to UCLA, north past every gym, and on to the court, with a short spur into each gym door. They pulse in the direction of travel. The Weightroom has none: it's the detour.
+5. **Same speed indoors:** interiors use a closer camera, which made the same world speed look faster. Indoor speed is now scaled by the camera zoom (0.62), so it looks identical on screen.
+6. **Smoother, fitted, combined pop-ups:** two or three simple screens (sliders, screenshots, photo sets) now sit side by side with their captions instead of behind tabs. That covers Rewards Store, Platform Enablement, AI at BetMGM, all three Meta projects, and the hobby cards. Images are sized by viewport height so a row fits on screen. Cards ease out on close as well as in, tabs cross-fade, and the phone sheet follows the finger.
+
+## M4: All gyms + badges (done)
+
+**What's in**
+- **Three more interiors:** UCLA (a campus gym: graduation stage, club fair booths, internship corkboard), Deloitte (an office: three project whiteboards, the sushi bar), Meta (a product floor: feedback kiosk, a giant phone showing Stories, a mailbox, a window with the HQ photo). All four gyms share one room template, so a gym file only lists its theme, furniture, and stations.
+- **Gym leaders:** Calvin stands at the back of every gym with three lines of dialogue: a welcome, the badge hand-off once every station is visited, and a follow-up afterwards.
+- **Badges:** six of them (Bruin, Consultant, Ship-It, High Roller, Explorer, Park Legend). Earning one plays a ceremony: the badge spins up with confetti and a short buzz on phones. The Explorer badge comes from finishing all five Weightroom stops. Park Legend waits for the finale (M6).
+- **Badge case:** six slots top-left. Tap it for the list of badges and how to earn each, plus a two-tap "Reset progress".
+- **Door badges:** the floating marker over each gym door turns from grey to the gym's color once its badge is earned.
+- **Texts from Calvin:** a toast at two badges and at four, using the lines from the plan.
+- **Deep links:** `#/gym/betmgm`, `#/gym/betmgm/rewards-store`, `#/weightroom/chess`, `#/court`. A link skips the title screen and drops the visitor there with the card open. The hash follows the visitor as they walk around and open cards.
+- **Save:** look, badges, and visited stations persist. Everything works with storage off.
+
+**Tests**
+- Vitest: 21 passing (adds reachability checks for every scene, a check that every station is placed exactly once, and deep-link parsing).
+- Playwright: 50 passing across desktop and mobile. New: a full run of UCLA, Deloitte, and Meta ending in each badge, the Weightroom to the Explorer badge, the badge case and reset, deep links, hash sync, the résumé and social buttons, and indoor speed.
+
+**Screenshots**
+
+| | |
+|---|---|
+| ![ucla](progress/m4-desktop-ucla-interior.png) | ![deloitte](progress/m4-desktop-deloitte-interior.png) |
+| ![meta](progress/m4-desktop-meta-interior.png) | ![ceremony](progress/m4-desktop-ceremony.png) |
+| ![weightroom](progress/m4-desktop-weightroom.png) | ![select](progress/m2-mobile-select.png) |
+
 ---
 
 ## Decisions and deviations from the plan
@@ -170,8 +204,14 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 | Gym doors | Interact to enter | Walking onto the door tile enters, and so does the prompt | Feels like a Pokémon door. The prompt is there for click/tap and keyboard users |
 | Map size and areas | 80 x 60 with a separate Workshop interior and Blacktop | 52 x 60 with one outdoor Weightroom | Calvin's call after M3: the court was too far and the side areas were easy to miss |
 | Workshop easter egg | "You are here" diorama | Cut | Fewer stops in the Weightroom, at Calvin's request |
+| Résumé | `/resume`: an HTML page generated from the content files (M7) | Calvin's real résumé PDF at `/resume.pdf` | Calvin's call (Nov 15). The generated page is dropped unless he wants both. Note: a PDF is less accessible than HTML, so the plan's "résumé view is the accessible version" no longer holds |
+| HUD socials | Icon buttons | Text buttons (LinkedIn, GitHub, Twitter, Email) | Clear without hand-drawn brand icons. Easy to swap for icons later |
+| Character select | Rotating models on their own screen | Drawn over the live park | Calvin's call: keep the world in view so people don't bail |
+| Deep-link visitors | Default look | Default look, and nothing is saved until they pick one | A shared link shouldn't lock a look in for the next real visit |
 | `deploy.yml` on `world` | Changed to build + `dist/` at M8 | Left as the M0 version for now | It only triggers on `main`, so it's inert here. Swapped at M8 as planned |
 
 ## Open issues
 
-- **LAN preview not verified from this laptop.** The dev server listens on all interfaces, but a connection from the laptop to its own LAN IP times out. The laptop runs CrowdStrike, FortiClient, and Tailscale network extensions, and one of them may filter LAN traffic. If the phone can't load the LAN URL, the plan's fallback is a temporary `cloudflared` tunnel (not installed here).
+- **Résumé PDF is local only.** `public/resume.pdf` is gitignored because it shows a phone number and the repo is public. On Calvin's machine the links work. On CI and in a deploy they would 404 until the file is committed. Needs his yes or no (or a version without the phone number).
+- **LAN preview not verified from this laptop.** The dev server listens on all interfaces, but a connection from the laptop to its own LAN IP times out (CrowdStrike, FortiClient, and Tailscale network extensions are installed). Calvin has been testing on his phone, so it reaches him.
+- **Running tests locally:** stop the dev server first if the machine is busy. Each test page renders WebGL in software, and Playwright is capped at three workers for that reason.

@@ -62,6 +62,55 @@ export const dialogue: Record<string, DialogueNode> = {
     ],
   },
 
+  // Gym leaders. Three nodes each: first talk, all stations done (awards the badge), and after the badge.
+  'ucla.leader': {
+    lines: [
+      { speaker: CALVIN, text: 'Welcome to UCLA. Dream school, and where all of this started.' },
+      { speaker: CALVIN, text: 'Three stops in here: the graduation stage, the club fair, and the internship board.' },
+    ],
+    action: 'card:ucla-overview',
+  },
+  'ucla.leaderDone': {
+    lines: [{ speaker: CALVIN, text: "That's all of UCLA. Go Bruins. This one's yours." }],
+    action: 'badge:ucla',
+  },
+  'ucla.leaderAgain': {
+    lines: [{ speaker: CALVIN, text: 'Bruin Badge looks good on you. Deloitte is next door, up the path.' }],
+    action: 'card:ucla-overview',
+  },
+
+  'deloitte.leader': {
+    lines: [
+      { speaker: CALVIN, text: 'Deloitte. First real job, and where I figured out I wanted to build products.' },
+      { speaker: CALVIN, text: 'Three whiteboards, three projects. The sushi bar has a story too.' },
+    ],
+    action: 'card:deloitte-overview',
+  },
+  'deloitte.leaderDone': {
+    lines: [{ speaker: CALVIN, text: 'Three for three. You read whiteboards faster than most partners.' }],
+    action: 'badge:deloitte',
+  },
+  'deloitte.leaderAgain': {
+    lines: [{ speaker: CALVIN, text: 'Consultant Badge, earned. Meta is the next building up.' }],
+    action: 'card:deloitte-overview',
+  },
+
+  'meta.leader': {
+    lines: [
+      { speaker: CALVIN, text: 'Meta. Stories and Messaging, shipping to billions of people.' },
+      { speaker: CALVIN, text: 'Check the kiosk, the feature wall, and the mailbox. The window is worth a look too.' },
+    ],
+    action: 'card:meta-overview',
+  },
+  'meta.leaderDone': {
+    lines: [{ speaker: CALVIN, text: 'All three. Ship it.' }],
+    action: 'badge:meta',
+  },
+  'meta.leaderAgain': {
+    lines: [{ speaker: CALVIN, text: 'Ship-It Badge is yours. BetMGM is at the top of the path.' }],
+    action: 'card:meta-overview',
+  },
+
   'betmgm.leader': {
     lines: [
       { speaker: CALVIN, text: 'Welcome to BetMGM. This is where I work now, on the rewards program.' },
@@ -71,6 +120,10 @@ export const dialogue: Record<string, DialogueNode> = {
   },
   'betmgm.leaderDone': {
     lines: [{ speaker: CALVIN, text: "That's all four. You know this place better than most new hires." }],
+    action: 'badge:betmgm',
+  },
+  'betmgm.leaderAgain': {
+    lines: [{ speaker: CALVIN, text: 'High Roller Badge, nice. My court is right outside when you want a game.' }],
     action: 'card:betmgm-overview',
   },
 
@@ -85,7 +138,10 @@ export const dialogue: Record<string, DialogueNode> = {
   },
 };
 
-/** Short non-blocking notices. */
+/** Short non-blocking notices. The two badge lines arrive as a "text from Calvin". */
 export const toasts = {
   welcomeBack: 'Welcome back. Your progress is saved.',
+  twoBadges: "Calvin: Two badges already? You're moving. Court's open whenever you're ready.",
+  fourBadges: "Calvin: Okay you've done your homework. Let's see if it paid off. Court. Now.",
+  reset: 'Progress cleared.',
 };

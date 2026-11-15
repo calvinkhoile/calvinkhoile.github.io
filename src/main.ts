@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import './ui/styles/main.css';
+import { badgeById, badgeForScene, badges as allBadges, CAREER_BADGES } from './content/badges';
 import { dialogue as dialogueNodes, toasts, type DialogueNode } from './content/dialogue';
+import { profile } from './content/profile';
 import { countedStations, stationById, type SceneId } from './content/stations';
 import { FollowCamera } from './engine/camera';
 import { DebugOverlay } from './engine/debug';
@@ -9,6 +11,7 @@ import { Input, type InputState } from './engine/input';
 import { loadAll, loadModel } from './engine/loader';
 import { FrameWatchdog, pickTier, settingsFor, type QualityTier } from './engine/quality';
 import { createRenderer, hasWebGL2, isCoarsePointer } from './engine/renderer';
+import { BadgeUi } from './ui/badges';
 import { CardOverlay } from './ui/card';
 import { aboutCard, careerCard, stationCard } from './ui/card-models';
 import { DialogueBox } from './ui/dialogue';
@@ -27,7 +30,8 @@ import type { Door, MapDef } from './world/maps/types';
 import { Npc } from './world/npc';
 import { OccluderFader } from './world/occlusion';
 import { Player, PLAYER_RADIUS, WALK_SPEED } from './world/player';
-import { loadSave, writeSave } from './world/save';
+import { formatRoute, parseRoute, type Route } from './world/routes';
+import { clearSave, loadSave, writeSave } from './world/save';
 import { SCENE_NAMES, SCENES } from './world/scenes';
 
 declare global {
@@ -44,6 +48,7 @@ declare global {
       look: string;
       drawCalls: number;
       visited: string[];
+      badges: string[];
       guide: string | null;
       player: { x: number; z: number; speed: number; pathLength: number };
       targets: { id: string; kind: string; label: string; x: number; z: number }[];
@@ -94,7 +99,10 @@ async function boot(): Promise<void> {
   const screens = new Screens();
   const save = loadSave();
   const visited = new Set(save.visitedStations);
-  const persist = () => writeSave({ ...save, visitedStations: [...visited] });
+  const owned = new Set(save.badges);
+  const persist = () => writeSave({ ...save, visitedStations: [...visited], badges: [...owned] });
+  // A deep link drops the visitor straight in: no title screen, default look unless they already picked one.
+  const entryRoute = parseRoute(location.hash);
   let state: GameState = 'loading';
 
   // ----- renderer, quality, lights -----
@@ -124,11 +132,23 @@ async function boot(): Promise<void> {
   const counter = document.getElementById('station-counter') as HTMLElement;
   const fade = document.getElementById('fade') as HTMLElement;
   const toastEl = document.getElementById('toast') as HTMLElement;
+  let toastTimer = 0;
   const toast = (text: string) => {
     toastEl.textContent = text;
     toastEl.hidden = false;
-    setTimeout(() => (toastEl.hidden = true), 4500);
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => (toastEl.hidden = true), 5000);
   };
+  const badgeUi = new BadgeUi(ui, {
+    reducedMotion,
+    onReset: () => {
+      clearSave();
+      location.hash = '';
+      location.reload();
+    },
+    onToggle: (open) => (open ? begin() : end()),
+  });
+  badgeUi.refresh(owned);
 
   // ----- camera -----
   // Tuning knobs for comparing camera feel on a real device:
@@ -202,12 +222,42 @@ async function boot(): Promise<void> {
     follow.setBounds(next.def.cameraBounds);
     player.teleport(x, z);
     player.facing = facing;
+    player.speedScale = interior ? INTERIOR_ZOOM : 1;
     follow.snapTo(x, z);
     marker.visible = false;
     pending = null;
     doorArmed = false;
     next.interactions.refresh(visited);
     updateCounter();
+    syncHash();
+  }
+
+  /** Keep the URL hash on the current place (and open station card), without adding history entries. */
+  function syncHash(): void {
+    const station = cards.isOpen && cards.currentId && stationById(cards.currentId) ? cards.currentId : null;
+    const hash = current ? formatRoute(current.id, station) : '#/';
+    if (location.hash !== hash && !(hash === '#/' && location.hash === '')) history.replaceState(null, '', hash);
+  }
+
+  function refreshDoorBadges(): void {
+    for (const b of allBadges) if (b.scene) exteriorScene.art.setDoorBadge?.(b.scene, owned.has(b.id));
+  }
+
+  /** Award a badge with the ceremony. No-op if it's already owned. */
+  async function award(id: string): Promise<void> {
+    const badge = badgeById(id);
+    if (!badge || owned.has(id)) return;
+    owned.add(id);
+    persist();
+    badgeUi.refresh(owned);
+    refreshDoorBadges();
+    begin();
+    await badgeUi.ceremony(badge);
+    end();
+    // Calvin "texts" at two and four career badges.
+    const career = CAREER_BADGES.filter((b) => owned.has(b)).length;
+    if (CAREER_BADGES.includes(id) && career === 2) toast(toasts.twoBadges);
+    if (CAREER_BADGES.includes(id) && career === 4) toast(toasts.fourBadges);
   }
 
   // Click/tap-to-move destination marker.
@@ -238,6 +288,7 @@ async function boot(): Promise<void> {
 
   const exteriorScene = await loadScene('exterior');
   showScene(exteriorScene, exteriorScene.def.spawn.x, exteriorScene.def.spawn.z, Math.PI * 0.75);
+  refreshDoorBadges();
 
   const input = new Input(canvas, ui);
 
@@ -270,17 +321,21 @@ async function boot(): Promise<void> {
 
   async function openCard(model: Parameters<CardOverlay['open']>[0]): Promise<void> {
     begin();
-    await cards.open(model, {
+    const closed = cards.open(model, {
       onLink: guideTo,
       onFooter: (action) => {
         if (action.startsWith('guide:')) guideTo(action.slice(6));
       },
     });
+    syncHash();
+    await closed;
+    syncHash();
     end();
   }
 
   async function runAction(action: string): Promise<void> {
     if (action === 'about') return openCard(aboutCard());
+    if (action.startsWith('badge:')) return award(action.slice(6));
     if (action.startsWith('card:')) return openCard(careerCard(action.slice(5), { chip: chipFor(current.id) }));
     if (action === 'tour') return say('plaza.tourStart');
     const calvin = exteriorScene.npcs[0];
@@ -340,8 +395,10 @@ async function boot(): Promise<void> {
       .filter((t): t is Target => !!t)
       .sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z));
     if (remaining.length > 0) model.footer = { label: 'Next station →', action: `guide:${remaining[0].id}` };
-    else if (current.npcs.some((n) => n.spawn.role === 'leader')) model.footerNote = 'Talk to Calvin for your badge.';
+    else if (current.npcs.some((n) => n.spawn.role === 'leader') && !owned.has(badgeForScene(current.id)?.id ?? '')) model.footerNote = 'Talk to Calvin for your badge.';
     await openCard(model);
+    // The Weightroom has no leader: finishing its last stop earns the Explorer badge on the spot.
+    if (station.scene === 'exterior' && countedStations('exterior').every((s) => visited.has(s.id))) await award('explorer');
   }
 
   let introSeen = false;
@@ -353,7 +410,8 @@ async function boot(): Promise<void> {
     }
     const prefix = npc.spawn.dialogue;
     const allDone = countedStations(current.id).every((s) => visited.has(s.id));
-    return say(allDone ? `${prefix}.leaderDone` : `${prefix}.leader`);
+    const hasBadge = owned.has(badgeForScene(current.id)?.id ?? '');
+    return say(hasBadge ? `${prefix}.leaderAgain` : allDone ? `${prefix}.leaderDone` : `${prefix}.leader`);
   }
 
   async function useDoor(door: Door): Promise<void> {
@@ -401,6 +459,24 @@ async function boot(): Promise<void> {
         break;
     }
   }
+
+  // ----- HUD: résumé + socials -----
+  const hudLinks = document.getElementById('hud-links') as HTMLElement;
+  const contact = document.getElementById('hud-contact') as HTMLButtonElement;
+  hudLinks.querySelectorAll<HTMLAnchorElement>('[data-social]').forEach((a) => (a.href = profile.links[a.dataset.social as keyof typeof profile.links]));
+  const setContactOpen = (open: boolean) => {
+    hudLinks.classList.toggle('is-open', open);
+    contact.setAttribute('aria-expanded', String(open));
+  };
+  contact.addEventListener('click', () => setContactOpen(!hudLinks.classList.contains('is-open')));
+  canvas.addEventListener('pointerdown', () => setContactOpen(false));
+  document.getElementById('hud-email')!.addEventListener('click', () => {
+    // Copy the address. If the clipboard is off limits, fall back to opening a mail draft.
+    const fallback = () => (location.href = `mailto:${profile.email}`);
+    if (!navigator.clipboard) return fallback();
+    navigator.clipboard.writeText(profile.email).then(() => toast(`Copied ${profile.email}`), fallback);
+    setContactOpen(false);
+  });
 
   // ----- HUD bits -----
   const aButton = document.getElementById('a-button') as HTMLButtonElement;
@@ -498,6 +574,9 @@ async function boot(): Promise<void> {
     get visited() {
       return [...visited];
     },
+    get badges() {
+      return [...owned];
+    },
     get guide() {
       return current.interactions.guideId;
     },
@@ -540,8 +619,17 @@ async function boot(): Promise<void> {
     time += dt;
 
     if (state === 'select' && stage) {
+      // Character select: the park keeps rendering behind, the trainers are drawn on top of it.
       stage.update(dt);
+      current.art.update(time);
+      for (const npc of current.npcs) npc.update(dt, null);
+      player.object.visible = false;
+      renderer.three.render(scene, follow.camera);
+      player.object.visible = true;
+      renderer.three.autoClear = false;
+      renderer.three.clearDepth();
       renderer.three.render(stage.scene, stage.camera);
+      renderer.three.autoClear = true;
       return;
     }
 
@@ -624,11 +712,40 @@ async function boot(): Promise<void> {
     document.body.classList.add('is-playing');
   };
 
-  if (save.look) {
-    // Returning visitor: straight into the park with their look and progress.
+  /** Go where a deep link points: into a gym, to an outdoor spot, and open a station's card if one is named. */
+  async function applyRoute(route: Route): Promise<void> {
+    if (busyCount > 0) return;
+    if (route.scene !== current.id) {
+      if (route.scene === 'exterior') {
+        showScene(exteriorScene, exteriorScene.def.spawn.x, exteriorScene.def.spawn.z, Math.PI);
+      } else if (SCENES[route.scene]) {
+        begin();
+        const next = await loadScene(route.scene);
+        showScene(next, next.def.spawn.x, next.def.spawn.z, Math.PI);
+        end();
+      }
+    }
+    if (route.spot === 'weightroom') window.__mypark!.teleport(38.5, 25);
+    if (route.spot === 'court') window.__mypark!.teleport(38, 12);
+    if (route.station) {
+      const station = stationById(route.station);
+      const target = current.interactions.byId(route.station);
+      if (target) window.__mypark!.teleport(target.x, target.z);
+      const model = station && stationCard(station, chipFor(station.scene));
+      if (model) await openCard(model);
+    }
+  }
+  window.addEventListener('hashchange', () => {
+    const route = parseRoute(location.hash);
+    if (route && state === 'play') void applyRoute(route);
+  });
+
+  if (save.look || entryRoute) {
+    // Returning visitor or deep link: straight into the park, no title screen.
     introSeen = true;
     enterWorld();
-    toast(toasts.welcomeBack);
+    if (entryRoute) await applyRoute(entryRoute);
+    else toast(toasts.welcomeBack);
     return;
   }
 

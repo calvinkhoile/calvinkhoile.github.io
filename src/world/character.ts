@@ -80,7 +80,9 @@ export class Character {
   }
 
   /** Pick idle / walk / jog / sprint from ground speed and keep the feet in step with it. */
-  locomote(speed: number): void {
+  locomote(groundSpeed: number, scale = 1): void {
+    // `scale` undoes the indoor slowdown so the same run cycle plays inside and out.
+    const speed = groundSpeed / scale;
     const anim: CharacterAnim = speed < 0.25 ? 'Idle_Loop' : speed < 2.7 ? 'Walk_Loop' : speed < 5.2 ? 'Jog_Fwd_Loop' : 'Sprint_Loop';
     this.play(anim);
     const natural = NATURAL_SPEED[anim];

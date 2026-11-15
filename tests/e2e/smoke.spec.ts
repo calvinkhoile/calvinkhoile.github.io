@@ -35,7 +35,7 @@ test('fresh visit: title, character select, then into the park with the look sav
   const errors = await boot(page, '', { fresh: true });
   await expect(page.locator('#title')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.title-name')).toHaveText('CALVIN LE');
-  await expect(page.locator('#title a')).toHaveAttribute('href', /classic|resume/);
+  await expect(page.locator('#title a')).toHaveAttribute('href', '/resume.pdf');
   expect(await page.evaluate(() => window.__mypark!.ready)).toBe(false);
   await page.waitForTimeout(600);
   await page.screenshot({ path: `docs/progress/m2-${info.project.name}-title.png` });
@@ -58,7 +58,8 @@ test('fresh visit: title, character select, then into the park with the look sav
   await expect.poll(() => page.evaluate(() => window.__mypark!.busy)).toBe(false);
   expect(await page.evaluate(() => window.__mypark!.look)).toBe('b');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mypark:v1')!).look)).toBe('b');
-  await expect(page.locator('.resume-link')).toBeVisible();
+  await expect(page.locator('.hud-resume')).toBeVisible();
+  await expect(page.locator('.hud-resume')).toHaveAttribute('href', '/resume.pdf');
   expect(errors).toEqual([]);
 });
 

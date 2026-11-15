@@ -5,6 +5,8 @@ export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000, // CI renders WebGL in software, so the game loop runs slowly there
   fullyParallel: true,
+  // Each page renders WebGL in software. More than three at once starves them all.
+  workers: 3,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {

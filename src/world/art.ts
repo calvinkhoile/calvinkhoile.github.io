@@ -19,6 +19,8 @@ export interface ArtScene {
   occluders: Occluder[];
   /** Per-frame ambient animation (badges, marquee, kiosk glow). */
   update(time: number): void;
+  /** Light up the floating badge over a door once its gym's badge is earned. Keyed by the scene the door leads to. */
+  setDoorBadge?(to: string, earned: boolean): void;
 }
 
 const PALETTE = {
@@ -473,7 +475,9 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
     }
   }
 
-  for (const door of map.doors) animated.push(buildDoor(shared, door));
+  const doorBadges = new Map<string, { mesh: THREE.Mesh; color: number }>();
+  for (const door of map.doors) animated.push(buildDoor(shared, door, doorBadges));
+  if (map.guides) animated.push(buildGuideArrows(root, map.guides));
   buildSigns(shared, map);
   if (q.ambientDetail) scatterDecor(map, place, shared);
   shared.merge();
@@ -487,7 +491,20 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
     for (const o of kit.instances(model, transforms, shadows && !model.startsWith('flower') && !model.startsWith('skyline'))) root.add(o);
   }
 
-  return { root, occluders, update: (time) => animated.forEach((fn) => fn(time)) };
+  return {
+    root,
+    occluders,
+    update: (time) => animated.forEach((fn) => fn(time)),
+    setDoorBadge(to, earned) {
+      const badge = doorBadges.get(to);
+      if (!badge) return;
+      const mat = badge.mesh.material as THREE.MeshLambertMaterial;
+      // Grey until earned, then the gym's color, glowing.
+      mat.color.setHex(earned ? badge.color : 0xaab0b8);
+      mat.emissive.setHex(earned ? badge.color : 0x000000);
+      mat.emissiveIntensity = earned ? 0.6 : 0;
+    },
+  };
 }
 
 function buildGround(root: THREE.Group, map: MapDef, shadows: boolean): void {
@@ -1030,7 +1047,7 @@ function buildTrophyCase(b: Builder, p: Prop): void {
   }
 }
 
-function buildDoor(b: Builder, d: Door): (time: number) => void {
+function buildDoor(b: Builder, d: Door, registry: Map<string, { mesh: THREE.Mesh; color: number }>): (time: number) => void {
   const out = FACE_OUT[d.facing];
   // The door sits on the wall: the edge of the door tile opposite to the way it faces.
   const wx = d.x + 0.5 - out[0] * 0.5;
@@ -1042,11 +1059,60 @@ function buildDoor(b: Builder, d: Door): (time: number) => void {
   // Floating badge above the door: grey until earned (M4 turns it full color).
   const badge = b.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.42), new THREE.MeshLambertMaterial({ color: 0xaab0b8, flatShading: true })));
   badge.userData.dynamic = true;
+  registry.set(d.to, { mesh: badge, color: d.color });
   badge.position.set(wx + out[0] * 0.9, 3.4, wz + out[1] * 0.9);
   const phase = d.x * 0.7 + d.z;
   return (time) => {
     badge.rotation.y = time * 1.2 + phase;
     badge.position.y = 3.4 + Math.sin(time * 1.6 + phase) * 0.12;
+  };
+}
+
+/** Small chevrons painted along the route, pulsing gently in the direction of travel. */
+function buildGuideArrows(root: THREE.Group, guides: { x: number; z: number }[][]): (time: number) => void {
+  const shape = new THREE.Shape();
+  // A chevron pointing +y in shape space (becomes -z, "forward", once laid flat).
+  shape.moveTo(0, 0.28);
+  shape.lineTo(0.3, -0.06);
+  shape.lineTo(0.3, -0.24);
+  shape.lineTo(0, 0.1);
+  shape.lineTo(-0.3, -0.24);
+  shape.lineTo(-0.3, -0.06);
+  shape.closePath();
+  const geo = new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
+  const spots: { x: number; z: number; angle: number; phase: number }[] = [];
+  const SPACING = 1.9;
+  for (const line of guides) {
+    let along = 0;
+    for (let i = 0; i < line.length - 1; i++) {
+      const a = line[i];
+      const b = line[i + 1];
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      const angle = Math.atan2(b.x - a.x, b.z - a.z) + Math.PI; // chevron's forward is -z
+      const n = Math.max(1, Math.floor(len / SPACING));
+      for (let k = 0; k < n; k++) {
+        const t = (k + 0.5) / n;
+        spots.push({ x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, angle, phase: along + t * len });
+      }
+      along += len;
+    }
+  }
+  // Three interleaved groups so brightness can travel along the path like runway lights.
+  const groups = [0, 1, 2].map(() => new THREE.MeshBasicMaterial({ color: 0xfff4d6, transparent: true, opacity: 0.5, depthWrite: false }));
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  const one = new THREE.Vector3(1, 1, 1);
+  groups.forEach((mat, g) => {
+    const mine = spots.filter((_, i) => i % 3 === g);
+    const inst = new THREE.InstancedMesh(geo, mat, mine.length);
+    mine.forEach((s, i) => inst.setMatrixAt(i, m.compose(new THREE.Vector3(s.x, 0.045, s.z), q.setFromAxisAngle(up, s.angle), one)));
+    inst.renderOrder = 2;
+    root.add(inst);
+  });
+  return (time) => {
+    const lead = Math.floor(time * 2.2) % 3;
+    groups.forEach((mat, g) => (mat.opacity = g === lead ? 0.85 : 0.38));
   };
 }
 

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { Grid, TILE_BLOCKED } from '../src/engine/grid';
 import { buildGrid } from '../src/world/collision';
 import { exterior } from '../src/world/maps/exterior';
+import { SCENES } from '../src/world/scenes';
+import { stations } from '../src/content/stations';
+import { parseRoute, formatRoute } from '../src/world/routes';
 
 const R = 0.35;
 
@@ -122,5 +125,44 @@ describe('Exterior map', () => {
       expect(grid.isBlocked(0, z)).toBe(true);
       expect(grid.isBlocked(exterior.width - 1, z)).toBe(true);
     }
+  });
+});
+
+describe('Every scene', () => {
+  for (const [id, map] of Object.entries(SCENES)) {
+    const grid = buildGrid(map!);
+    it(`${id}: spawn, stations, NPCs, and doors are all reachable`, () => {
+      expect(grid.circleBlocked(map!.spawn.x, map!.spawn.z, R)).toBe(false);
+      for (const i of map!.interactables) {
+        expect(grid.circleBlocked(i.x, i.z, R), `${i.id} stand point is blocked`).toBe(false);
+        expect(grid.findPath(map!.spawn, { x: i.x, z: i.z }, R), `no route to ${i.id}`).not.toBeNull();
+      }
+      for (const d of map!.doors) expect(grid.findPath(map!.spawn, { x: d.x + 0.5, z: d.z + 0.5 }, R), `no route to door ${d.id}`).not.toBeNull();
+      for (const n of map!.npcs) expect(grid.findPath(map!.spawn, { x: n.x + 0.5, z: n.z + 1.5 }, R), `no route to ${n.id}`).not.toBeNull();
+    });
+  }
+
+  it('every station in the registry is placed in exactly one scene', () => {
+    const placed = Object.values(SCENES).flatMap((m) => m!.interactables.filter((i) => i.station).map((i) => i.station!));
+    expect([...placed].sort()).toEqual(stations.map((s) => s.id).sort());
+  });
+});
+
+describe('Deep links', () => {
+  it('parses gym, station, weightroom, and court routes', () => {
+    expect(parseRoute('#/gym/betmgm')).toEqual({ scene: 'gym-betmgm', station: undefined });
+    expect(parseRoute('#/gym/betmgm/rewards-store')).toEqual({ scene: 'gym-betmgm', station: 'betmgm/rewards-store' });
+    expect(parseRoute('#/weightroom/chess')).toEqual({ scene: 'exterior', spot: 'weightroom', station: 'weightroom/chess' });
+    expect(parseRoute('#/court')).toEqual({ scene: 'exterior', spot: 'court' });
+    expect(parseRoute('#/')).toBeNull();
+    expect(parseRoute('#/gym/nope')).toBeNull();
+    expect(parseRoute('#/gym/meta/not-a-station')).toEqual({ scene: 'gym-meta', station: undefined });
+  });
+
+  it('formats the hash for a place and an open card', () => {
+    expect(formatRoute('exterior', null)).toBe('#/');
+    expect(formatRoute('gym-ucla', null)).toBe('#/gym/ucla');
+    expect(formatRoute('gym-ucla', 'ucla/clubs')).toBe('#/gym/ucla/clubs');
+    expect(formatRoute('exterior', 'weightroom/running')).toBe('#/weightroom/running');
   });
 });

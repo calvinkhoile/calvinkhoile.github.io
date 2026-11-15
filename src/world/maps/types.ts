@@ -75,6 +75,18 @@ export interface NpcSpawn {
   faceZ: number;
 }
 
+/** Look of an interior room. */
+export interface InteriorTheme {
+  floor: 'casino' | 'hardwood' | 'office' | 'studio';
+  wall: number;
+  trim: number;
+  /** Accent used for pinstripes and details. */
+  accent: number;
+  logo: string;
+  /** Backing color behind the wall logo. */
+  logoBg: number;
+}
+
 export interface MapDef {
   id: string;
   width: number;
@@ -86,7 +98,10 @@ export interface MapDef {
   interactables: Interactable[];
   npcs: NpcSpawn[];
   spawn: { x: number; z: number };
+  /** Ground arrows that lead visitors along the main route. Each list is a polyline; arrows point along it. */
+  guides?: { x: number; z: number }[][];
   /** Interiors: tighter camera, dark backdrop, no fog. */
   interior?: boolean;
+  theme?: InteriorTheme;
   cameraBounds: { minX: number; maxX: number; minZ: number; maxZ: number };
 }

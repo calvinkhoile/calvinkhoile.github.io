@@ -12,14 +12,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Lilita+One&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- Points at the classic site until /resume ships in M7. -->
-  <a class="skip-link" href="/classic/">Skip to the classic site</a>
+  <a class="skip-link" href="/resume.pdf">Skip to résumé (PDF)</a>
 
   <canvas id="world" aria-label="MyPark, a 3D world you can walk around"></canvas>
 
   <div id="ui">
-    <!-- Points at the classic site until /resume ships in M7. -->
-    <a class="resume-link" href="/classic/" target="_blank" rel="noopener">Résumé</a>
+    <!-- Always visible: the résumé (Calvin's real PDF) and his socials. Hrefs for the socials come from src/content/profile.ts. -->
+    <nav class="hud-links" id="hud-links" aria-label="Résumé and contact">
+      <a class="hud-btn hud-resume" href="/resume.pdf" target="_blank" rel="noopener">Résumé</a>
+      <button class="hud-btn hud-contact" id="hud-contact" type="button" aria-expanded="false" aria-controls="hud-socials">Contact</button>
+      <div class="hud-socials" id="hud-socials">
+        <a class="hud-btn" data-social="linkedin" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="hud-btn" data-social="github" target="_blank" rel="noopener">GitHub</a>
+        <a class="hud-btn" data-social="x" target="_blank" rel="noopener">Twitter</a>
+        <button class="hud-btn" id="hud-email" type="button">Email</button>
+      </div>
+    </nav>
     <div id="hint" class="hint" role="note">
       <span class="hint-desktop">WASD or arrow keys to move · Click to walk there</span>
       <span class="hint-touch">Use the joystick to move<br />or tap the ground to walk there</span>
@@ -48,7 +56,7 @@
     <p class="title-role">Sr. Product Manager · BetMGM</p>
     <div class="title-actions">
       <button id="title-start" class="btn btn-primary" type="button">Press Start</button>
-      <a class="btn" href="/classic/">View Résumé</a>
+      <a class="btn" href="/resume.pdf" target="_blank" rel="noopener">View Résumé</a>
     </div>
   </div>
 
@@ -56,12 +64,13 @@
     <img class="loading-icon" src="/favicon.png" alt="" width="72" height="72" />
     <div class="loading-track"><div id="loading-bar" class="loading-bar"></div></div>
     <p id="loading-tip" class="loading-tip"></p>
-    <a class="loading-link" href="/classic/">Skip to the résumé</a>
+    <a class="loading-link" href="/resume.pdf">Skip to the résumé</a>
   </div>
 
   <div id="fallback" class="fallback" hidden>
     <h1>Your device is sitting this one out.</h1>
     <p>Here's the fast version.</p>
+    <a href="/resume.pdf">Open my résumé</a>
     <a href="/classic/">Open the classic site</a>
   </div>
 
@@ -69,6 +78,7 @@
     <div class="fallback">
       <h1>Calvin Le</h1>
       <p>Senior Product Manager at BetMGM. This page needs JavaScript.</p>
+      <a href="/resume.pdf">Open my résumé</a>
       <a href="/classic/">Open the classic site</a>
     </div>
   </noscript>

@@ -69,15 +69,13 @@ test('signpost: prompt appears in range and its dialogue plays through', async (
   await interact(page, isMobile);
   await expect(page.locator('.dialogue')).toBeVisible();
   await expect(page.locator('.dialogue-speaker')).toHaveText('Signpost');
-  // First press completes the typewriter, second moves to the next line.
-  await page.locator('.dialogue').click();
-  await expect(page.locator('.dialogue-text')).toContainText('West: UCLA');
+  // The line types itself out, then shows how to continue.
+  await expect(page.locator('.dialogue-text')).toContainText('North along the path: Deloitte, Meta, BetMGM.');
   await expect(page.locator('.dialogue-hint')).toHaveText(isMobile ? 'Tap to continue' : 'Press any key to continue');
-  // Any key continues on desktop.
+  // Any key continues on desktop. A tap does on touch.
   if (isMobile) await page.locator('.dialogue').click();
   else await page.keyboard.press('x');
-  await page.locator('.dialogue').click();
-  await expect(page.locator('.dialogue-text')).toContainText('The Weightroom');
+  await expect(page.locator('.dialogue-text')).toContainText("Calvin's Court.");
   await page.locator('.dialogue').click();
   await expect(page.locator('.dialogue')).toBeHidden();
   await idle(page);
@@ -138,10 +136,10 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
 
     if (i === 0) {
       // All three before/afters are on screen at once, with a hint, and each slider follows its range input.
-      await expect(page.locator('.card .ba-row .ba')).toHaveCount(3);
+      await expect(page.locator('.card .card-row .ba')).toHaveCount(3);
       await expect(page.locator('.card [data-tab]')).toHaveCount(0);
       await expect(page.locator('.card-hint')).toContainText('Drag each slider');
-      const slider = page.locator('.card .ba-row .ba').first();
+      const slider = page.locator('.card .card-row .ba').first();
       await slider.locator('.ba-range').evaluate((el: HTMLInputElement) => {
         el.value = '80';
         el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -166,10 +164,10 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
         await page.screenshot({ path: `docs/progress/m3-${info.project.name}-card-spots.png` });
       }
       if (i === 2) {
-        // Gallery pages with its arrows.
-        await page.locator('.card [data-tab="0"]').click();
-        await page.locator('.card-panel:not([hidden]) .gallery-next').click();
-        await expect(page.locator('.card-panel:not([hidden]) .gallery-dot').nth(1)).toHaveClass(/is-on/);
+        // Marriott and Global BRPs sit side by side, and the Marriott gallery pages with its arrows.
+        await expect(page.locator('.card-row-label')).toHaveText(['Marriott', 'Global BRPs']);
+        await page.locator('.card .gallery-next').click();
+        await expect(page.locator('.card .gallery-dot').nth(1)).toHaveClass(/is-on/);
       }
       if (i === 3) await expect(page.locator('.card-footer-note')).toHaveText('Talk to Calvin for your badge.');
       await page.locator('.card-close').click();
@@ -189,11 +187,21 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
   await expect(page.locator('.lightbox')).toBeHidden();
   await idle(page);
 
-  // Gym leader: intro lines, then the overview card with jump links to the stations.
+  // Gym leader: with all four done he hands over the badge.
   await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
   await interact(page, isMobile);
   await expect(page.locator('.dialogue')).toBeVisible();
   for (let i = 0; i < 4 && (await page.locator('.dialogue').isVisible()); i++) await page.locator('.dialogue').click();
+  await expect(page.locator('.ceremony-name')).toHaveText('High Roller Badge');
+  await page.locator('.ceremony-continue').click();
+  await idle(page);
+
+  // Talk again: a new line, then the overview card with jump links to the stations.
+  await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
+  await interact(page, isMobile);
+  await expect(page.locator('.dialogue')).toBeVisible();
+  for (let i = 0; i < 4 && (await page.locator('.dialogue').isVisible()); i++) await page.locator('.dialogue').click();
+  await expect(page.locator('.card')).toBeVisible();
   await expect(page.locator('.card')).toHaveAttribute('data-card', 'betmgm-overview');
   await expect(page.locator('.card-link')).toHaveCount(4);
   await page.getByRole('button', { name: 'Loyalty APIs' }).click();
@@ -223,14 +231,6 @@ test('walking onto a door tile goes through it', async ({ page }) => {
   const door = await page.evaluate(() => window.__mypark!.project(15.5, 8.5));
   await page.mouse.click(door.x, door.y);
   await expect.poll(() => page.evaluate(() => window.__mypark!.scene), { timeout: 30_000 }).toBe('gym-betmgm');
-});
-
-test('a door to a gym that is not built yet says so', async ({ page, isMobile }) => {
-  await boot(page);
-  await standAt(page, 'door-ucla', 'Enter UCLA Gym');
-  await interact(page, isMobile);
-  await expect(page.locator('.dialogue-speaker')).toHaveText('UCLA Gym');
-  expect(await page.evaluate(() => window.__mypark!.scene)).toBe('exterior');
 });
 
 test('every station card renders with all of its images', async ({ page }) => {
@@ -267,15 +267,14 @@ test('card content: UCLA tabs and timeline, Deloitte impact, hobbies, side build
   // One hoop covers all of basketball: three slices in one card.
   await page.evaluate(() => window.__mypark!.openStationCard('weightroom/basketball'));
   await expect(page.locator('.card-title')).toHaveText('Basketball');
-  await expect(page.locator('.card-tab')).toHaveText(['Record', 'Playing', 'Coaching']);
-  await page.locator('.card-tab', { hasText: 'Coaching' }).click();
-  await expect(page.locator('.card-panel:not([hidden]) .card-caption')).toContainText('Genesis Elite');
+  await expect(page.locator('.card-row-label')).toHaveText(['Record', 'Playing', 'Coaching']);
+  await expect(page.locator('.card-row-item').nth(2).locator('.card-caption')).toContainText('Genesis Elite');
   await page.keyboard.press('Escape');
   await expect(page.locator('.card')).toBeHidden();
 
   // One sprint lane covers both marathons.
   await page.evaluate(() => window.__mypark!.openStationCard('weightroom/running'));
-  await expect(page.locator('.card-tab')).toHaveText(['LA Marathon', 'Huntington Beach']);
+  await expect(page.locator('.card-row-label')).toHaveText(['LA Marathon', 'Huntington Beach']);
   await page.keyboard.press('Escape');
   await expect(page.locator('.card')).toBeHidden();
 

@@ -21,6 +21,8 @@ export class Player {
   facing = 0;
   path: Point[] = [];
   private stuckTime = 0;
+  /** Interiors use a closer camera, so world speed is scaled down there to look the same on screen. */
+  speedScale = 1;
   private character: Character | null = null;
 
   constructor(x: number, z: number) {
@@ -65,12 +67,12 @@ export class Player {
     const mag = Math.hypot(input.moveX, input.moveY);
     if (mag > 0) {
       this.path = [];
-      const top = input.desktop ? DESKTOP_SPEED : input.sprint ? SPRINT_SPEED : WALK_SPEED;
+      const top = (input.desktop ? DESKTOP_SPEED : input.sprint ? SPRINT_SPEED : WALK_SPEED) * this.speedScale;
       wantX = (basis.rx * input.moveX + basis.fx * input.moveY) * top;
       wantZ = (basis.rz * input.moveX + basis.fz * input.moveY) * top;
     } else if (this.path.length > 0) {
       const remaining = this.remainingPathLength();
-      const top = input.desktop ? DESKTOP_SPEED : remaining > AUTO_SPRINT_DISTANCE ? SPRINT_SPEED : WALK_SPEED;
+      const top = (input.desktop ? DESKTOP_SPEED : remaining > AUTO_SPRINT_DISTANCE ? SPRINT_SPEED : WALK_SPEED) * this.speedScale;
       // Drop waypoints we've reached.
       while (this.path.length > 0 && Math.hypot(this.path[0].x - this.x, this.path[0].z - this.z) < 0.12) this.path.shift();
       const next = this.path[0];
@@ -138,7 +140,7 @@ export class Player {
 
   /** Advance the body's animation. Separate from update() so it keeps idling while input is paused. */
   animate(dt: number): void {
-    this.character?.locomote(this.speed);
+    this.character?.locomote(this.speed, this.speedScale);
     this.character?.update(dt);
   }
 

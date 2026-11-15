@@ -5,3 +5,7 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+
+# Calvin's résumé PDF has his phone number on it. Not committed until he confirms it should be public.
+public/resume.pdf
+[[]Le, Calvin - Resume[]].pdf

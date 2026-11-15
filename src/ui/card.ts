@@ -75,6 +75,27 @@ function baHTML(s: Screen): string {
     </div>`;
 }
 
+/** One column of a combined row: label, visual, caption. */
+function rowItemHTML(s: Screen): string {
+  let visual: string;
+  let wide = false;
+  if (s.before && s.after) visual = baHTML(s);
+  else if (s.gallery) {
+    visual = galleryHTML(s.gallery);
+    wide = true;
+  } else if (s.img && s.imgHover) visual = zoomWrap(s.img, s.imgHover, s.imgHoverPos, s.label, s.imgWidth);
+  else {
+    // Phone screenshots carry a small imgWidth. Anything else is a landscape photo and gets a wider column on phones.
+    wide = !s.imgWidth || parseInt(s.imgWidth, 10) > 300;
+    visual = photo(s.img!, s.label);
+  }
+  return `<figure class="card-row-item${wide ? ' card-row-item--wide' : ''}">
+    <figcaption class="card-row-label">${esc(s.label)}</figcaption>
+    <div class="card-row-visual">${visual}</div>
+    ${s.caption ? `<p class="card-caption">${esc(s.caption)}</p>` : ''}
+  </figure>`;
+}
+
 const hintHTML = (text: string) => `<p class="card-hint"><span aria-hidden="true">↔</span> ${esc(text)}</p>`;
 const LETTERS = 'ABCDEF';
 
@@ -213,12 +234,15 @@ export class CardOverlay {
   /** Close. On phones the sheet slides back down first. */
   close(): void {
     if (!this.model || this.closing) return;
-    if (!this.isSheet() || matchMedia('(prefers-reduced-motion: reduce)').matches) return this.finish();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return this.finish();
     this.closing = true;
-    this.card.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 1, 1)';
-    this.card.style.transform = 'translateY(105%)';
+    const sheet = this.isSheet();
+    // Phones: the sheet slides back down. Desktop: the panel eases away.
+    this.card.style.transition = sheet ? 'transform 0.22s cubic-bezier(0.4, 0, 1, 1)' : 'transform 0.16s ease, opacity 0.16s ease';
+    this.card.style.transform = sheet ? 'translateY(105%)' : 'translateY(14px) scale(0.985)';
+    if (!sheet) this.card.style.opacity = '0';
     this.overlay.classList.add('is-closing');
-    this.closeTimer = window.setTimeout(() => this.finish(), 220);
+    this.closeTimer = window.setTimeout(() => this.finish(), sheet ? 220 : 160);
   }
 
   private closing = false;
@@ -234,6 +258,7 @@ export class CardOverlay {
     this.closing = false;
     this.card.style.transition = '';
     this.card.style.transform = '';
+    this.card.style.opacity = '';
     this.overlay.classList.remove('is-closing');
     this.model = null;
     this.overlay.hidden = true;
@@ -251,20 +276,19 @@ export class CardOverlay {
       : m.sideGallery
         ? `<div class="card-side">${galleryHTML(m.sideGallery)}</div>`
         : '';
-    // When every screen is a before/after, show them all at once instead of hiding two behind tabs.
-    const allBa = m.screens.length > 1 && m.screens.every((s) => s.before && s.after);
+    // Combine where we can: two or three simple screens (a slider, a screenshot, a photo set) sit side by side
+    // with their captions instead of hiding behind tabs. Tabs remain for screens with lists or timelines to read.
+    const simple = (s: Screen) => !s.hotspots && !s.bullets && !s.timeline && !!((s.before && s.after) || s.img || s.gallery);
+    const row = m.screens.length > 1 && m.screens.length <= 3 && m.screens.every(simple);
     const tabs =
-      allBa
-        ? ''
-        : m.screens.length > 1
+      !row && m.screens.length > 1
         ? `<div class="card-tabs" role="tablist" aria-label="Sections">${m.screens
             .map((s, i) => `<button type="button" role="tab" class="card-tab" id="card-tab-${i}" data-tab="${i}" aria-controls="card-panel-${i}">${esc(s.label)}</button>`)
             .join('')}</div>`
         : '';
-    const panels = allBa
-      ? `${hintHTML('Drag each slider to compare before and after')}<div class="ba-row">${m.screens
-          .map((s) => `<figure class="ba-item"><figcaption class="ba-item-label">${esc(s.label)}</figcaption>${baHTML(s)}${s.caption ? `<p class="card-caption">${esc(s.caption)}</p>` : ''}</figure>`)
-          .join('')}</div>`
+    const panels = row
+      ? `${m.screens.some((s) => s.before) ? hintHTML(m.screens.filter((s) => s.before).length > 1 ? 'Drag each slider to compare before and after' : 'Drag the slider to compare before and after') : ''}
+         <div class="card-row" style="--cols:${m.screens.length}">${m.screens.map((s) => rowItemHTML(s)).join('')}</div>`
       : m.screens
           .map((s, i) => `<div class="card-panel" role="tabpanel" id="card-panel-${i}" aria-labelledby="card-tab-${i}" data-panel="${i}" hidden>${screenHTML(s)}</div>`)
           .join('');
@@ -310,7 +334,7 @@ export class CardOverlay {
             }</footer>`
           : ''
       }`;
-    if (m.screens.length && !allBa) this.showTab(Math.min(m.initialTab ?? 0, m.screens.length - 1));
+    if (m.screens.length && !row) this.showTab(Math.min(m.initialTab ?? 0, m.screens.length - 1));
     this.card.querySelectorAll<HTMLElement>('[data-spots]').forEach((el) => this.pickSpot(el, 0));
   }
 

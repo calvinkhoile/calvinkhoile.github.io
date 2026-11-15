@@ -113,8 +113,7 @@ const doors: Door[] = [
 
 const interactables: Interactable[] = [
   { id: 'plaza/signpost', kind: 'sign', label: 'Signpost', x: 28.5, z: 46.7, radius: 1.3, dialogue: 'plaza.signpost' },
-  // TODO(M7): point at /resume once it exists.
-  { id: 'plaza/resume-kiosk', kind: 'kiosk', label: 'Résumé Kiosk', x: 37.5, z: 46.7, radius: 1.3, href: '/classic/' },
+  { id: 'plaza/resume-kiosk', kind: 'kiosk', label: 'Résumé Kiosk', x: 37.5, z: 46.7, radius: 1.3, href: '/resume.pdf' },
 
   // The Weightroom.
   { id: 'weightroom/sports-betting', kind: 'station', label: 'Sportsbook Ticker', x: 31.5, z: 26, radius: 1.2, station: 'weightroom/sports-betting' },
@@ -159,4 +158,14 @@ export const exterior: MapDef = {
   npcs: [{ id: 'calvin-plaza', label: 'Calvin', x: 30, z: 51, role: 'plaza', dialogue: 'plaza', faceX: 33.5, faceZ: 52.5 }],
   spawn: { x: 33.5, z: 52.5 },
   cameraBounds: { minX: 4, maxX: W - 4, minZ: 4, maxZ: H - 4 },
+  // Arrows lead from the plaza to UCLA, north past every gym, and on to the court. Short spurs point into each door.
+  // The Weightroom gets none on purpose: it's the detour for whenever, the gyms come first.
+  guides: [
+    [{ x: 30.5, z: 49.5 }, { x: 19.5, z: 49.5 }],
+    [{ x: 19.5, z: 47 }, { x: 19.5, z: 8.5 }, { x: 28.5, z: 8.5 }],
+    [{ x: 18.3, z: 49.5 }, { x: 16.2, z: 49.5 }],
+    [{ x: 18.3, z: 37.5 }, { x: 15.2, z: 37.5 }],
+    [{ x: 18.3, z: 23.5 }, { x: 16.2, z: 23.5 }],
+    [{ x: 18.3, z: 8.5 }, { x: 16.2, z: 8.5 }],
+  ],
 };
