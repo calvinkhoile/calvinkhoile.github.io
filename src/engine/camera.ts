@@ -33,7 +33,8 @@ export class FollowCamera {
   private velX = 0;
   private velZ = 0;
   private readonly reducedMotion: boolean;
-  private readonly zoomOut: number;
+  private zoomOut: number;
+  private aspect = 1;
   private bounds: CameraBounds | null = null;
 
   constructor(opts: CameraOptions = {}) {
@@ -48,7 +49,14 @@ export class FollowCamera {
     this.bounds = b;
   }
 
+  /** Distance multiplier: under 1 moves in (interiors), over 1 pulls back. */
+  setZoomOut(k: number): void {
+    this.zoomOut = k;
+    this.resize(this.aspect);
+  }
+
   resize(aspect: number): void {
+    this.aspect = aspect;
     this.camera.aspect = aspect;
     const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2);
     const widthAtBase = 2 * BASE_DISTANCE * Math.tan(halfFov) * aspect;

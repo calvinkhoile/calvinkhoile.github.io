@@ -28,7 +28,12 @@ export default defineConfig({
     assetsDir: '_app',
     target: 'es2022',
   },
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173,
+    strictPort: true,
+    // Test runs and builds rewrite these constantly. Watching them makes the dev server reload in a loop.
+    watch: { ignored: ['**/dist/**', '**/docs/**', '**/test-results/**', '**/playwright-report/**', '**/assets-src/**'] },
+  },
   preview: { port: 4173, strictPort: true },
   test: {
     include: ['tests/**/*.test.ts'],

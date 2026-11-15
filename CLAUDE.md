@@ -42,20 +42,22 @@ index.html          ← world entry (canvas + UI root)
 src/
   main.ts           ← boot: capability check, scene, game loop
   engine/           ← renderer, camera, input (keyboard/mouse/touch), grid (collision + A*), debug overlay
-  world/            ← player, scene building, maps/ (one data file per scene)
-  ui/styles/        ← CSS for DOM overlays
+  world/            ← player, NPCs, interactions, exterior and interior art, maps/ (one data file per scene)
+  ui/               ← DOM overlays: cards, dialogue, prompts, title and select screens, styles/
+  content/          ← all copy: career, profile, side builds, hobbies, dialogue, station registry
 public/
   classic/          ← the old site, frozen (index.html, style.css, script.js, assets/). Served at /classic/
   models/           ← optimized .glb output of `npm run assets`
 tests/              ← Vitest unit tests; tests/e2e/ Playwright smoke tests
 scripts/            ← asset pipeline + its manifest
 assets-src/         ← raw downloaded asset packs (gitignored)
-docs/               ← plan, PROGRESS.md
+docs/               ← plan, PROGRESS.md, ASSETS.md (licenses), CONTENT-EDITING.md (how to edit copy, list of drafts)
 ```
 
 - Stack: Vite 5, TypeScript (strict), three.js, Vitest, Playwright. All versions pinned exact in `package.json`. No React, no physics engine, no game engine.
 - Maps are code (`src/world/maps/*.ts`): zones, props, doors, interactables. Blocking props stamp the collision grid automatically.
 - UI overlays are plain DOM + CSS over the canvas.
+- Site copy for the world lives in `src/content/`, migrated verbatim from the classic site. Edit copy there, never inside UI or game code. New draft copy gets a `TODO(calvin)` and a row in `docs/CONTENT-EDITING.md`.
 - Classic site details (still true inside `public/classic/`): Three.js 0.165.0 via import map, Phosphor Icons, career content in the `careerData` object in `script.js`, section IDs `career` / `projects` / `hobbies`. Don't edit classic files; they're an archive.
 
 ## Design

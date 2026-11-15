@@ -116,8 +116,17 @@ const doors: Door[] = [
 ];
 
 const interactables: Interactable[] = [
-  { id: 'plaza/signpost', kind: 'sign', label: 'Signpost', x: 28.5, z: 45.5, radius: 1.5 },
-  { id: 'plaza/resume-kiosk', kind: 'kiosk', label: 'Résumé Kiosk', x: 37.5, z: 45.5, radius: 1.5 },
+  { id: 'plaza/signpost', kind: 'sign', label: 'Signpost', x: 28.5, z: 46.7, radius: 1.3, dialogue: 'plaza.signpost' },
+  // TODO(M7): point at /resume once it exists.
+  { id: 'plaza/resume-kiosk', kind: 'kiosk', label: 'Résumé Kiosk', x: 37.5, z: 46.7, radius: 1.3, href: '/classic/' },
+
+  // The Blacktop: hobby stations, outdoors.
+  { id: 'blacktop/la-marathon', kind: 'station', label: 'Mile Marker: LA', x: 61.8, z: 25.5, radius: 1.2, station: 'blacktop/la-marathon' },
+  { id: 'blacktop/huntington-beach', kind: 'station', label: 'Mile Marker: Huntington Beach', x: 70.8, z: 40.5, radius: 1.2, station: 'blacktop/huntington-beach' },
+  { id: 'blacktop/chess', kind: 'station', label: 'Chess Table', x: 61.5, z: 30.2, radius: 1.2, station: 'blacktop/chess' },
+  { id: 'blacktop/chess-teaser', kind: 'station', label: 'Chess Table', x: 61.5, z: 35.8, radius: 1.2, station: 'blacktop/chess-teaser' },
+  { id: 'blacktop/coaching', kind: 'station', label: "Coach's Bench", x: 66.5, z: 36.8, radius: 1.2, station: 'blacktop/coaching' },
+  { id: 'blacktop/trophy-case', kind: 'station', label: 'Trophy Case', x: 69, z: 31.8, radius: 1.2, station: 'blacktop/trophy-case' },
 ];
 
 // Trees: deterministic scatter on open grass, kept clear of paths, zones, and props.
@@ -152,7 +161,7 @@ export const exterior: MapDef = {
   props: [...props, ...scatterTrees(60)],
   doors,
   interactables,
-  npcs: [{ id: 'calvin-plaza', x: 30, z: 51, color: 0x0070d1 }],
+  npcs: [{ id: 'calvin-plaza', label: 'Calvin', x: 30, z: 51, role: 'plaza', dialogue: 'plaza', faceX: 33.5, faceZ: 52.5 }],
   spawn: { x: 33.5, z: 52.5 },
   cameraBounds: { minX: 4, maxX: W - 4, minZ: 4, maxZ: H - 4 },
 };

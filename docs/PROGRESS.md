@@ -9,7 +9,8 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M0 | Project setup | Done (Nov 15, 2026). Pages source switched to GitHub Actions and verified: only site files are served |
 | M1 | Graybox movement ★ | Done. Approved by Calvin on his phone (Nov 15, 2026) |
 | M2 | Exterior art pass | Done, with small items deferred (see M2 section) |
-| M3–M8 | | Not started |
+| M3 | Interaction + dialogue + cards ★ | Built, tests green. **Waiting on Calvin's review** |
+| M4–M8 | | Not started |
 
 ## How to run
 
@@ -102,6 +103,37 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 - Stadium lights at the court and path footprint decals are not built.
 - Trainer names (Rookie, Playmaker, Sixth Man, Sharpshooter) and loading tips are drafts for Calvin to review.
 
+## M3: Interaction + dialogue + cards ★ (ready for review)
+
+**What's in**
+- **Content migrated:** all 11 career entries, bio, side builds, and hobbies now live in `src/content/`, verbatim. 52 card photos optimized to WebP: 79 MB of originals down to 4.4 MB.
+- **Proximity prompts:** walk into range and a prompt floats over the thing ("E · Rewards Store" on desktop, "● Rewards Store" on touch). Nearest target in the direction you face wins. Click or tap a target and the player walks over and uses it.
+- **Dialogue:** Pokémon-style box with a speaker tab, typewriter text, blinking ▼, and choices. E / Space / Enter / click / the A button advance. Esc skips.
+- **Plaza Calvin:** on a first visit he walks up and starts the intro. Choices: "Show me around" (he leads you to the UCLA door), "I'll explore", "Who are you?" (About card with your two bio paragraphs).
+- **Project cards:** every screen type from the classic site: before/after slider, side-by-side with zoom spot, single image with zoom spot, swipeable gallery, bullets, timeline, side photo, side gallery, jump links. Tap any photo for the lightbox. Desktop panel, full-screen sheet on phones (swipe the header down to close). Keyboard-usable modal with a focus trap.
+- **BetMGM interior:** walk through the door (fade), four stations (Rewards Store counter, server racks, partnership desk with a bellhop cart, AI lab pod), the Product Summit stage showing your photo, and Calvin as gym leader. Rings turn from blue to green with a check when visited, a counter shows "2/4 stations", "Next station →" drops a bouncing arrow on the nearest unvisited one. Progress is saved.
+- **Blacktop stations** (outdoors) are wired too: mile markers, chess tables, coach's bench, trophy case.
+- Other gym doors say "Still under construction" until M4.
+
+**Tests**
+- Vitest: 13 passing. Playwright: 37 passing across desktop and mobile, including a full BetMGM run (enter, all four stations, leader, exit, reload) and a sweep that opens every station's card and checks every image loads.
+
+**Screenshots**
+
+| | |
+|---|---|
+| ![interior](progress/m3-desktop-betmgm-interior.png) | ![card](progress/m3-desktop-card.png) |
+| ![mobile interior](progress/m3-mobile-betmgm-interior.png) | ![mobile card](progress/m3-mobile-card-ucla.png) |
+
+**For Calvin to review**
+1. Dialogue copy: every line is a draft, listed in `docs/CONTENT-EDITING.md`.
+2. Cards on your phone: does the before/after slider feel right, and do the zoom spots land where you expect?
+3. The BetMGM room: do the four stations read as what they are?
+
+**Deferred from this milestone**
+- Hover outline glow on interactables (desktop shows a pointer cursor for now).
+- Gym leader outfits per era (every Calvin wears the plaza look until the M5 avatar pass).
+
 ---
 
 ## Decisions and deviations from the plan
@@ -120,6 +152,8 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 | Pond | "hedges, water, or fences" at edges | Added a small pond east of the plaza | Fills the empty south-middle. Easy to cut |
 | Skip link | "Skip to résumé" | Points at `/classic/` for now | `/resume` doesn't exist until M7 |
 | `.nojekyll` | Include in the artifact | Included, with `include-hidden-files: true` | `upload-pages-artifact` v4+ drops dotfiles by default |
+| Before/after | "A before/after comparison slider" | Built as a slider (the classic site shows the two side by side) | The plan asked for it, and each before/after pair has matching dimensions, so the overlay lines up |
+| Gym doors | Interact to enter | Walking onto the door tile enters, and so does the prompt | Feels like a Pokémon door. The prompt is there for click/tap and keyboard users |
 | `deploy.yml` on `world` | Changed to build + `dist/` at M8 | Left as the M0 version for now | It only triggers on `main`, so it's inert here. Swapped at M8 as planned |
 
 ## Open issues

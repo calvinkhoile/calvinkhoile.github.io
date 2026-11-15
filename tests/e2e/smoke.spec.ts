@@ -50,6 +50,12 @@ test('fresh visit: title, character select, then into the park with the look sav
   await page.locator('#select-confirm').click();
 
   await page.waitForFunction(() => window.__mypark?.ready === true);
+  // First visit: Calvin walks over and starts the intro on his own. Esc skips it.
+  await expect(page.locator('.dialogue')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('.dialogue-speaker')).toHaveText('Calvin');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.dialogue')).toBeHidden();
+  await expect.poll(() => page.evaluate(() => window.__mypark!.busy)).toBe(false);
   expect(await page.evaluate(() => window.__mypark!.look)).toBe('b');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mypark:v1')!).look)).toBe('b');
   await expect(page.locator('.resume-link')).toBeVisible();

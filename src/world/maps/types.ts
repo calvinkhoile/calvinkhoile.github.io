@@ -49,16 +49,30 @@ export interface Interactable {
   id: string;
   kind: 'station' | 'sign' | 'kiosk';
   label: string;
+  /** Where the visitor stands to use it (center of the floor ring). Must be walkable. */
   x: number;
   z: number;
   radius: number;
+  /** Station id from src/content/stations.ts (kind: station). */
+  station?: string;
+  /** Dialogue node key (kind: sign). */
+  dialogue?: string;
+  /** Link opened in a new tab (kind: kiosk). */
+  href?: string;
 }
 
 export interface NpcSpawn {
   id: string;
+  label: string;
   x: number;
   z: number;
-  color: number;
+  /** Which behavior the NPC has: the plaza guide, or a gym leader for a company. */
+  role: 'plaza' | 'leader';
+  /** Dialogue prefix for leaders, e.g. "betmgm" -> betmgm.leader / betmgm.leaderDone. */
+  dialogue: string;
+  /** Point the NPC faces while idle. */
+  faceX: number;
+  faceZ: number;
 }
 
 export interface MapDef {
@@ -72,5 +86,7 @@ export interface MapDef {
   interactables: Interactable[];
   npcs: NpcSpawn[];
   spawn: { x: number; z: number };
+  /** Interiors: tighter camera, dark backdrop, no fog. */
+  interior?: boolean;
   cameraBounds: { minX: number; maxX: number; minZ: number; maxZ: number };
 }

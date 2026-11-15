@@ -50,9 +50,14 @@ export class DebugOverlay {
     this.pathLine.frustumCulled = false;
     this.root.add(this.pathLine);
 
-    this.panel = document.createElement('pre');
-    this.panel.className = 'debug-panel';
-    ui.appendChild(this.panel);
+    // One panel is shared by every scene's overlay.
+    let panel = ui.querySelector<HTMLElement>('.debug-panel');
+    if (!panel) {
+      panel = document.createElement('pre');
+      panel.className = 'debug-panel';
+      ui.appendChild(panel);
+    }
+    this.panel = panel;
   }
 
   private addTiles(grid: Grid, flag: number, color: number, opacity: number, y: number): void {

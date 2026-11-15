@@ -61,7 +61,7 @@ function rng(seed: number): () => number {
 }
 
 /** Collects the meshes of one building so it can fade as a unit. Materials are private to the builder. */
-class Builder {
+export class Builder {
   readonly group = new THREE.Group();
   private readonly mats = new Map<string, THREE.MeshLambertMaterial>();
 
@@ -206,7 +206,7 @@ class Builder {
 
 // ---------- textures ----------
 
-function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void): THREE.CanvasTexture {
+export function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
@@ -217,10 +217,10 @@ function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2
   return tex;
 }
 
-const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
+export const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
 
 /** Text sign. Signs are basic (unlit) materials so they stay readable in shadow. */
-function textSign(text: string, bg: number, fg: number, aspect: number, font = '800'): THREE.MeshBasicMaterial {
+export function textSign(text: string, bg: number, fg: number, aspect: number, font = '800'): THREE.MeshBasicMaterial {
   const h = 128;
   const w = Math.round(h * aspect);
   const tex = canvasTexture(w, h, (ctx) => {
@@ -240,7 +240,7 @@ function textSign(text: string, bg: number, fg: number, aspect: number, font = '
 }
 
 /** Logo on a backing board. The logo image is drawn onto a canvas once it loads, letterboxed with padding. */
-function logoSign(url: string, bg: number, aspect: number): THREE.MeshBasicMaterial {
+export function logoSign(url: string, bg: number, aspect: number): THREE.MeshBasicMaterial {
   const h = 256;
   const w = Math.round(h * aspect);
   const canvas = document.createElement('canvas');
@@ -490,7 +490,7 @@ function buildGround(root: THREE.Group, map: MapDef, shadows: boolean): void {
 
 const ZONE_Y: Record<ZoneKind, number> = { water: 0.012, concrete: 0.014, plaza: 0.016, court: 0.018, path: 0.024, track: 0.03 };
 
-function flat(b: Builder, x: number, z: number, w: number, d: number, y: number, material: THREE.Material): THREE.Mesh {
+export function flat(b: Builder, x: number, z: number, w: number, d: number, y: number, material: THREE.Material): THREE.Mesh {
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), material);
   mesh.position.set(x + w / 2, y, z + d / 2);
   mesh.receiveShadow = true;

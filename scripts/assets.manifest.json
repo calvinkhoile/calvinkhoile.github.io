@@ -80,5 +80,18 @@
     "deloitte.webp": "public/classic/assets/logos/deloitte.png",
     "betmgm.webp": "public/classic/assets/logos/betmgm.png",
     "meta.svg": "public/classic/assets/logos/meta.svg"
+  },
+  "photos": {
+    "srcDir": "public/classic/assets",
+    "folders": [
+      "betmgm",
+      "meta",
+      "deloitte",
+      "ucla",
+      "hobbies",
+      "mybadges"
+    ],
+    "maxSize": 1600,
+    "quality": 80
   }
 }

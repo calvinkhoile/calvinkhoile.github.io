@@ -22,7 +22,7 @@ import {
   weld,
 } from '@gltf-transform/functions';
 import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
-import { copyFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join as joinPath, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -374,6 +374,32 @@ async function buildLogos(logos) {
   console.log(`assets: ${Object.keys(logos).length} logos            ${kb.toFixed(1).padStart(7)} KB`);
 }
 
+// ---------- photos (project cards) ----------
+
+/** 'meta/external signal 1.PNG' -> 'meta/external-signal-1.webp'. Keep in sync with how src/content paths are written. */
+const photoSlug = (rel) => rel.replace(/\.[^.]+$/, '').toLowerCase().replace(/[ _]+/g, '-') + '.webp';
+
+async function buildPhotos(spec) {
+  let kb = 0;
+  let count = 0;
+  for (const folder of spec.folders) {
+    const dir = joinPath(root, spec.srcDir, folder);
+    for (const file of readdirSync(dir)) {
+      if (file.startsWith('.')) continue;
+      const dst = joinPath(root, 'public/images', photoSlug(`${folder}/${file}`));
+      mkdirSync(dirname(dst), { recursive: true });
+      await sharp(joinPath(dir, file))
+        .rotate() // apply EXIF orientation before the metadata is dropped
+        .resize({ width: spec.maxSize, height: spec.maxSize, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: spec.quality })
+        .toFile(dst);
+      kb += statSync(dst).size / 1024;
+      count++;
+    }
+  }
+  console.log(`assets: ${count} photos           ${kb.toFixed(1).padStart(7)} KB`);
+}
+
 // ---------- run ----------
 
 let total = 0;
@@ -382,3 +408,4 @@ for (const c of manifest.characters ?? []) total += await buildCharacter(c);
 if (manifest.animations) total += await buildAnimations(manifest.animations);
 console.log(`assets: ${total.toFixed(1)} KB total in public/models/`);
 if (manifest.logos) await buildLogos(manifest.logos);
+if (manifest.photos) await buildPhotos(manifest.photos);
