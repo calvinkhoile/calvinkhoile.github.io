@@ -1,0 +1,28 @@
+{
+  "name": "mypark",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:lan": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "assets": "node scripts/assets.mjs"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "4.5.1",
+    "@playwright/test": "1.65.1",
+    "@types/node": "24.19.2",
+    "@types/three": "0.187.0",
+    "typescript": "5.9.3",
+    "vite": "5.4.21",
+    "vitest": "3.2.7"
+  }
+}
