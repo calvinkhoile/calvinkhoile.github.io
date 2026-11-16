@@ -227,6 +227,21 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 **Notes**
 - The plan asked for one material per character. The body is one material. The accessories add two or three tiny ones.
 
+### Calvin's fifth round of feedback (Nov 15 to 16) and what changed
+
+1. **Keys:** Enter and the right arrow move on everywhere there's a "next": dialogue, the station pop-up, the finale, the badge ceremony. Arrows move between dialogue choices.
+2. **Finale answers on one line:** the question card is wider and four answers sit in one row on desktop (two by two on phones).
+3. **Chess notation:** the check and mate marks (+ and #) are no longer shown on the answer buttons.
+4. **Picking up a basketball is obvious now:** every loose ball on the court has an orange ring and a "Pick up the ball" prompt, the dumbbells got the same ring, and stepping onto the court for the first time shows a hint.
+5. **Speed:**
+   - The badge case has a jump button for every badge (four gyms, the Weightroom, the court).
+   - Talking to Calvin in a gym leads with **Finish this gym**, which marks it done and awards the badge on the spot. His welcome is one line, so the choices are there right away. The tracker has the same button.
+   - **"I'll look around"** now just closes (it used to open the overview card).
+6. **One pop-up per place.** A station's pop-up shows that station and carries a strip of every stop in the gym, with a check on the ones seen. Tap another stop in the strip, or "Next", and the pop-up swaps in place. Close it after seeing them all (Finish, X, or a click outside) and the badge is awarded right there. UCLA's three stations each show only their own part.
+7. **The workbench is scenery.** No ring, no prompt, no card. The Weightroom has four stops. The "Building with AI" copy is still in `src/content/side-builds.ts` but nothing in the world shows it now.
+8. **Phones swipe photo sets.** Galleries are native scroll strips: no arrows on phones, the next photo peeks in, dots follow.
+9. **Sushi bar line** says "March 2020".
+
 ## M6: Finale ★ (ready for review)
 
 **What's in**

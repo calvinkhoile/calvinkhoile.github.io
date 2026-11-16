@@ -1343,19 +1343,26 @@ body.is-talking .hud-row2 {
 }
 
 .gallery-viewport {
-  overflow: hidden;
+  overflow-x: auto;
   border-radius: 12px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gallery-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .gallery-track {
   display: flex;
-  transition: transform 0.25s ease;
 }
 
 .gallery-slide {
   flex: 0 0 100%;
   display: grid;
   place-items: center;
+  scroll-snap-align: center;
 }
 
 .gallery-slide .card-photo {
@@ -2389,7 +2396,7 @@ body.in-finale .prompt {
 }
 
 .finale-card {
-  width: min(560px, 100%);
+  width: min(880px, 100%);
   max-height: calc(100% - 70px);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -2451,7 +2458,8 @@ body.in-finale .prompt {
 
 .q-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* All the answers on one line when there's room (the card is wide enough for four). */
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 8px;
   margin-top: 12px;
 }
@@ -2870,4 +2878,147 @@ body.in-finale .prompt {
   .finale-card {
     transition: none;
   }
+}
+
+/* Finale answers: one row on desktop, two by two on phones. */
+@media (min-width: 701px) {
+  .q-options[data-count='4'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .q-options[data-count='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .q-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Jump buttons in the badge case */
+.badge-row {
+  flex-wrap: wrap;
+}
+
+.badge-row > div {
+  flex: 1;
+  min-width: 150px;
+}
+
+.badge-go {
+  flex: none;
+  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font: 600 13px/1 var(--font-body);
+  cursor: pointer;
+}
+
+.badge-go:hover {
+  background: var(--accent);
+}
+
+.badge-go:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.tracker-finish {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1.2 var(--font-body);
+  text-align: center;
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.tracker-finish:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Station strip: the other stops in this place, one tap away, with a check on the ones already seen. */
+.card-stations {
+  display: flex;
+  flex: none; /* the card is a flex column: without this the strip gets squeezed flat on phones */
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.card-stations::-webkit-scrollbar {
+  display: none;
+}
+
+.card-station {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 8px 13px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.card-station.is-done span[aria-hidden] {
+  color: #86efac;
+}
+
+.card-station.is-current {
+  border-color: transparent;
+  background: var(--accent);
+}
+
+.card-station.is-current span[aria-hidden] {
+  color: #fff;
+}
+
+.card-station:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Swapping between stops: no slide, just a quick fade of the content. */
+.card.is-swap {
+  animation: none;
+}
+
+.card.is-swap .card-body {
+  animation: panel-in 0.18s ease;
+}
+
+/* Phones: photo sets are swiped, so the arrows go away and the next photo peeks in. */
+@media (max-width: 700px) {
+  .gallery-arrow {
+    display: none;
+  }
+
+  .gallery-slide {
+    flex-basis: 86%;
+  }
+
+  .card-stations {
+    padding: 8px 16px;
+  }
+}
+
+.card-header,
+.card-footer {
+  flex: none;
 }

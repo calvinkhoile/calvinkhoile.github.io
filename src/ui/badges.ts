@@ -14,7 +14,7 @@ export class BadgeUi {
   constructor(
     root: HTMLElement,
     caseHost: HTMLElement,
-    private readonly opts: { reducedMotion: boolean; onReset(): void; onToggle(open: boolean): void },
+    private readonly opts: { reducedMotion: boolean; onReset(): void; onToggle(open: boolean): void; onJump(route: string): void },
   ) {
     this.caseBtn = document.createElement('button');
     this.caseBtn.type = 'button';
@@ -41,6 +41,12 @@ export class BadgeUi {
     this.panel.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
       if (t === this.panel || t.closest('.badge-panel-close')) return this.closePanel();
+      const go = t.closest<HTMLElement>('[data-go]');
+      if (go) {
+        this.closePanel();
+        this.opts.onJump(go.dataset.go!);
+        return;
+      }
       const reset = t.closest<HTMLButtonElement>('.badge-reset');
       if (!reset) return;
       // Two taps, so progress can't be wiped by accident.
@@ -82,8 +88,12 @@ export class BadgeUi {
         ${badges
           .map((b) => {
             const earned = this.owned.has(b.id);
+            // Every badge has a shortcut to the place that awards it.
+            const route = b.scene ? `gym/${b.id}` : b.id === 'explorer' ? 'weightroom' : 'court';
+            const where = b.scene ? 'Jump to gym' : b.id === 'explorer' ? 'Jump to the Weightroom' : 'Jump to the court';
             return `<li class="badge-row${earned ? ' is-earned' : ''}">${medal(b, earned ? 'is-earned' : '')}
-              <div><strong>${b.name}</strong><p>${earned ? 'Earned ✓' : b.how}</p></div></li>`;
+              <div><strong>${b.name}</strong><p>${earned ? 'Earned ✓' : b.how}</p></div>
+              <button type="button" class="badge-go" data-go="${route}">${where} →</button></li>`;
           })
           .join('')}
       </ul>
@@ -126,10 +136,15 @@ export class BadgeUi {
     navigator.vibrate?.([30, 40, 60]);
     const button = this.ceremonyEl.querySelector('.ceremony-continue') as HTMLButtonElement;
     button.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'ArrowRight' && !this.ceremonyEl.hidden) button.click();
+    };
+    window.addEventListener('keydown', onKey);
     return new Promise((resolve) => {
       button.addEventListener(
         'click',
         () => {
+          window.removeEventListener('keydown', onKey);
           this.ceremonyEl.hidden = true;
           this.ceremonyEl.replaceChildren();
           resolve();

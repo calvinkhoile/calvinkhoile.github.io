@@ -52,6 +52,15 @@ export class Finale {
     this.el.hidden = true;
     this.el.innerHTML = `<div class="scoreboard" role="status" aria-live="polite"></div><section class="finale-card" aria-live="polite"></section>`;
     root.appendChild(this.el);
+    // Right arrow is the same as pressing the highlighted "next" button.
+    window.addEventListener('keydown', (e) => {
+      if (this.el.hidden || e.code !== 'ArrowRight' || e.repeat) return;
+      const next = this.card.querySelector<HTMLButtonElement>('.q-verdict:not([hidden]) .q-next');
+      if (next) {
+        e.preventDefault();
+        next.click();
+      }
+    });
     this.board = this.el.querySelector('.scoreboard')!;
     this.card = this.el.querySelector('.finale-card')!;
   }

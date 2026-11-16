@@ -52,10 +52,10 @@ export const stations: Station[] = [
   { id: 'betmgm/ai-betmgm', scene: 'gym-betmgm', label: 'AI Lab', content: { source: 'career', key: 'ai-betmgm' }, counts: true },
   { id: 'betmgm/product-summit', scene: 'gym-betmgm', label: 'Product Summit Stage', content: { source: 'photo', src: '/images/betmgm/product-summit.webp', alt: 'BetMGM Product Summit', caption: 'BetMGM Product Summit.' /* TODO(calvin): caption */ }, counts: false },
 
-  // The Weightroom (outdoors, in the exterior scene). All five count toward the Explorer badge.
+  // The Weightroom (outdoors, in the exterior scene). All four count toward the Explorer badge.
+  // The workbench there is scenery: Calvin asked for it to be something you walk past, not a stop.
   // One stop per hobby or side build, on purpose: Calvin asked to keep this area short so it doesn't read as a brag list.
   { id: 'weightroom/sports-betting', scene: 'exterior', label: 'Sportsbook Ticker', content: { source: 'side-builds', key: 'sports-betting' }, counts: true },
-  { id: 'weightroom/ai-building', scene: 'exterior', label: 'Workbench', content: { source: 'side-builds', key: 'ai-building' }, counts: true },
   { id: 'weightroom/running', scene: 'exterior', label: 'Sprint Lane', content: { source: 'hobbies', key: 'running' }, counts: true },
   { id: 'weightroom/chess', scene: 'exterior', label: 'Chess Table', content: { source: 'hobbies', key: 'chess' }, counts: true },
   { id: 'weightroom/basketball', scene: 'exterior', label: 'Hoop', content: { source: 'hobbies', key: 'basketball' }, counts: true },

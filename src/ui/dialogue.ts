@@ -56,13 +56,15 @@ export class DialogueBox {
         return;
       }
       const onChoice = document.activeElement instanceof HTMLButtonElement && this.choices.contains(document.activeElement);
-      if (e.code === 'ArrowDown' || e.code === 'ArrowUp') {
-        const buttons = Array.from(this.choices.querySelectorAll('button'));
-        if (buttons.length === 0) return;
+      const buttons = Array.from(this.choices.querySelectorAll('button'));
+      const arrow = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.code);
+      if (arrow && buttons.length > 0) {
+        // Choices on screen: arrows move between them, Enter picks.
         e.preventDefault();
         const at = buttons.indexOf(document.activeElement as HTMLButtonElement);
-        buttons[(at + (e.code === 'ArrowDown' ? 1 : buttons.length - 1)) % buttons.length].focus();
-      } else if (!e.repeat && !onChoice && !e.metaKey && !e.ctrlKey && !e.altKey && !['Tab', 'ShiftLeft', 'ShiftRight', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        const step = e.code === 'ArrowDown' || e.code === 'ArrowRight' ? 1 : buttons.length - 1;
+        buttons[(Math.max(0, at) + step) % buttons.length].focus();
+      } else if (!e.repeat && !onChoice && !e.metaKey && !e.ctrlKey && !e.altKey && !['Tab', 'ShiftLeft', 'ShiftRight', 'ArrowLeft', 'ArrowUp'].includes(e.code)) {
         // Any key continues.
         e.preventDefault();
         this.advance();
@@ -134,7 +136,7 @@ export class DialogueBox {
       }
       (this.choices.firstElementChild as HTMLButtonElement).focus({ preventScroll: true });
     } else {
-      this.more.querySelector('.dialogue-hint')!.textContent = document.body.classList.contains('is-touch') ? 'Tap to continue' : 'Press any key to continue';
+      this.more.querySelector('.dialogue-hint')!.textContent = document.body.classList.contains('is-touch') ? 'Tap to continue' : 'Enter or → to continue';
       this.more.hidden = false;
     }
   }

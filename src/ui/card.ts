@@ -26,6 +26,12 @@ export interface CardModel {
   tags?: string[];
   /** Shows a work-in-progress strip. */
   wip?: boolean;
+  /**
+   * The other stops in this place, shown as a strip under the header with a check on the ones already seen.
+   * Tapping one swaps the card to that stop without closing it.
+   */
+  stations?: { id: string; label: string; done: boolean; current: boolean }[];
+  /** An action starting with "swap:" changes the card in place instead of closing it. */
   footer?: { label: string; action: string };
   footerNote?: string;
 }
@@ -33,6 +39,8 @@ export interface CardModel {
 export interface CardHandlers {
   onLink?(target: string): void;
   onFooter?(action: string): void;
+  /** A station in the strip, or a "swap:" footer, was chosen. The card stays open for the caller to replace. */
+  onSwap?(action: string): void;
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -194,9 +202,28 @@ export class CardOverlay {
         this.close();
       } else if (e.code === 'Tab') {
         this.trapFocus(e);
+      } else if (e.code === 'ArrowRight' && !e.repeat) {
+        // Right arrow moves on, unless it's being used on a slider or inside the tab row.
+        const el = document.activeElement as HTMLElement | null;
+        const footer = this.card.querySelector<HTMLButtonElement>('.card-footer-btn');
+        if (footer && !el?.closest('input, [role="tablist"]')) {
+          e.preventDefault();
+          footer.click();
+        }
       }
     });
     this.card.addEventListener('click', (e) => this.onClick(e));
+    // Scroll doesn't bubble, so listen in the capture phase to keep gallery dots in step with swipes.
+    this.card.addEventListener(
+      'scroll',
+      (e) => {
+        const viewport = e.target as HTMLElement;
+        if (!viewport.classList?.contains('gallery-viewport')) return;
+        const g = viewport.closest<HTMLElement>('[data-gallery]')!;
+        this.galleryMark(g, Math.round(viewport.scrollLeft / Math.max(1, viewport.clientWidth)));
+      },
+      true,
+    );
     this.card.addEventListener('pointerover', (e) => {
       // Desktop: hovering a lettered pin picks it.
       const pin = e.pointerType === 'mouse' ? (e.target as HTMLElement).closest<HTMLElement>('.spots-pin') : null;
@@ -219,15 +246,19 @@ export class CardOverlay {
 
   /** Open a card. Resolves when it closes. */
   open(model: CardModel, handlers: CardHandlers = {}): Promise<void> {
-    if (this.model) this.finish();
+    // Opening over an open card swaps the content in place: no slide out and back in.
+    const swapping = !!this.model && !this.closing;
+    if (this.model) this.finish(!swapping);
+    this.card.classList.toggle('is-swap', swapping);
     this.model = model;
     this.handlers = handlers;
-    this.returnFocus = document.activeElement as HTMLElement | null;
+    if (!swapping) this.returnFocus = document.activeElement as HTMLElement | null;
     this.render(model);
     this.overlay.hidden = false;
     this.card.scrollTop = 0;
     document.body.classList.add('has-card');
-    (this.card.querySelector('.card-close') as HTMLElement).focus({ preventScroll: true });
+    // With a "Next" or "Finish" button, that's where focus starts, so Enter moves on.
+    ((this.card.querySelector('.card-footer-btn') ?? this.card.querySelector('.card-close')) as HTMLElement).focus({ preventScroll: true });
     return new Promise((resolve) => (this.resolve = resolve));
   }
 
@@ -251,7 +282,7 @@ export class CardOverlay {
     return matchMedia('(max-width: 700px)').matches;
   }
 
-  private finish(): void {
+  private finish(hide = true): void {
     if (!this.model) return;
     // A card opened mid-close must not be torn down by the old close timer.
     window.clearTimeout(this.closeTimer);
@@ -261,10 +292,12 @@ export class CardOverlay {
     this.card.style.opacity = '';
     this.overlay.classList.remove('is-closing');
     this.model = null;
-    this.overlay.hidden = true;
-    this.card.replaceChildren();
-    document.body.classList.remove('has-card');
-    this.returnFocus?.focus?.({ preventScroll: true });
+    if (hide) {
+      this.overlay.hidden = true;
+      this.card.replaceChildren();
+      document.body.classList.remove('has-card');
+      this.returnFocus?.focus?.({ preventScroll: true });
+    }
     const resolve = this.resolve;
     this.resolve = null;
     resolve?.();
@@ -306,6 +339,16 @@ export class CardOverlay {
         ${m.chip ? `<span class="card-chip">${esc(m.chip)}</span>` : ''}
         <button class="card-close" type="button" aria-label="Close">✕</button>
       </header>
+      ${
+        m.stations?.length
+          ? `<nav class="card-stations" aria-label="Stops here">${m.stations
+              .map(
+                (st) =>
+                  `<button type="button" class="card-station${st.current ? ' is-current' : ''}${st.done ? ' is-done' : ''}" data-station="${esc(st.id)}" ${st.current ? 'aria-current="true"' : ''}><span aria-hidden="true">${st.done ? '✓' : '○'}</span>${esc(st.label)}<span class="visually-hidden">${st.done ? ', seen' : ', not seen yet'}</span></button>`,
+              )
+              .join('')}</nav>`
+          : ''
+      }
       <div class="card-body${side ? ' card-body--side' : ''}">
         <div class="card-main">
           ${m.paragraphs.map((p) => `<p class="card-desc">${esc(p)}</p>`).join('')}
@@ -373,10 +416,16 @@ export class CardOverlay {
       handler?.(to);
       return;
     }
+    const station = target.closest<HTMLElement>('[data-station]');
+    if (station) {
+      if (!station.classList.contains('is-current')) this.handlers.onSwap?.(`station:${station.dataset.station}`);
+      return;
+    }
     const footer = target.closest<HTMLElement>('[data-footer]');
     if (footer) {
       const handler = this.handlers.onFooter;
       const action = footer.dataset.footer!;
+      if (action.startsWith('swap:')) return this.handlers.onSwap?.(action.slice(5));
       this.close();
       handler?.(action);
       return;
@@ -406,11 +455,17 @@ export class CardOverlay {
     return Number(g.dataset.index ?? 0);
   }
 
+  /** Galleries are native scroll strips (swipe on phones). Arrows and dots just scroll them. */
   private galleryGo(g: HTMLElement, n: number): void {
     const total = g.querySelectorAll('.gallery-slide').length;
     const i = ((n % total) + total) % total;
+    const viewport = g.querySelector('.gallery-viewport') as HTMLElement;
+    viewport.scrollTo({ left: i * viewport.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    this.galleryMark(g, i);
+  }
+
+  private galleryMark(g: HTMLElement, i: number): void {
     g.dataset.index = String(i);
-    (g.querySelector('.gallery-track') as HTMLElement).style.transform = `translateX(-${i * 100}%)`;
     g.querySelectorAll('.gallery-dot').forEach((d, k) => d.classList.toggle('is-on', k === i));
   }
 
@@ -448,9 +503,8 @@ export class CardOverlay {
       const dy = e.changedTouches[0].clientY - start.y;
       const s = start;
       start = null;
-      if (s.gallery && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-        this.galleryGo(s.gallery, this.galleryIndex(s.gallery) + (dx < 0 ? 1 : -1));
-      } else if (s.header && dragging) {
+      void dx;
+      if (s.header && dragging) {
         dragging = false;
         const velocity = dy / Math.max(1, performance.now() - s.t); // px per ms
         if (dy > 120 || (dy > 30 && velocity > 0.5)) {

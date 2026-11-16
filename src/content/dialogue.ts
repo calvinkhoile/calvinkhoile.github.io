@@ -32,9 +32,12 @@ const plazaChoices: DialogueChoice[] = [
 ];
 
 /** First talk with a gym leader: take the quick tour inside the pop-up, or explore on foot with the overview in hand. */
-const leaderChoices = (gym: string): DialogueChoice[] => [
+const leaderChoices = (_gym: string): DialogueChoice[] => [
+  // Most visitors won't walk every room. "Finish" marks the gym done and hands over the badge on the spot.
+  { label: 'Finish this gym', action: 'finish-gym' },
   { label: 'Walk me through it', action: 'walkthrough' },
-  { label: "I'll look around", action: `card:${gym}-overview` },
+  // No pop-up: the visitor wants to walk the room.
+  { label: "I'll look around" },
 ];
 
 export const dialogue: Record<string, DialogueNode> = {
@@ -70,10 +73,7 @@ export const dialogue: Record<string, DialogueNode> = {
 
   // Gym leaders. Three nodes each: first talk, all stations done (awards the badge), and after the badge.
   'ucla.leader': {
-    lines: [
-      { speaker: CALVIN, text: 'Welcome to UCLA. Dream school, and where all of this started.' },
-      { speaker: CALVIN, text: 'Three stops in here: the graduation stage, the club fair, and the internship board.' },
-    ],
+    lines: [{ speaker: CALVIN, text: "Welcome to UCLA. Dream school, and where all of this started. Three stops in here." }],
     choices: leaderChoices('ucla'),
   },
   'ucla.leaderDone': {
@@ -86,10 +86,7 @@ export const dialogue: Record<string, DialogueNode> = {
   },
 
   'deloitte.leader': {
-    lines: [
-      { speaker: CALVIN, text: 'Deloitte. First real job, and where I figured out I wanted to build products.' },
-      { speaker: CALVIN, text: 'Three whiteboards, three projects. The sushi bar has a story too.' },
-    ],
+    lines: [{ speaker: CALVIN, text: "Deloitte. First real job, and where I figured out I wanted to build products. Three whiteboards, and a sushi bar with a story." }],
     choices: leaderChoices('deloitte'),
   },
   'deloitte.leaderDone': {
@@ -102,10 +99,7 @@ export const dialogue: Record<string, DialogueNode> = {
   },
 
   'meta.leader': {
-    lines: [
-      { speaker: CALVIN, text: 'Meta. Stories and Messaging, shipping to billions of people.' },
-      { speaker: CALVIN, text: 'Check the kiosk, the feature wall, and the mailbox. The window is worth a look too.' },
-    ],
+    lines: [{ speaker: CALVIN, text: "Meta. Stories and Messaging, shipping to billions of people. Three stops, plus a window worth a look." }],
     choices: leaderChoices('meta'),
   },
   'meta.leaderDone': {
@@ -118,10 +112,7 @@ export const dialogue: Record<string, DialogueNode> = {
   },
 
   'betmgm.leader': {
-    lines: [
-      { speaker: CALVIN, text: 'Welcome to BetMGM. This is where I work now, on the rewards program.' },
-      { speaker: CALVIN, text: 'Four stations in here. Hit them all, then come back and see me.' },
-    ],
+    lines: [{ speaker: CALVIN, text: "Welcome to BetMGM. This is where I work now, on the rewards program. Four stations in here." }],
     choices: leaderChoices('betmgm'),
   },
   'betmgm.leaderDone': {
@@ -153,9 +144,9 @@ export const dialogue: Record<string, DialogueNode> = {
     lines: [{ speaker: 'Door', text: 'Still under construction. This one opens in the next build.' }],
   },
 
-  // Source copy (deloitte-overview.desc).
+  // Calvin's words, from the Deloitte overview. "March" added at his request.
   'deloitte.sushi': {
-    lines: [{ speaker: CALVIN, text: 'When the world shut down in 2020, I was at a sushi bar in SF for a client project.' }],
+    lines: [{ speaker: CALVIN, text: 'When the world shut down in March 2020, I was at a sushi bar in SF for a client project.' }],
   },
 };
 

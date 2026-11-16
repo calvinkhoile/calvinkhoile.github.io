@@ -16,7 +16,7 @@ export class Tracker {
 
   constructor(
     host: HTMLElement,
-    private readonly handlers: { onJump(id: string): void; onSkipAll(): void },
+    private readonly handlers: { onJump(id: string): void; onSkipAll(): void; onFinish(): void },
   ) {
     this.el = document.createElement('div');
     this.el.className = 'tracker';
@@ -34,6 +34,9 @@ export class Tracker {
       if (jump) {
         this.setOpen(false);
         this.handlers.onJump(jump.dataset.jump!);
+      } else if (t.closest('.tracker-finish')) {
+        this.setOpen(false);
+        this.handlers.onFinish();
       } else if (t.closest('.tracker-skip')) {
         this.setOpen(false);
         this.handlers.onSkipAll();
@@ -69,6 +72,7 @@ export class Tracker {
     this.panel.innerHTML = `<ul class="tracker-list">${items
       .map((i) => `<li><button type="button" class="tracker-item${i.done ? ' is-done' : ''}" data-jump="${i.id}"><span aria-hidden="true">${i.done ? '✓' : '○'}</span>${i.label}<span class="visually-hidden">${i.done ? ', visited' : ', not visited'}. Jump there.</span></button></li>`)
       .join('')}</ul>
-      <button type="button" class="tracker-skip">Skip the walk: see all ${items.length} →</button>`;
+      <button type="button" class="tracker-skip">Skip the walk: see all ${items.length} →</button>
+      ${done < items.length ? `<button type="button" class="tracker-finish">Finish ${place === 'The Weightroom' ? 'the Weightroom' : 'this gym'} now</button>` : ''}`;
   }
 }

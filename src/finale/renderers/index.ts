@@ -18,6 +18,7 @@ function optionList(host: HTMLElement, options: { value: string; label: string }
   list.className = 'q-options';
   list.setAttribute('role', 'group');
   list.setAttribute('aria-label', 'Answers');
+  list.dataset.count = String(options.length);
   list.innerHTML = options.map((o) => `<button type="button" class="q-option" data-option="${esc(o.value)}"><span>${esc(o.label)}</span></button>`).join('');
   host.appendChild(list);
   let done = false;
@@ -79,7 +80,9 @@ function chess(q: Question, host: HTMLElement, onAnswer: (picked: string) => voi
     }
   }
   host.appendChild(board);
-  const opts = optionList(host, q.options.map((o) => ({ value: o, label: o })), q.answer, (picked) => {
+  // Check (+) and mate (#) marks are left off the buttons: they'd give the answer away, and nobody should miss
+  // a question over notation.
+  const opts = optionList(host, q.options.map((o) => ({ value: o, label: o.replace(/[+#]+$/, '') })), q.answer, (picked) => {
     opts.mark(picked);
     onAnswer(picked);
   });

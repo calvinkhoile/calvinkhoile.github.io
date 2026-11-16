@@ -40,6 +40,8 @@ function propAnchor(map: MapDef, x: number, z: number): { x: number; y: number; 
 
 const RING_TODO = 0x38bdf8;
 const RING_DONE = 0x22c55e;
+/** Things to do rather than read (dumbbells, loose basketballs) get an orange ring. */
+const RING_PLAY = 0xfb923c;
 
 function checkSprite(): THREE.Sprite {
   const canvas = document.createElement('canvas');
@@ -72,7 +74,7 @@ export class Interactions {
   readonly targets: Target[] = [];
   /** All floor rings are one instanced mesh (one draw call), colored per instance. */
   private ringMesh: THREE.InstancedMesh | null = null;
-  private readonly rings = new Map<string, { index: number; x: number; z: number; check: THREE.Sprite }>();
+  private readonly rings = new Map<string, { index: number; x: number; z: number; check: THREE.Sprite; color: number }>();
   private readonly guide: THREE.Mesh;
   private guideTarget: Target | null = null;
 
@@ -82,7 +84,7 @@ export class Interactions {
       if (i.kind === 'station' && !station) throw new Error(`map ${map.id}: unknown station "${i.station}"`);
       const target: Target = { id: i.id, kind: i.kind, label: station?.label ?? i.label, x: i.x, z: i.z, radius: i.radius, height: 2.2, anchor: propAnchor(map, i.x, i.z), source: i, station };
       this.targets.push(target);
-      if (i.kind === 'station') this.addRing(target);
+      if (i.kind === 'station' || i.kind === 'lift' || i.kind === 'shoot') this.addRing(target);
     }
     for (const d of map.doors) {
       this.targets.push({ id: d.id, kind: 'door', label: doorLabel(d), x: d.x + 0.5, z: d.z + 0.5, radius: 1.15, height: 2.7, anchor: { x: d.x + 0.5, y: 1.2, z: d.z + 0.5 }, door: d });
@@ -106,7 +108,7 @@ export class Interactions {
     check.position.set(t.x, 0.5, t.z);
     check.visible = false;
     this.root.add(check);
-    this.rings.set(t.id, { index: this.rings.size, x: t.x, z: t.z, check });
+    this.rings.set(t.id, { index: this.rings.size, x: t.x, z: t.z, check, color: t.kind === 'station' ? RING_TODO : RING_PLAY });
   }
 
   private buildRings(): void {
@@ -116,8 +118,8 @@ export class Interactions {
       new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false }),
       this.rings.size,
     );
-    const todo = new THREE.Color(RING_TODO);
-    for (const r of this.rings.values()) mesh.setColorAt(r.index, todo);
+    const color = new THREE.Color();
+    for (const r of this.rings.values()) mesh.setColorAt(r.index, color.setHex(r.color));
     mesh.frustumCulled = false;
     this.ringMesh = mesh;
     this.root.add(mesh);
