@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Calvin Le's personal website. Static portfolio served by GitHub Pages at https://calvinkhoile.github.io.
+Calvin Le's personal website, served by GitHub Pages at https://calvinkhoile.github.io. The live site is a static portfolio. The `world` branch is rebuilding it as MyPark, a small 3D world you walk around in.
 
 ## Who I Am
 
@@ -31,26 +31,40 @@ This is a recruiter- and hiring-manager-facing site. Copy should sound like me: 
 
 ## Project Structure
 
-No framework, no build step, no package manager.
+Two things live in this repo, depending on the branch.
+
+**`main` (live site):** the classic static site. `index.html`, `style.css`, `script.js`, `assets/`. No build step. Deployed by `.github/workflows/deploy.yml`, which uploads only those files.
+
+**`world` (in progress):** MyPark, a 3D world built with Vite + TypeScript + three.js. Plan: `docs/mypark-world-plan.md`. Progress log: `docs/PROGRESS.md`. Goes live at M8 when `world` merges into `main`.
 
 ```
-index.html   ← all markup: nav, bio/hero (3D model), section grid, section panels, lightbox
-style.css    ← all styles; design tokens on :root; breakpoints at 860 / 600 / 380px
-script.js    ← section open/close/switch, careerData (company content), projects, hobby carousel, lightbox
-assets/      ← images grouped by company/topic (betmgm/, meta/, deloitte/, hobbies/, logos/)
+index.html          ← world entry (canvas + UI root)
+src/
+  main.ts           ← boot: capability check, scene, game loop
+  engine/           ← renderer, camera, input (keyboard/mouse/touch), grid (collision + A*), debug overlay
+  world/            ← player, NPCs, interactions, exterior and interior art, maps/ (one data file per scene)
+  ui/               ← DOM overlays: cards, dialogue, prompts, title and select screens, styles/
+  content/          ← all copy: career, profile, side builds, hobbies, dialogue, station registry
+public/
+  classic/          ← the old site, frozen (index.html, style.css, script.js, assets/). Served at /classic/
+  models/           ← optimized .glb output of `npm run assets`
+tests/              ← Vitest unit tests; tests/e2e/ Playwright smoke tests
+scripts/            ← asset pipeline + its manifest
+assets-src/         ← raw downloaded asset packs (gitignored)
+docs/               ← plan, PROGRESS.md, ASSETS.md (licenses), CONTENT-EDITING.md (how to edit copy, list of drafts)
 ```
 
-- **Three.js** (0.165.0 via import map + jsDelivr) renders the hero 3D model in an inline `<script type="module">` at the bottom of `index.html`.
-- **Phosphor Icons** (2.1.1 via unpkg) for icons.
-- Fonts: Inter (body) and Roboto (display) from Google Fonts.
-- Career content lives in the `careerData` object in `script.js`, not in the HTML. Edit there for company copy and photos.
-- Section IDs: `career`, `projects` (labeled MyBadges), `hobbies` (labeled MyPark).
+- Stack: Vite 5, TypeScript (strict), three.js, Vitest, Playwright. All versions pinned exact in `package.json`. No React, no physics engine, no game engine.
+- Maps are code (`src/world/maps/*.ts`): zones, props, doors, interactables. Blocking props stamp the collision grid automatically.
+- UI overlays are plain DOM + CSS over the canvas.
+- Site copy for the world lives in `src/content/`, migrated verbatim from the classic site. Edit copy there, never inside UI or game code. New draft copy gets a `TODO(calvin)` and a row in `docs/CONTENT-EDITING.md`.
+- Classic site details (still true inside `public/classic/`): Three.js 0.165.0 via import map, Phosphor Icons, career content in the `careerData` object in `script.js`, section IDs `career` / `projects` / `hobbies`. Don't edit classic files; they're an archive.
 
 ## Design
 
-The live site is a **PlayStation-inspired dark theme**: black canvas (`--bg: #000`), white ink, PlayStation Blue accent (`--accent: #0070d1`), translucent white hairlines. Tokens are defined at the top of `style.css`. Use them, don't inline hex values.
+The classic site and the world's DOM UI share a **PlayStation-inspired dark theme**: black canvas (`--bg: #000`), white ink, PlayStation Blue accent (`--accent: #0070d1`), translucent white hairlines. Tokens are defined at the top of `public/classic/style.css` and mirrored in `src/ui/styles/main.css`. Use them, don't inline hex values. The 3D world's own palette is in the plan (section 7.1).
 
-`.kiro/steering/design.md` describes a **Cursor** cream/orange design system. That is not what the site uses. Treat `style.css` tokens as the source of truth; only reference `design.md` if I explicitly ask to move toward that look.
+`.kiro/steering/design.md` describes a **Cursor** cream/orange design system. That is not what the site uses. Treat the `style.css` tokens as the source of truth; only reference `design.md` if I explicitly ask to move toward that look.
 
 Rules:
 - Always check mobile. Most recent bugs have been mobile layout issues (see git log). Test at 375px and around 860px.
@@ -60,14 +74,23 @@ Rules:
 ## Running Locally
 
 ```
-python3 -m http.server 8000
+npm install
+npm run dev        # http://localhost:5173 (classic site at /classic/)
+npm run dev:lan    # adds a LAN URL for phone testing on the same Wi-Fi
+npm run build      # typecheck + build to dist/
+npm test           # unit tests
+npm run test:e2e   # Playwright smoke tests (desktop + mobile viewports)
+npm run assets     # optimize models from assets-src/ into public/models/
 ```
 
-Then open http://localhost:8000. Serving (vs. opening the file directly) is required for the ES module import map and the 3D model to load.
+Debug URL params: `?debug=1` (grid, collision, FPS), `?yaw=0`, `?zoom=1.3`.
+
+On `main`, the classic site still runs with `python3 -m http.server 8000`.
 
 ## Git & Deploy
 
-- Pushing to `main` deploys via GitHub Pages (usually live within 1–2 minutes). There's no MR process here (unlike product-team-os).
+- Pushing to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`, usually live within 1–2 minutes). There's no MR process here (unlike product-team-os).
+- World work happens on the `world` branch. CI (`ci.yml`) builds and tests every push there and never deploys. Don't merge `world` into `main` without my go-ahead.
 - Only commit or push when I ask.
 - Commit messages: short, imperative, describe the user-visible change (e.g., "Fix mobile career panel staying open after collapsing a company").
 - Remote: `github.com/calvinkhoile/calvinkhoile.github.io`.

@@ -1,0 +1,586 @@
+[
+  {
+    "id": "chess-backrank",
+    "category": "chess",
+    "type": "chess",
+    "difficulty": "normal",
+    "setup": "Chess break. You're White. Mate in one.",
+    "prompt": "Find the move.",
+    "fen": "6k1/5ppp/8/8/8/8/3r1PPP/4R1K1 w - - 0 1",
+    "options": [
+      "Re8#",
+      "Re7",
+      "h3",
+      "Kf1"
+    ],
+    "answer": "Re8#",
+    "explain": "Back-rank mate. Black's own pawns trap the king.",
+    "calvinWin": "Back rank. Gets everyone.",
+    "calvinLose": "Yeah, that's the one.",
+    "move": {
+      "from": "e1",
+      "to": "e8"
+    }
+  },
+  {
+    "id": "chess-scholars",
+    "category": "chess",
+    "type": "chess",
+    "difficulty": "normal",
+    "setup": "Four moves in and Black just blundered. You're White.",
+    "prompt": "Finish it.",
+    "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+    "options": [
+      "Qxf7#",
+      "Qxe5+",
+      "Bxf7+",
+      "Qh4"
+    ],
+    "answer": "Qxf7#",
+    "explain": "Scholar's mate. The queen takes f7 with the bishop backing her up.",
+    "calvinWin": "Every chess kid learns that one the hard way.",
+    "calvinLose": "Okay, you've played before.",
+    "move": {
+      "from": "h5",
+      "to": "f7"
+    }
+  },
+  {
+    "id": "chess-ladder",
+    "category": "chess",
+    "type": "chess",
+    "difficulty": "normal",
+    "setup": "Two rooks, one lonely king. You're White.",
+    "prompt": "Mate in one.",
+    "fen": "k7/7R/8/8/8/8/8/6RK w - - 0 1",
+    "options": [
+      "Rg8#",
+      "Rh8+",
+      "Rb7",
+      "Kg2"
+    ],
+    "answer": "Rg8#",
+    "explain": "Rook ladder. One rook cuts off the 7th rank, the other mates on the 8th.",
+    "calvinWin": "Climb the ladder. One rank at a time.",
+    "calvinLose": "Clean.",
+    "move": {
+      "from": "g1",
+      "to": "g8"
+    }
+  },
+  {
+    "id": "chess-fork",
+    "category": "chess",
+    "type": "chess",
+    "difficulty": "hard",
+    "setup": "For three. You're White, and there's a queen to win.",
+    "prompt": "Find the fork.",
+    "fen": "6k1/3q1p1p/8/8/4N3/8/5PPP/6K1 w - - 0 1",
+    "options": [
+      "Nf6+",
+      "Nc5",
+      "Nd6",
+      "Ng5"
+    ],
+    "answer": "Nf6+",
+    "explain": "Nf6+ forks the king and queen. Fun detail: after Nc5 or Ng5, Black has Qd1 mate.",
+    "calvinWin": "Knights are sneaky. Check the checks.",
+    "calvinLose": "A fork from deep. Respect.",
+    "move": {
+      "from": "e4",
+      "to": "f6"
+    }
+  },
+  {
+    "id": "hoops-help-corner",
+    "category": "hoops",
+    "type": "play",
+    "difficulty": "normal",
+    "setup": "You're driving baseline and the help comes over.",
+    "prompt": "Who's open?",
+    "play": {
+      "offense": [
+        {
+          "id": "O1",
+          "x": 39,
+          "y": 9,
+          "ball": true
+        },
+        {
+          "id": "O2",
+          "x": 3,
+          "y": 3
+        },
+        {
+          "id": "O3",
+          "x": 47,
+          "y": 18
+        },
+        {
+          "id": "O4",
+          "x": 12,
+          "y": 24
+        },
+        {
+          "id": "O5",
+          "x": 25,
+          "y": 21
+        }
+      ],
+      "defense": [
+        {
+          "id": "X1",
+          "x": 41,
+          "y": 12
+        },
+        {
+          "id": "X2",
+          "x": 21,
+          "y": 8
+        },
+        {
+          "id": "X3",
+          "x": 44,
+          "y": 17
+        },
+        {
+          "id": "X4",
+          "x": 14,
+          "y": 21
+        },
+        {
+          "id": "X5",
+          "x": 26,
+          "y": 17
+        }
+      ],
+      "arrows": [
+        {
+          "from": "O1",
+          "to": [
+            31,
+            6
+          ],
+          "style": "solid"
+        },
+        {
+          "from": "X2",
+          "to": [
+            27,
+            7
+          ],
+          "style": "dashed"
+        }
+      ],
+      "labels": {
+        "O2": "Weak-side corner",
+        "O3": "Right wing",
+        "O4": "Left wing",
+        "O5": "High post"
+      }
+    },
+    "options": [
+      "O2",
+      "O3",
+      "O4",
+      "O5"
+    ],
+    "answer": "O2",
+    "explain": "X2 left the weak-side corner to help. Kick it to the shooter he left.",
+    "calvinWin": "Help came from the corner. That's where the ball goes.",
+    "calvinLose": "Drive and kick. Textbook."
+  },
+  {
+    "id": "hoops-blitz",
+    "category": "hoops",
+    "type": "play",
+    "difficulty": "normal",
+    "setup": "Pick-and-roll. Both defenders jump you at the screen.",
+    "prompt": "Where does the ball go?",
+    "play": {
+      "offense": [
+        {
+          "id": "O1",
+          "x": 31,
+          "y": 31,
+          "ball": true
+        },
+        {
+          "id": "O2",
+          "x": 3,
+          "y": 3
+        },
+        {
+          "id": "O3",
+          "x": 47,
+          "y": 3
+        },
+        {
+          "id": "O4",
+          "x": 8,
+          "y": 25
+        },
+        {
+          "id": "O5",
+          "x": 27,
+          "y": 22
+        }
+      ],
+      "defense": [
+        {
+          "id": "X1",
+          "x": 32,
+          "y": 28
+        },
+        {
+          "id": "X5",
+          "x": 29,
+          "y": 29
+        },
+        {
+          "id": "X2",
+          "x": 8,
+          "y": 6
+        },
+        {
+          "id": "X3",
+          "x": 43,
+          "y": 6
+        },
+        {
+          "id": "X4",
+          "x": 11,
+          "y": 22
+        }
+      ],
+      "arrows": [
+        {
+          "from": "O5",
+          "to": [
+            25,
+            11
+          ],
+          "style": "solid"
+        }
+      ],
+      "labels": {
+        "O2": "Left corner",
+        "O3": "Right corner",
+        "O4": "Left wing",
+        "O5": "Rolling big"
+      }
+    },
+    "options": [
+      "O5",
+      "O2",
+      "O3",
+      "O4"
+    ],
+    "answer": "O5",
+    "explain": "Two on the ball means someone is open. Hit the roller in the pocket and it's 4-on-3.",
+    "calvinWin": "They sent two at you. The roller was wide open.",
+    "calvinLose": "Pocket pass. Nice."
+  },
+  {
+    "id": "hoops-fastbreak",
+    "category": "hoops",
+    "type": "play",
+    "difficulty": "hard",
+    "setup": "For three. 2-on-1 break, and the lone defender steps up to you.",
+    "prompt": "What's the play?",
+    "play": {
+      "offense": [
+        {
+          "id": "O1",
+          "x": 19,
+          "y": 25,
+          "ball": true
+        },
+        {
+          "id": "O2",
+          "x": 33,
+          "y": 17
+        }
+      ],
+      "defense": [
+        {
+          "id": "X1",
+          "x": 20,
+          "y": 19
+        }
+      ],
+      "arrows": [
+        {
+          "from": "O2",
+          "to": [
+            28,
+            8
+          ],
+          "style": "solid"
+        },
+        {
+          "from": "X1",
+          "to": [
+            19,
+            22
+          ],
+          "style": "dashed"
+        }
+      ],
+      "labels": {
+        "O2": "Dump it to the wing",
+        "O1": "Take it yourself"
+      }
+    },
+    "options": [
+      "O2",
+      "O1"
+    ],
+    "answer": "O2",
+    "explain": "Make the defender pick. Whoever he leaves gets the ball.",
+    "calvinWin": "He picked you. So it wasn't your shot.",
+    "calvinLose": "Easy two. Well, three today."
+  },
+  {
+    "id": "hoops-backdoor",
+    "category": "hoops",
+    "type": "play",
+    "difficulty": "normal",
+    "setup": "Your wing is getting denied hard. He plants and cuts.",
+    "prompt": "Who gets it?",
+    "play": {
+      "offense": [
+        {
+          "id": "O1",
+          "x": 25,
+          "y": 33,
+          "ball": true
+        },
+        {
+          "id": "O2",
+          "x": 9,
+          "y": 23
+        },
+        {
+          "id": "O3",
+          "x": 41,
+          "y": 22
+        },
+        {
+          "id": "O4",
+          "x": 4,
+          "y": 4
+        },
+        {
+          "id": "O5",
+          "x": 19,
+          "y": 19
+        }
+      ],
+      "defense": [
+        {
+          "id": "X1",
+          "x": 25,
+          "y": 29
+        },
+        {
+          "id": "X2",
+          "x": 11,
+          "y": 20
+        },
+        {
+          "id": "X3",
+          "x": 38,
+          "y": 26
+        },
+        {
+          "id": "X4",
+          "x": 8,
+          "y": 7
+        },
+        {
+          "id": "X5",
+          "x": 20,
+          "y": 15
+        }
+      ],
+      "arrows": [
+        {
+          "from": "O3",
+          "to": [
+            30,
+            8
+          ],
+          "style": "solid"
+        }
+      ],
+      "labels": {
+        "O2": "Left wing",
+        "O3": "Backdoor cutter",
+        "O4": "Left corner",
+        "O5": "High post"
+      }
+    },
+    "options": [
+      "O3",
+      "O2",
+      "O4",
+      "O5"
+    ],
+    "answer": "O3",
+    "explain": "When they deny the pass, go behind them.",
+    "calvinWin": "He was overplaying. The rim was right there.",
+    "calvinLose": "Backdoor. That one always feels good."
+  },
+  {
+    "id": "points-best-use",
+    "category": "points",
+    "type": "choice",
+    "difficulty": "normal",
+    "setup": "Points check.",
+    "prompt": "You've got 100k transferable credit card points. Usually the highest-value move?",
+    "options": [
+      "Transfer to an airline or hotel partner for premium travel",
+      "Cash back at 1¢ a point",
+      "Buy gift cards",
+      "Spend them at Amazon checkout"
+    ],
+    "answer": "Transfer to an airline or hotel partner for premium travel",
+    "explain": "Transfer partners are where points are worth the most.",
+    "calvinWin": "Cashing out at a penny hurts me to watch.",
+    "calvinLose": "You've been on the points blogs."
+  },
+  {
+    "id": "points-status",
+    "category": "points",
+    "type": "choice",
+    "difficulty": "hard",
+    "setup": "For three. Loyalty trivia.",
+    "prompt": "Which airline gave away 25 years of elite status to people who completed its challenge?",
+    "options": [
+      "JetBlue",
+      "Delta",
+      "United",
+      "Southwest"
+    ],
+    "answer": "JetBlue",
+    "explain": "JetBlue's 25 for 25. I did it. Mosaic 1 until 2051.",
+    "calvinWin": "There's a little jet outside the fence that would've told you.",
+    "calvinLose": "You saw the jet, didn't you."
+  },
+  {
+    "id": "points-bonus",
+    "category": "points",
+    "type": "choice",
+    "difficulty": "normal",
+    "setup": "Points check.",
+    "prompt": "Fastest way to earn a big chunk of points at once?",
+    "options": [
+      "A credit card welcome bonus",
+      "Everyday spending",
+      "An airline shopping portal",
+      "Flying more"
+    ],
+    "answer": "A credit card welcome bonus",
+    "explain": "One welcome bonus can beat a year of everyday spending.",
+    "calvinWin": "The bonus is the whole game.",
+    "calvinLose": "Correct. Dangerous knowledge."
+  },
+  {
+    "id": "betting-line-shopping",
+    "category": "betting",
+    "type": "choice",
+    "difficulty": "normal",
+    "setup": "Same bet, three books.",
+    "prompt": "Which book do you take it at?",
+    "board": [
+      {
+        "book": "Book A",
+        "odds": "-110"
+      },
+      {
+        "book": "Book B",
+        "odds": "+105"
+      },
+      {
+        "book": "Book C",
+        "odds": "-115"
+      }
+    ],
+    "options": [
+      "Book A",
+      "Book B",
+      "Book C"
+    ],
+    "answer": "Book B",
+    "explain": "Same bet, better price. Always shop the line.",
+    "calvinWin": "Plus money was sitting right there.",
+    "calvinLose": "Line shopper. I see you."
+  },
+  {
+    "id": "betting-know-sports",
+    "category": "betting",
+    "type": "choice",
+    "difficulty": "hard",
+    "setup": "For three.",
+    "prompt": "To make money sports betting, do you need to know a lot about sports?",
+    "options": [
+      "No. Learning line movement and price shopping matters more",
+      "Yes, you need to be an expert",
+      "Only for parlays",
+      "Only for live betting"
+    ],
+    "answer": "No. Learning line movement and price shopping matters more",
+    "explain": "Sports knowledge can help, but the edge is in the prices, not the picks.",
+    "calvinWin": "It's a pricing game dressed up as a sports game.",
+    "calvinLose": "Most people miss that one."
+  },
+  {
+    "id": "betting-odds",
+    "category": "betting",
+    "type": "choice",
+    "difficulty": "normal",
+    "setup": "Quick math.",
+    "prompt": "You bet $100 at +200 and win. How much profit?",
+    "options": [
+      "$200",
+      "$100",
+      "$150",
+      "$300"
+    ],
+    "answer": "$200",
+    "explain": "+200 pays $200 for every $100 risked.",
+    "calvinWin": "Plus 200 means two hundred on a hundred.",
+    "calvinLose": "Math checks out."
+  },
+  {
+    "id": "rivalry-teams",
+    "category": "rivalry",
+    "type": "rivalry",
+    "difficulty": "normal",
+    "setup": "Game point. Let's see if you know my teams.",
+    "prompt": "Pick the team I root for in each matchup. All three to score.",
+    "matchups": [
+      {
+        "a": "UCLA",
+        "b": "USC",
+        "answer": "UCLA"
+      },
+      {
+        "a": "Lakers",
+        "b": "Knicks",
+        "answer": "Lakers"
+      },
+      {
+        "a": "Rams",
+        "b": "49ers",
+        "answer": "Rams"
+      }
+    ],
+    "options": [],
+    "answer": "UCLA, Lakers, Rams",
+    "explain": "UCLA football and basketball first, then the Lakers, then the Rams.",
+    "calvinWin": "LA through and through. You'll learn.",
+    "calvinLose": "Okay, you actually know me."
+  }
+]

@@ -3,3 +3,8 @@ assets-src/
 .DS_Store
 node_modules/
 dist/
+test-results/
+playwright-report/
+
+# The résumé ships as public/resume.pdf. The original in the repo root is just the source copy.
+[[]Le, Calvin - Resume[]].pdf
