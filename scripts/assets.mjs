@@ -400,6 +400,19 @@ async function buildPhotos(spec) {
   console.log(`assets: ${count} photos           ${kb.toFixed(1).padStart(7)} KB`);
 }
 
+// ---------- audio ----------
+
+function buildAudio(files) {
+  const dir = joinPath(root, 'public/audio');
+  mkdirSync(dir, { recursive: true });
+  let kb = 0;
+  for (const [out, src] of Object.entries(files)) {
+    copyFileSync(joinPath(root, src), joinPath(dir, out));
+    kb += statSync(joinPath(dir, out)).size / 1024;
+  }
+  console.log(`assets: ${Object.keys(files).length} sounds           ${kb.toFixed(1).padStart(7)} KB`);
+}
+
 // ---------- run ----------
 
 let total = 0;
@@ -409,3 +422,4 @@ if (manifest.animations) total += await buildAnimations(manifest.animations);
 console.log(`assets: ${total.toFixed(1)} KB total in public/models/`);
 if (manifest.logos) await buildLogos(manifest.logos);
 if (manifest.photos) await buildPhotos(manifest.photos);
+if (manifest.audio) buildAudio(manifest.audio);

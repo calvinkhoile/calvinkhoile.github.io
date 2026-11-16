@@ -12,8 +12,9 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M3 | Interaction + dialogue + cards ★ | Done. Reviewed by Calvin twice (Nov 15), changes applied |
 | M4 | All gyms + badges | Done (Nov 15, 2026) |
 | M5 | Calvin's avatar ★ | Tier A in the park. Calvin chose Tier B: **waiting on his generated model in `assets-src/calvin/`** |
-| M6 | Finale ★ | Built, tests green. **Waiting on Calvin: review all 15 questions and the basketball diagrams** |
-| M7–M8 | | Not started |
+| M6 | Finale ★ | Done. Calvin reviewed and confirmed the questions (Nov 15) |
+| M7 | Polish | Built. Music is the one piece missing (no track yet) |
+| M8 | Launch ★ | **Live.** Calvin merged PR #1 on Nov 16, 2026 (03:05 UTC) and the new deploy workflow published it on its first run. Two later commits on `world` (the fifth feedback round and M7) are waiting on a second PR. `v1.0` tag not cut yet |
 
 ## How to run
 
@@ -227,6 +228,21 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 **Notes**
 - The plan asked for one material per character. The body is one material. The accessories add two or three tiny ones.
 
+### Calvin's fifth round of feedback (Nov 15 to 16) and what changed
+
+1. **Keys:** Enter and the right arrow move on everywhere there's a "next": dialogue, the station pop-up, the finale, the badge ceremony. Arrows move between dialogue choices.
+2. **Finale answers on one line:** the question card is wider and four answers sit in one row on desktop (two by two on phones).
+3. **Chess notation:** the check and mate marks (+ and #) are no longer shown on the answer buttons.
+4. **Picking up a basketball is obvious now:** every loose ball on the court has an orange ring and a "Pick up the ball" prompt, the dumbbells got the same ring, and stepping onto the court for the first time shows a hint.
+5. **Speed:**
+   - The badge case has a jump button for every badge (four gyms, the Weightroom, the court).
+   - Talking to Calvin in a gym leads with **Finish this gym**, which marks it done and awards the badge on the spot. His welcome is one line, so the choices are there right away. The tracker has the same button.
+   - **"I'll look around"** now just closes (it used to open the overview card).
+6. **One pop-up per place.** A station's pop-up shows that station and carries a strip of every stop in the gym, with a check on the ones seen. Tap another stop in the strip, or "Next", and the pop-up swaps in place. Close it after seeing them all (Finish, X, or a click outside) and the badge is awarded right there. UCLA's three stations each show only their own part.
+7. **The workbench is scenery.** No ring, no prompt, no card. The Weightroom has four stops. The "Building with AI" copy is still in `src/content/side-builds.ts` but nothing in the world shows it now.
+8. **Phones swipe photo sets.** Galleries are native scroll strips: no arrows on phones, the next photo peeks in, dots follow.
+9. **Sushi bar line** says "March 2020".
+
 ## M6: Finale ★ (ready for review)
 
 **What's in**
@@ -261,6 +277,22 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 - `?seed=` and `?set=` work in every build, not just debug builds, because the tests run against the production build. They change nothing unless typed into the URL.
 - Chess pieces are Unicode symbols, so there is no piece-set license to track.
 
+## M7: Polish (built)
+
+**What's in**
+- **Sound effects**, off by default, never autoplayed. A speaker button next to the badge case turns them on (that click is also what browsers require before audio can play). Footsteps change with the surface (grass, hard ground, indoor carpet), plus blips for interacting and advancing dialogue, a whoosh for doors, pop-up open and close, the badge fanfare, right and wrong in the 1-on-1, and swish or rim in the shootaround. 18 files, 136 KB, all Kenney (CC0). The audio library loads only when sound is first switched on.
+- **Minimap:** M on a keyboard, or the map button. A top-down sketch of the park with labels and the visitor's position and heading. Outdoors only.
+- **Accessibility audit:** axe-core runs in the browser tests against the title screen, character select, HUD, tracker, badge case, dialogue, every kind of station pop-up, every finale question type, and the result screen. Zero serious or critical violations. Three real problems were found and fixed: clickable players inside a diagram marked as an image, a link nested inside the loading progress bar, and photo strips that couldn't be reached by keyboard.
+- **Sharing and search:** Open Graph and Twitter card tags, a 1200 x 630 preview image of the park (`public/og.png`, captured by a test), a canonical URL, `sitemap.xml`, and `robots.txt`.
+- **Slow devices:** if a device is already on the lowest quality tier and still under 20 frames a second, a screen offers the résumé and the classic site, with "Keep going anyway". No WebGL at all shows the same screen without that button.
+- Already in from earlier milestones: haptics on interact and badges, reduced-motion handling (no camera lead, no confetti, instant fades, court animations skipped), and the no-JavaScript message.
+
+**Not done**
+- **Music.** The plan wants a looping track per zone. No CC0 or licensed track has been picked, so there is no music toggle yet. Needs a track from Calvin, or his OK to pick one from OpenGameArt.
+- **Older iPhones may stay silent.** The sounds are Ogg files, which Safari only plays in recent versions. Converting to AAC needs `ffmpeg`, which isn't installed here.
+- **Volume sliders and a menu.** The plan describes a menu with sliders and a quality override. Sound is a single on/off button for now, and quality is `?quality=low`.
+- **A generated `/resume` page.** Dropped when Calvin chose the PDF. A PDF is less accessible than HTML, so screen-reader users get the PDF and the classic site rather than a purpose-built page.
+
 ---
 
 ## Decisions and deviations from the plan
@@ -288,6 +320,13 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 | Character select | Rotating models on their own screen | Drawn over the live park | Calvin's call: keep the world in view so people don't bail |
 | Deep-link visitors | Default look | Default look, and nothing is saved until they pick one | A shared link shouldn't lock a look in for the next real visit |
 | `deploy.yml` on `world` | Changed to build + `dist/` at M8 | Left as the M0 version for now | It only triggers on `main`, so it's inert here. Swapped at M8 as planned |
+
+## Launch notes (M8)
+
+- **Live site:** https://calvinkhoile.github.io is MyPark as of PR #1, which contains everything through M6. Verified after the deploy: the world loads, `/resume.pdf` and `/classic/` are served, and `/CLAUDE.md` and `/docs/` return 404.
+- **Not live yet:** the one-pop-up-per-place change, Finish and jump shortcuts, keyboard advance, swipeable galleries, the workbench as scenery, and all of M7 (sound, minimap, accessibility fixes, the social preview image and tags). They are on `world`, CI is green, and they go live with the next merge to `main`.
+- **Rollback:** revert the merge commit on `main`.
+- **Still to do before calling it v1.0:** Calvin's pass on a real iPhone and Android phone, the Tier B avatar, music (needs a track), and the `v1.0` tag.
 
 ## Open issues
 

@@ -18,6 +18,7 @@ function optionList(host: HTMLElement, options: { value: string; label: string }
   list.className = 'q-options';
   list.setAttribute('role', 'group');
   list.setAttribute('aria-label', 'Answers');
+  list.dataset.count = String(options.length);
   list.innerHTML = options.map((o) => `<button type="button" class="q-option" data-option="${esc(o.value)}"><span>${esc(o.label)}</span></button>`).join('');
   host.appendChild(list);
   let done = false;
@@ -79,7 +80,9 @@ function chess(q: Question, host: HTMLElement, onAnswer: (picked: string) => voi
     }
   }
   host.appendChild(board);
-  const opts = optionList(host, q.options.map((o) => ({ value: o, label: o })), q.answer, (picked) => {
+  // Check (+) and mate (#) marks are left off the buttons: they'd give the answer away, and nobody should miss
+  // a question over notation.
+  const opts = optionList(host, q.options.map((o) => ({ value: o, label: o.replace(/[+#]+$/, '') })), q.answer, (picked) => {
     opts.mark(picked);
     onAnswer(picked);
   });
@@ -119,7 +122,7 @@ function play(q: Question, host: HTMLElement, onAnswer: (picked: string) => void
   const wrap = document.createElement('div');
   wrap.className = 'court-diagram';
   const describe = `Half-court diagram. You have the ball as ${handler.id}. Teammates: ${q.options.map((o) => `${o}, ${p.labels[o]}`).join('; ')}.`;
-  wrap.innerHTML = `<svg viewBox="-1 -1 52 40" role="img" aria-label="${esc(describe)}">
+  wrap.innerHTML = `<svg viewBox="-1 -1 52 40" role="group" aria-label="${esc(describe)}">
     <defs><marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
     <rect x="0" y="0" width="50" height="38" class="court-floor"/>
     <rect x="17" y="0" width="16" height="19" class="court-paint"/>

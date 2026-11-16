@@ -31,7 +31,7 @@ export class Screens {
 
   setProgress(fraction: number): void {
     this.bar.style.transform = `scaleX(${Math.max(0.04, Math.min(1, fraction))})`;
-    this.loading.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
+    document.getElementById('loading-track')!.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
   }
 
   hideLoading(): void {

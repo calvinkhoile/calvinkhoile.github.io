@@ -71,10 +71,10 @@ test('signpost: prompt appears in range and its dialogue plays through', async (
   await expect(page.locator('.dialogue-speaker')).toHaveText('Signpost');
   // The line types itself out, then shows how to continue.
   await expect(page.locator('.dialogue-text')).toContainText('North along the path: Deloitte, Meta, BetMGM.');
-  await expect(page.locator('.dialogue-hint')).toHaveText(isMobile ? 'Tap to continue' : 'Press any key to continue');
-  // Any key continues on desktop. A tap does on touch.
+  await expect(page.locator('.dialogue-hint')).toHaveText(isMobile ? 'Tap to continue' : 'Enter or → to continue');
+  // Enter or the right arrow continues on desktop. A tap does on touch.
   if (isMobile) await page.locator('.dialogue').click();
-  else await page.keyboard.press('x');
+  else await page.keyboard.press('ArrowRight');
   await expect(page.locator('.dialogue-text')).toContainText("Calvin's Court.");
   await page.locator('.dialogue').click();
   await expect(page.locator('.dialogue')).toBeHidden();
@@ -146,10 +146,15 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
       });
       await expect(slider).toHaveAttribute('style', /--pos:\s*80%/);
       await page.screenshot({ path: `docs/progress/m3-${info.project.name}-card.png` });
-      // Footer points at the next station.
-      await page.getByRole('button', { name: 'Next station →' }).click();
+      // The strip lists every stop here, with a check on the ones seen. "Next" swaps to the next one in place.
+      await expect(page.locator('.card-station')).toHaveText([/Rewards Store/, /Loyalty APIs/, /Partnership Desk/, /AI Lab/]);
+      await expect(page.locator('.card-station.is-done')).toHaveCount(1);
+      await expect(page.locator('.card-station.is-current')).toContainText('Rewards Store');
+      await page.locator('.card-footer-btn', { hasText: 'Next: Loyalty APIs →' }).click();
+      await expect(card).toHaveAttribute('data-card', 'betmgm/loyalty-apis');
+      await expect(page.locator('.card-station.is-done')).toHaveCount(2);
+      await page.locator('.card-close').click();
       await expect(card).toBeHidden();
-      expect(await page.evaluate(() => window.__mypark!.guide)).toMatch(/^betmgm\//);
     } else {
       if (i === 1) {
         // Account Linking and Real-Time Data are one comparison with A/B spots.
@@ -166,12 +171,22 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
       if (i === 2) {
         // Marriott and Global BRPs sit side by side, and the Marriott gallery pages with its arrows.
         await expect(page.locator('.card-row-label')).toHaveText(['Marriott', 'Global BRPs']);
-        await page.locator('.card .gallery-next').click();
+        // Desktop pages with arrows. Phones swipe the strip (no arrows there).
+        if (isMobile) await page.locator('.card .gallery-viewport').first().evaluate((el) => el.scrollTo({ left: el.scrollWidth, behavior: 'auto' }));
+        else await page.locator('.card .gallery-next').click();
         await expect(page.locator('.card .gallery-dot').nth(1)).toHaveClass(/is-on/);
       }
-      if (i === 3) await expect(page.locator('.card-footer-note')).toHaveText('Talk to Calvin for your badge.');
-      await page.locator('.card-close').click();
-      await expect(card).toBeHidden();
+      if (i === 3) {
+        // Last stop: the button says Finish, and closing with everything seen earns the badge on the spot.
+        await expect(page.locator('.card-station.is-done')).toHaveCount(4);
+        await page.locator('.card-footer-btn', { hasText: 'Finish' }).click();
+        await expect(card).toBeHidden();
+        await expect(page.locator('.ceremony-name')).toHaveText('High Roller Badge');
+        await page.locator('.ceremony-continue').click();
+      } else {
+        await page.locator('.card-close').click();
+        await expect(card).toBeHidden();
+      }
     }
     await idle(page);
   }
@@ -187,16 +202,7 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
   await expect(page.locator('.lightbox')).toBeHidden();
   await idle(page);
 
-  // Gym leader: with all four done he hands over the badge.
-  await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
-  await interact(page, isMobile);
-  await expect(page.locator('.dialogue')).toBeVisible();
-  for (let i = 0; i < 4 && (await page.locator('.dialogue').isVisible()); i++) await page.locator('.dialogue').click();
-  await expect(page.locator('.ceremony-name')).toHaveText('High Roller Badge');
-  await page.locator('.ceremony-continue').click();
-  await idle(page);
-
-  // Talk again: a new line, then the overview card with jump links to the stations.
+  // The gym leader, badge already earned: a line, then the overview card with jump links to the stations.
   await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
   await interact(page, isMobile);
   await expect(page.locator('.dialogue')).toBeVisible();
@@ -237,7 +243,7 @@ test('every station card renders with all of its images', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = await boot(page);
   const withCards = stations.filter((s) => s.content.source !== 'photo' && s.content.source !== 'dialogue');
-  expect(withCards.length).toBeGreaterThanOrEqual(15);
+  expect(withCards.length).toBeGreaterThanOrEqual(14);
   for (const s of withCards) {
     expect(await page.evaluate((id) => window.__mypark!.openStationCard(id), s.id), s.id).toBe(true);
     await expect(page.locator('.card')).toHaveAttribute('data-card', s.id);
@@ -249,13 +255,16 @@ test('every station card renders with all of its images', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('card content: UCLA tabs and timeline, Deloitte impact, hobbies, side builds', async ({ page }, info) => {
+test('card content: a UCLA station, Deloitte impact, hobbies', async ({ page }, info) => {
   await boot(page);
   // UCLA internships: opens on its own tab and shows the five-step timeline.
   await page.evaluate(() => window.__mypark!.openStationCard('ucla/internships'));
-  await expect(page.locator('.card-tab.is-on')).toHaveText('Internships');
-  await expect(page.locator('.card-panel:not([hidden]) .timeline-item')).toHaveCount(5);
-  await expect(page.locator('.card-panel:not([hidden]) .timeline-role').nth(2)).toContainText('Later raised $120M Series C from SoftBank.');
+  // The station shows just its own part of UCLA: no tabs for the other two.
+  await expect(page.locator('.card-title')).toHaveText('Internships');
+  await expect(page.locator('.card-tag')).toHaveText('UCLA');
+  await expect(page.locator('.card-tab')).toHaveCount(0);
+  await expect(page.locator('.card .timeline-item')).toHaveCount(5);
+  await expect(page.locator('.card .timeline-role').nth(2)).toContainText('Later raised $120M Series C from SoftBank.');
   await page.screenshot({ path: `docs/progress/m3-${info.project.name}-card-ucla.png` });
   await page.keyboard.press('Escape');
 
@@ -277,10 +286,6 @@ test('card content: UCLA tabs and timeline, Deloitte impact, hobbies, side build
   await expect(page.locator('.card-row-label')).toHaveText(['LA Marathon', 'Huntington Beach']);
   await page.keyboard.press('Escape');
   await expect(page.locator('.card')).toBeHidden();
-
-  await page.evaluate(() => window.__mypark!.openStationCard('weightroom/ai-building'));
-  await expect(page.locator('.card-wip')).toBeVisible();
-  await expect(page.locator('.card-tags li')).toHaveCount(3);
 });
 
 test('card is a keyboard-usable modal dialog', async ({ page, isMobile }) => {

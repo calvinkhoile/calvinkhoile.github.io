@@ -166,3 +166,21 @@ describe('Deep links', () => {
     expect(formatRoute('exterior', 'weightroom/running')).toBe('#/weightroom/running');
   });
 });
+
+describe('Frame-rate watchdog', () => {
+  it('ignores long pauses instead of reading them as slow frames', async () => {
+    const { FrameWatchdog } = await import('../src/engine/quality');
+    let slow = 0;
+    const dog = new FrameWatchdog(() => slow++);
+    const run = (seconds: number, dt: number) => {
+      for (let t = 0; t < seconds; t += dt) dog.tick(dt);
+    };
+    run(6, 1 / 60); // healthy
+    expect(slow).toBe(0);
+    dog.tick(20); // a pop-up was open for 20 seconds
+    run(6, 1 / 60);
+    expect(slow).toBe(0);
+    run(8, 1 / 15); // really slow
+    expect(slow).toBeGreaterThan(0);
+  });
+});

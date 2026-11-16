@@ -53,7 +53,6 @@ async function dismiss(page: Page): Promise<void> {
   await expect(card).toBeHidden();
   await expect(photo).toBeHidden();
   await expect(talk).toBeHidden();
-  await idle(page);
 }
 
 const GYMS: { scene: SceneId; door: string; name: string; prefix: string; badge: string }[] = [
@@ -73,31 +72,27 @@ test('UCLA, Deloitte, and Meta: visit every station, earn each badge from the gy
     await page.waitForTimeout(500);
     await page.screenshot({ path: `docs/progress/m4-${info.project.name}-${gym.prefix}-interior.png` });
 
-    // Every station in the room, counted or not.
+    // Every station in the room, counted or not. Closing the pop-up after the last counted one earns the badge.
     const here = stations.filter((s) => s.scene === gym.scene);
+    const total = countedStations(gym.scene).length;
+    let seen = 0;
     for (const s of here) {
       await standAt(page, s.id, s.label);
       await interact(page, isMobile);
       await dismiss(page);
+      if (s.counts && ++seen === total) {
+        await expect(page.locator('.ceremony-name')).toHaveText(gym.badge);
+        if (n === 0) await page.screenshot({ path: `docs/progress/m4-${info.project.name}-ceremony.png` });
+        await page.locator('.ceremony-continue').click();
+        await expect(page.locator('.ceremony')).toBeHidden();
+      }
+      await idle(page);
     }
-    const total = countedStations(gym.scene).length;
     await expect(page.locator('#station-counter')).toHaveText(`${gym.name} · ${total}/${total} stations ✓`);
-
-    // The leader hands over the badge.
-    await standAt(page, `calvin-${gym.prefix}`, 'Talk to Calvin');
-    await interact(page, isMobile);
-    const talk = page.locator('.dialogue');
-    await expect(talk).toBeVisible();
-    for (let i = 0; i < 6 && (await talk.isVisible()); i++) await talk.click();
-    await expect(page.locator('.ceremony')).toBeVisible();
-    await expect(page.locator('.ceremony-name')).toHaveText(gym.badge);
-    if (n === 0) await page.screenshot({ path: `docs/progress/m4-${info.project.name}-ceremony.png` });
-    await page.locator('.ceremony-continue').click();
-    await expect(page.locator('.ceremony')).toBeHidden();
-    await idle(page);
     expect(await page.evaluate(() => window.__mypark!.badges)).toContain(gym.prefix);
     await expect(page.locator('#badge-case .medal.is-earned')).toHaveCount(n + 1);
     if (n === 1) await expect(page.locator('#toast')).toContainText('Two badges already?');
+    const talk = page.locator('.dialogue');
 
     // Talking again doesn't award twice: a new line, then the overview card.
     await standAt(page, `calvin-${gym.prefix}`, 'Talk to Calvin');
@@ -127,7 +122,7 @@ test('the Weightroom: five stops, then the Explorer badge', async ({ page, isMob
   test.setTimeout(120_000);
   await boot(page);
   const stops = stations.filter((s) => s.id.startsWith('weightroom/'));
-  expect(stops).toHaveLength(5);
+  expect(stops).toHaveLength(4);
   for (const [i, s] of stops.entries()) {
     await standAt(page, s.id, s.label);
     if (i === 0) await page.screenshot({ path: `docs/progress/m4-${info.project.name}-weightroom.png` });
@@ -171,8 +166,8 @@ test('deep links drop a first-time visitor straight at a project', async ({ page
   await page.locator('.card-close').click();
   await expect(page.locator('.card')).toBeHidden();
   await expect.poll(() => page.evaluate(() => location.hash)).toBe('#/gym/betmgm');
-  // A deep link is a look around, not a saved game: no look is stored.
-  expect(await page.evaluate(() => localStorage.getItem('mypark:v1'))).toBeNull();
+  // A deep link is a look around: the stop counts as seen, but no trainer look is locked in.
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mypark:v1')!))).toMatchObject({ look: null, visitedStations: ['betmgm/rewards-store'] });
 
   // Changing the hash moves the visitor.
   await idle(page);
@@ -254,12 +249,8 @@ test('talking to the gym leader offers a walkthrough that steps through every st
   await idle(page);
   await standAt(page, 'calvin-deloitte', 'Talk to Calvin');
   await interact(page, isMobile);
-  // Advance through his welcome until the choices come up.
-  for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
-    await page.locator('.dialogue').click();
-    await page.waitForTimeout(250);
-  }
-  await expect(page.locator('.dialogue-choice')).toHaveText(['Walk me through it', "I'll look around"]);
+  // His welcome is one line, and the choices are there as soon as it finishes typing. Finish comes first.
+  await expect(page.locator('.dialogue-choice')).toHaveText(['Finish this gym', 'Walk me through it', "I'll look around"], { timeout: 20_000 });
   await page.getByRole('button', { name: 'Walk me through it' }).click();
 
   const card = page.locator('.card');
@@ -267,7 +258,8 @@ test('talking to the gym leader offers a walkthrough that steps through every st
   for (const [i, s] of stops.entries()) {
     await expect(card).toBeVisible();
     await expect(card).toHaveAttribute('data-card', s.id);
-    await expect(page.locator('.card-footer-note')).toHaveText(`Stop ${i + 1} of ${stops.length}`);
+    await expect(page.locator('.card-station.is-current')).toContainText(s.label);
+    await expect(page.locator('.card-station.is-done')).toHaveCount(i + 1);
     const next = i < stops.length - 1 ? `Next: ${stops[i + 1].label} →` : 'Finish';
     await expect(page.locator('.card-footer-btn')).toHaveText(next);
     await page.locator('.card-footer-btn').click();
@@ -297,8 +289,9 @@ test('tracker: sits with the quick links, expands to jump to a station or skip t
   await expect(page.locator('.tracker-item')).toHaveText([/Feedback Kiosk/, /Feature Wall/, /Voice of the Customer/]);
   await page.locator('.tracker-item', { hasText: 'Feature Wall' }).click();
   await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/highlighted-features');
-  // A jump shows only that station: no walkthrough footer.
-  await expect(page.locator('.card-footer-note')).toHaveCount(0);
+  // The pop-up is about that one station, with the others a tap away in the strip.
+  await expect(page.locator('.card-title')).toHaveText('Highlighted Features');
+  await expect(page.locator('.card-station.is-current')).toContainText('Feature Wall');
   await page.locator('.card-close').click();
   await expect(page.locator('.card')).toBeHidden();
   await idle(page);
@@ -306,20 +299,27 @@ test('tracker: sits with the quick links, expands to jump to a station or skip t
 
   // Skip the walk, then bail out with X: the tour stops and no badge is given.
   await counter.click();
+  await expect(page.locator('.tracker-finish')).toHaveText('Finish this gym now');
   await page.locator('.tracker-skip').click();
   await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/external-feedback');
-  await expect(page.locator('.card-footer-note')).toHaveText('Stop 1 of 3');
+  // Hop to another stop from the strip.
+  await page.locator('.card-station', { hasText: 'Voice of the Customer' }).click();
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/product-feedback');
+  await expect(page.locator('.card-station.is-done')).toHaveCount(3);
+  // All three seen: closing with X is enough to earn the badge.
   await page.locator('.card-close').click();
   await expect(page.locator('.card')).toBeHidden();
+  await expect(page.locator('.ceremony-name')).toHaveText('Ship-It Badge');
+  await page.locator('.ceremony-continue').click();
   await idle(page);
-  expect(await page.evaluate(() => window.__mypark!.badges)).toEqual([]);
+  expect(await page.evaluate(() => window.__mypark!.badges)).toEqual(['meta']);
 });
 
 test('tracker shows the Weightroom stops only while the visitor is in the Weightroom', async ({ page }) => {
   await boot(page);
   await expect(page.locator('#station-counter')).toBeHidden();
   await goTo(page, 37.5, 30);
-  await expect(page.locator('#station-counter')).toHaveText('The Weightroom · 0/5 stations');
+  await expect(page.locator('#station-counter')).toHaveText('The Weightroom · 0/4 stations');
   await goTo(page, 33.5, 52.5);
   await expect(page.locator('#station-counter')).toBeHidden();
 });
@@ -360,7 +360,7 @@ test('the prompt itself can be tapped', async ({ page }) => {
 
 test('overhead press: grab the dumbbells, press a few reps, put them back', async ({ page, isMobile }, info) => {
   const errors = await boot(page);
-  await standAt(page, 'weightroom/dumbbells', 'Dumbbells');
+  await standAt(page, 'weightroom/dumbbells', 'Grab the dumbbells');
   await interact(page, isMobile);
   const hud = page.locator('#lift-hud');
   await expect(hud).toBeVisible();
@@ -404,4 +404,117 @@ test('the mini jet by the court tells the JetBlue story', async ({ page, isMobil
     'In 2025, I completed the JetBlue challenge that gave me 25 years of loyalty status, Mosaic 1. I hit 25 different airports in the span of 2 months. It was a crazy time!',
   );
   await expect.poll(() => page.locator('.card .card-photo').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+});
+
+test('Finish: one choice with the gym leader completes the gym and awards the badge', async ({ page, isMobile }) => {
+  await boot(page, '/#/gym/ucla');
+  await idle(page);
+  await standAt(page, 'calvin-ucla', 'Talk to Calvin');
+  await interact(page, isMobile);
+  await expect(page.locator('.dialogue-choice').first()).toHaveText('Finish this gym', { timeout: 20_000 });
+  // It's the focused choice, so Enter is enough on a keyboard.
+  if (isMobile) await page.locator('.dialogue-choice').first().click();
+  else {
+    await expect(page.locator('.dialogue-choice').first()).toBeFocused();
+    await page.keyboard.press('Enter');
+  }
+  await expect(page.locator('.ceremony-name')).toHaveText('Bruin Badge');
+  if (isMobile) await page.locator('.ceremony-continue').click();
+  else await page.keyboard.press('ArrowRight');
+  await idle(page);
+  await expect(page.locator('#station-counter')).toHaveText('UCLA Gym · 3/3 stations ✓');
+  expect(await page.evaluate(() => window.__mypark!.badges)).toEqual(['ucla']);
+});
+
+test('badge case has a jump button for every badge', async ({ page }) => {
+  await boot(page);
+  await page.locator('#badge-case').click();
+  await expect(page.locator('.badge-go')).toHaveText(['Jump to gym →', 'Jump to gym →', 'Jump to gym →', 'Jump to gym →', 'Jump to the Weightroom →', 'Jump to the court →']);
+  await page.locator('.badge-row', { hasText: 'High Roller Badge' }).locator('.badge-go').click();
+  await expect.poll(() => page.evaluate(() => window.__mypark!.scene), { timeout: 20_000 }).toBe('gym-betmgm');
+  await idle(page);
+  // And out again, to the court.
+  await page.locator('#badge-case').click();
+  await page.locator('.badge-row', { hasText: 'Park Legend' }).locator('.badge-go').click();
+  await expect.poll(() => page.evaluate(() => window.__mypark!.scene), { timeout: 20_000 }).toBe('exterior');
+  await expect.poll(async () => (await page.evaluate(() => window.__mypark!.player)).z).toBeLessThan(17);
+  // Standing on the court for the first time explains the loose balls.
+  await expect(page.locator('#toast')).toContainText('Loose balls on the court');
+});
+
+test('walkthrough cards move on with Enter or the right arrow', async ({ page, isMobile }) => {
+  test.skip(!!isMobile, 'keyboard');
+  await boot(page, '/#/gym/meta');
+  await idle(page);
+  await page.locator('#station-counter').click();
+  await page.locator('.tracker-skip').click();
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/external-feedback');
+  await expect(page.locator('.card-footer-btn')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/highlighted-features');
+  await expect(page.locator('.card-footer-btn')).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/product-feedback');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.ceremony-name')).toHaveText('Ship-It Badge');
+});
+
+test('"I\'ll look around" closes the conversation with no pop-up', async ({ page, isMobile }) => {
+  await boot(page, '/#/gym/betmgm');
+  await idle(page);
+  await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
+  await interact(page, isMobile);
+  await page.getByRole('button', { name: "I'll look around" }).click();
+  await expect(page.locator('.dialogue')).toBeHidden();
+  await idle(page);
+  await page.waitForTimeout(400);
+  await expect(page.locator('.card')).toBeHidden();
+});
+
+test('the workbench is scenery: no prompt, no card', async ({ page }) => {
+  await boot(page);
+  await goTo(page, 43, 26);
+  await page.waitForTimeout(500);
+  await expect(page.locator('.prompt')).toBeHidden();
+  expect(await page.evaluate(() => window.__mypark!.targets.some((t) => /workbench|ai-building/i.test(t.id + t.label)))).toBe(false);
+});
+
+test('phones swipe photo sets instead of using arrows', async ({ page, isMobile }) => {
+  await boot(page);
+  await page.evaluate(() => window.__mypark!.openStationCard('ucla/clubs'));
+  const gallery = page.locator('.card .gallery').first();
+  await expect(gallery.locator('.gallery-slide')).toHaveCount(3);
+  if (isMobile) {
+    await expect(gallery.locator('.gallery-arrow').first()).toBeHidden();
+    // Scrolling the strip moves the dots.
+    await gallery.locator('.gallery-viewport').evaluate((el) => el.scrollTo({ left: el.scrollWidth, behavior: 'auto' }));
+    await expect(gallery.locator('.gallery-dot').nth(2)).toHaveClass(/is-on/);
+  } else {
+    await gallery.locator('.gallery-next').click();
+    await expect(gallery.locator('.gallery-dot').nth(1)).toHaveClass(/is-on/);
+  }
+});
+
+test('sound is off by default and one click turns it on; the map toggles outdoors', async ({ page, isMobile }) => {
+  const errors = await boot(page);
+  const sound = page.locator('#hud-sound');
+  await expect(sound).toHaveAttribute('aria-pressed', 'false');
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#toast')).toHaveText('Sound effects on.');
+  // The sound files exist and load.
+  const res = await page.request.get('/audio/select.ogg');
+  expect(res.status()).toBe(200);
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-pressed', 'false');
+
+  const map = page.locator('.minimap');
+  await expect(map).toBeHidden();
+  if (isMobile) await page.locator('#hud-map').tap();
+  else await page.keyboard.press('m');
+  await expect(map).toBeVisible();
+  await expect(page.locator('#hud-map')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#hud-map').click();
+  await expect(map).toBeHidden();
+  expect(errors).toEqual([]);
 });

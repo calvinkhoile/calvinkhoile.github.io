@@ -71,6 +71,9 @@ test('win: five right answers, Park Legend badge, result screen with contact and
   // Possession 1: the knight fork, worth three.
   await expect(page.locator('.q-three')).toBeVisible();
   await expect(page.locator('.chessboard .sq')).toHaveCount(64);
+  // Buttons show the moves without check or mate marks, so notation never decides it.
+  for (const label of await page.locator('.q-option').allTextContents()) expect(label).not.toMatch(/[+#]/);
+  await expect(page.locator('.q-option[data-option="Nf6+"]')).toHaveText('Nf6');
   await answer(page, true);
   await expect(page.locator('.scoreboard')).toContainText('YOU 3');
   await expect(page.locator('.sq-to')).toHaveAttribute('data-sq', 'f6');
@@ -89,6 +92,11 @@ test('win: five right answers, Park Legend badge, result screen with contact and
 
   // Possession 4: line shopping, with its odds board.
   await expect(page.locator('.odds-board tr')).toHaveCount(3);
+  if (!isMobile) {
+    // Desktop: every answer sits on one line.
+    const tops = await page.locator('.q-option').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+    expect(new Set(tops).size).toBe(1);
+  }
   await answer(page, true);
   await next(page);
 
@@ -209,7 +217,7 @@ test('keyboard only: play the whole finale without a mouse', async ({ page, isMo
   await page.keyboard.press('e');
   await expect(page.locator('.dialogue')).toBeVisible();
   for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
-    await page.keyboard.press('x');
+    await page.keyboard.press(i % 2 ? 'Enter' : 'ArrowRight');
     await page.waitForTimeout(250);
   }
   // "Run it" is the first choice and already has focus.
@@ -239,7 +247,8 @@ test('keyboard only: play the whole finale without a mouse', async ({ page, isMo
       await page.keyboard.press('Enter');
     }
     await expect(page.locator('.q-next')).toBeFocused({ timeout: 20_000 });
-    await page.keyboard.press('Enter');
+    // Enter and the right arrow both move on.
+    await page.keyboard.press(i % 2 ? 'ArrowRight' : 'Enter');
   }
   await expect(page.locator('.ceremony-continue')).toBeFocused();
   await page.keyboard.press('Enter');
@@ -268,9 +277,9 @@ test('a normal draw follows the rules: five possessions, rivalry last', async ({
 test('shootaround: pick up a loose ball, put up shots, put it back', async ({ page, isMobile }, info) => {
   test.setTimeout(120_000);
   const errors = await boot(page, '', false);
-  const t = await page.evaluate(() => window.__mypark!.targets.find((x) => x.id === 'court/shootaround')!);
+  const t = await page.evaluate(() => window.__mypark!.targets.find((x) => x.id === 'court/ball-2')!);
   await page.evaluate(([x, z]) => window.__mypark!.teleport(x, z), [t.x + 0.2, t.z + 0.2]);
-  await expect(page.locator('.prompt')).toContainText('Basketball');
+  await expect(page.locator('.prompt')).toContainText('Pick up the ball');
   await page.waitForTimeout(320);
   await page.locator('.prompt').click();
   const hud = page.locator('#lift-hud');

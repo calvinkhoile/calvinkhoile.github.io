@@ -125,15 +125,16 @@ const interactables: Interactable[] = [
 
   // The Weightroom.
   { id: 'weightroom/sports-betting', kind: 'station', label: 'Sportsbook Ticker', x: 31.5, z: 26, radius: 1.2, station: 'weightroom/sports-betting' },
-  { id: 'weightroom/ai-building', kind: 'station', label: 'Workbench', x: 43, z: 26, radius: 1.2, station: 'weightroom/ai-building' },
   { id: 'weightroom/chess', kind: 'station', label: 'Chess Table', x: 30.5, z: 32, radius: 1.2, station: 'weightroom/chess' },
   { id: 'weightroom/basketball', kind: 'station', label: 'Hoop', x: 42.6, z: 30.5, radius: 1.2, station: 'weightroom/basketball' },
   { id: 'weightroom/running', kind: 'station', label: 'Sprint Lane', x: 37.5, z: 36, radius: 1.2, station: 'weightroom/running' },
   // Just for fun: pick up the dumbbells and press them overhead.
-  { id: 'weightroom/dumbbells', kind: 'lift', label: 'Dumbbells', x: 40, z: 32.8, radius: 1.1 },
+  { id: 'weightroom/dumbbells', kind: 'lift', label: 'Grab the dumbbells', x: 40, z: 32.8, radius: 1.1 },
 
-  // Shootaround: pick up a loose ball and put up some shots.
-  { id: 'court/shootaround', kind: 'shoot', label: 'Basketball', x: 34.5, z: 9.6, radius: 1.2 },
+  // Shootaround: every loose ball on the court can be picked up and shot from where it lies.
+  { id: 'court/ball-1', kind: 'shoot', label: 'Pick up the ball', x: 34.5, z: 9.5, radius: 1.3 },
+  { id: 'court/ball-2', kind: 'shoot', label: 'Pick up the ball', x: 42.5, z: 12.5, radius: 1.3 },
+  { id: 'court/ball-3', kind: 'shoot', label: 'Pick up the ball', x: 43.5, z: 6.5, radius: 1.3 },
 
   { id: 'court/jetblue', kind: 'station', label: 'Mini Jet', x: 48.5, z: 12.2, radius: 1.3, station: 'court/jetblue' },
 ];

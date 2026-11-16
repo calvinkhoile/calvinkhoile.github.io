@@ -10,15 +10,17 @@ import type { CardModel } from './card';
 
 const companyOf = (key: string) => companies.find((c) => c.overview === key || c.projects.includes(key));
 
-export function careerCard(key: string, opts: { id?: string; initialTab?: number; chip?: string } = {}): CardModel {
+export function careerCard(key: string, opts: { id?: string; initialTab?: number; onlyTab?: number; chip?: string } = {}): CardModel {
   const e = careerData[key];
   if (!e) throw new Error(`card: no career entry "${key}"`);
   const company = companyOf(key);
+  // A station that covers one tab of an entry (UCLA's three) shows just that tab, titled for it.
+  const only = opts.onlyTab !== undefined ? e.screens[opts.onlyTab] : undefined;
   return {
     id: opts.id ?? key,
     logo: company?.logo,
-    tag: e.tag,
-    title: e.title,
+    tag: only ? e.title : e.tag,
+    title: only ? only.label : e.title,
     subtitle: e.company,
     chip: opts.chip,
     paragraphs: [e.desc],
@@ -27,7 +29,7 @@ export function careerCard(key: string, opts: { id?: string; initialTab?: number
     links: e.highlights
       ?.map((h) => ({ label: h.label, target: stations.find((s) => s.content.source === 'career' && s.content.key === h.project)?.id ?? '' }))
       .filter((l) => l.target),
-    screens: e.screens,
+    screens: only ? [only] : e.screens,
     initialTab: opts.initialTab,
     sidePhoto: e.sidePhoto,
     sidePhotoWide: e.sidePhotoWide,
@@ -95,7 +97,7 @@ export function stationCard(station: Station, chip?: string): CardModel | null {
   const opts = { id: station.id, chip };
   switch (c.source) {
     case 'career':
-      return careerCard(c.key, { ...opts, initialTab: c.tab });
+      return careerCard(c.key, { ...opts, onlyTab: c.tab });
     case 'impact':
       return impactCard(c.key, c.index, { ...opts, title: station.label });
     case 'side-builds':

@@ -6,6 +6,18 @@
   <title>Calvin Le | MyPark</title>
   <meta name="description" content="Calvin Le, Senior Product Manager at BetMGM. Walk around MyPark, a small 3D world built from his career." />
   <meta name="theme-color" content="#000000" />
+  <link rel="canonical" href="https://calvinkhoile.github.io/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://calvinkhoile.github.io/" />
+  <meta property="og:title" content="Calvin Le | MyPark" />
+  <meta property="og:description" content="Senior Product Manager at BetMGM. Walk through my career as a small 3D park, then play me 1-on-1." />
+  <meta property="og:image" content="https://calvinkhoile.github.io/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Calvin Le | MyPark" />
+  <meta name="twitter:description" content="Senior Product Manager at BetMGM. Walk through my career as a small 3D park, then play me 1-on-1." />
+  <meta name="twitter:image" content="https://calvinkhoile.github.io/og.png" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -73,9 +85,9 @@
     </div>
   </div>
 
-  <div id="loading" class="screen loading" role="progressbar" aria-label="Loading MyPark" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div id="loading" class="screen loading">
     <img class="loading-icon" src="/favicon.png" alt="" width="72" height="72" />
-    <div class="loading-track"><div id="loading-bar" class="loading-bar"></div></div>
+    <div class="loading-track" id="loading-track" role="progressbar" aria-label="Loading MyPark" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loading-bar" class="loading-bar"></div></div>
     <p id="loading-tip" class="loading-tip"></p>
     <a class="loading-link" href="/resume.pdf">Skip to the résumé</a>
   </div>
@@ -85,6 +97,7 @@
     <p>Here's the fast version.</p>
     <a href="/resume.pdf">Open my résumé</a>
     <a href="/classic/">Open the classic site</a>
+    <button id="fallback-stay" class="fallback-stay" type="button">Keep going anyway</button>
   </div>
 
   <noscript>

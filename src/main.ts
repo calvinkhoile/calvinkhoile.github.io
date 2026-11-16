@@ -4,6 +4,7 @@ import { badgeById, badgeForScene, badges as allBadges, CAREER_BADGES } from './
 import { dialogue as dialogueNodes, toasts, type DialogueNode } from './content/dialogue';
 import { profile } from './content/profile';
 import { countedStations, stationById, type SceneId } from './content/stations';
+import { audio } from './engine/audio';
 import { FollowCamera } from './engine/camera';
 import { CourtScene } from './finale/court-scene';
 import { Finale } from './finale/game';
@@ -18,7 +19,11 @@ import { BadgeUi } from './ui/badges';
 import { CardOverlay } from './ui/card';
 import { aboutCard, careerCard, stationCard } from './ui/card-models';
 import { DialogueBox } from './ui/dialogue';
+import mapIcon from './ui/icons/map-trifold.svg?raw';
+import speakerOff from './ui/icons/speaker-slash.svg?raw';
+import speakerOn from './ui/icons/speaker-high.svg?raw';
 import { Lightbox } from './ui/lightbox';
+import { Minimap } from './ui/minimap';
 import { Prompt } from './ui/prompts';
 import { Screens } from './ui/screens';
 import { SelectStage } from './ui/select-stage';
@@ -158,18 +163,23 @@ async function boot(): Promise<void> {
       location.reload();
     },
     onToggle: (open) => (open ? begin() : end()),
+    // Jump buttons in the badge case: go straight to the place that awards each badge.
+    onJump: (route) => {
+      const target = parseRoute(`#/${route}`);
+      if (target) void applyRoute(target);
+    },
   });
   badgeUi.refresh(owned);
   const tracker = new Tracker(row2, {
     // Jump: put the visitor on the station and open it, same as walking up and pressing E.
     onJump: (id) => {
-      const target = current.interactions.byId(id);
-      if (!target || busyCount > 0) return;
-      window.__mypark!.teleport(target.x, target.z);
-      interact(target);
+      if (busyCount === 0) void stationSession(id);
     },
     onSkipAll: () => {
       if (busyCount === 0) void walkthrough(trackedScene());
+    },
+    onFinish: () => {
+      if (busyCount === 0) void finishPlace(trackedScene());
     },
   });
 
@@ -223,6 +233,41 @@ async function boot(): Promise<void> {
     loaded.set(id, sceneData);
     return sceneData;
   }
+
+  // ----- sound and map buttons, next to the badge case -----
+  const iconButton = (id: string, label: string, svg: string) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = id;
+    b.className = 'hud-btn hud-icon';
+    b.setAttribute('aria-label', label);
+    b.innerHTML = svg.replace('<svg ', '<svg class="icon" aria-hidden="true" focusable="false" ');
+    mini.appendChild(b);
+    return b;
+  };
+  const mini = document.createElement('div');
+  mini.className = 'hud-mini';
+  row2.appendChild(mini);
+  // Sound effects start off on every visit and never autoplay. One click turns them on.
+  const soundBtn = iconButton('hud-sound', 'Sound effects', speakerOff);
+  soundBtn.setAttribute('aria-pressed', 'false');
+  soundBtn.addEventListener('click', () => {
+    const on = !audio.enabled;
+    void audio.setEnabled(on);
+    soundBtn.setAttribute('aria-pressed', String(on));
+    soundBtn.innerHTML = (on ? speakerOn : speakerOff).replace('<svg ', '<svg class="icon" aria-hidden="true" focusable="false" ');
+    toast(on ? 'Sound effects on.' : 'Sound effects off.');
+  });
+  const mapBtn = iconButton('hud-map', 'Map', mapIcon);
+  mapBtn.setAttribute('aria-pressed', 'false');
+  const toggleMap = () => {
+    if (current.id !== 'exterior') return toast('The map works outside.');
+    mapBtn.setAttribute('aria-pressed', String(minimap.toggle()));
+  };
+  mapBtn.addEventListener('click', toggleMap);
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyM' && state === 'play' && busyCount === 0 && !e.repeat) toggleMap();
+  });
 
   // The Weightroom's footprint in the exterior map: the tracker shows its stops while the visitor is inside it.
   const inWeightroom = () => current.id === 'exterior' && player.x > 27 && player.x < 47 && player.z > 22 && player.z < 39;
@@ -278,6 +323,7 @@ async function boot(): Promise<void> {
     badgeUi.refresh(owned);
     refreshDoorBadges();
     begin();
+    audio.play('badge');
     await badgeUi.ceremony(badge);
     end();
     // Calvin "texts" at two and four career badges.
@@ -318,6 +364,7 @@ async function boot(): Promise<void> {
   };
 
   const exteriorScene = await loadScene('exterior');
+  const minimap = new Minimap(ui, exteriorScene.def);
   showScene(exteriorScene, exteriorScene.def.spawn.x, exteriorScene.def.spawn.z, Math.PI * 0.75);
   refreshDoorBadges();
 
@@ -330,6 +377,7 @@ async function boot(): Promise<void> {
     if (speakerOverride) node = { ...node, lines: node.lines.map((l) => ({ ...l, speaker: speakerOverride })) };
     begin();
     document.body.classList.add('is-talking');
+    talk.onAdvance = () => audio.play('advance');
     const result = await talk.play(node);
     document.body.classList.remove('is-talking');
     end();
@@ -368,35 +416,78 @@ async function boot(): Promise<void> {
     return picked;
   }
 
-  /**
-   * The quick way through a place: every station's card, one after another, inside the pop-up.
-   * Each stop counts as visited, and finishing earns the badge. Closing a card early stops the tour.
-   */
-  async function walkthrough(sceneId: SceneId): Promise<void> {
-    const list = countedStations(sceneId);
-    for (let i = 0; i < list.length; i++) {
-      const station = list[i];
-      visited.add(station.id);
-      persist();
-      current.interactions.refresh(visited);
-      updateCounter();
-      const target = current.interactions.byId(station.id);
-      if (target) window.__mypark!.teleport(target.x, target.z);
-      const model = stationCard(station, `${i + 1}/${list.length} stations`);
-      if (!model) continue;
-      const last = i === list.length - 1;
-      model.footerNote = `Stop ${i + 1} of ${list.length}`;
-      model.footer = { label: last ? 'Finish' : `Next: ${list[i + 1].label} →`, action: 'step' };
-      if ((await openCard(model)) !== 'step') return;
-    }
+  /** The fastest way through a place: mark every stop visited and hand over the badge, no cards. */
+  async function finishPlace(sceneId: SceneId): Promise<void> {
+    for (const st of countedStations(sceneId)) visited.add(st.id);
+    persist();
+    current.interactions.refresh(visited);
+    updateCounter();
     const badge = sceneId === 'exterior' ? badgeById('explorer') : badgeForScene(sceneId);
     if (badge) await award(badge.id);
+  }
+
+  /**
+   * One pop-up for a whole place. It opens on a station and carries a strip of every stop there, each with a
+   * check once seen. The visitor can hop between stops in the strip or with "Next", and everything they open
+   * counts as visited. Closing it after seeing them all (Finish, X, or a click outside) earns the badge.
+   */
+  async function stationSession(startId: string): Promise<void> {
+    const first = stationById(startId);
+    if (!first) return;
+    const sceneId = first.scene;
+    const stops = countedStations(sceneId);
+    let id = startId;
+    begin();
+    for (;;) {
+      const station = stationById(id)!;
+      if (!visited.has(id)) {
+        visited.add(id);
+        persist();
+        current.interactions.refresh(visited);
+        updateCounter();
+      }
+      // Stand the visitor at the stop they're reading about.
+      const target = current.interactions.byId(id);
+      if (target && Math.hypot(target.x - player.x, target.z - player.z) > target.radius) window.__mypark!.teleport(target.x, target.z);
+
+      const model = stationCard(station, chipFor(sceneId));
+      if (!model) break;
+      if (station.counts) {
+        model.stations = stops.map((st) => ({ id: st.id, label: st.label, done: visited.has(st.id), current: st.id === id }));
+        const next = stops.find((st) => !visited.has(st.id));
+        model.footer = next ? { label: `Next: ${next.label} →`, action: `swap:station:${next.id}` } : { label: 'Finish', action: 'finish' };
+      }
+      // Resolves with a swap ("station:<id>") while the card stays open, or null once it closes.
+      audio.play('open');
+      const action = await new Promise<string | null>((resolve) => {
+        void cards.open(model, { onLink: guideTo, onSwap: resolve }).then(() => resolve(null));
+        syncHash();
+      });
+      if (!action?.startsWith('station:')) break;
+      id = action.slice(8);
+    }
+    audio.play('close');
+    syncHash();
+    end();
+    // All of this place seen: the badge is theirs, no extra trip to the gym leader.
+    if (stops.length > 0 && stops.every((st) => visited.has(st.id))) {
+      const badge = sceneId === 'exterior' ? badgeById('explorer') : badgeForScene(sceneId);
+      if (badge) await award(badge.id);
+    }
+  }
+
+  /** "Walk me through it" and "Skip the walk": open the pop-up on the first stop not yet seen. */
+  function walkthrough(sceneId: SceneId): Promise<void> {
+    const stops = countedStations(sceneId);
+    const start = stops.find((st) => !visited.has(st.id)) ?? stops[0];
+    return start ? stationSession(start.id) : Promise.resolve();
   }
 
   async function runAction(action: string): Promise<void> {
     if (action === 'about') return void (await openCard(aboutCard()));
     if (action.startsWith('badge:')) return award(action.slice(6));
     if (action === 'walkthrough') return walkthrough(current.id);
+    if (action === 'finish-gym') return finishPlace(current.id);
     if (action === 'finale') return runFinale();
     if (action.startsWith('card:')) return void (await openCard(careerCard(action.slice(5), { chip: chipFor(current.id) })));
     if (action === 'tour') return say('plaza.tourStart');
@@ -430,13 +521,13 @@ async function boot(): Promise<void> {
 
   async function openStation(target: Target): Promise<void> {
     const station = target.station!;
-    if (!visited.has(station.id)) {
+    const content = station.content;
+    // Props (a photo, a line of dialogue) are marked seen here. Card stations are handled by the session.
+    if ((content.source === 'photo' || content.source === 'dialogue') && !visited.has(station.id)) {
       visited.add(station.id);
       persist();
       current.interactions.refresh(visited);
-      updateCounter();
     }
-    const content = station.content;
     if (content.source === 'photo') {
       begin();
       lightbox.onClose = () => {
@@ -448,19 +539,7 @@ async function boot(): Promise<void> {
     }
     if (content.source === 'dialogue') return say(content.key);
 
-    const model = stationCard(station, chipFor(station.scene));
-    if (!model) return;
-    // Footer: point at the nearest station still unvisited, or send them to the gym leader.
-    const remaining = countedStations(station.scene)
-      .filter((s) => !visited.has(s.id))
-      .map((s) => current.interactions.byId(s.id))
-      .filter((t): t is Target => !!t)
-      .sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z));
-    if (remaining.length > 0) model.footer = { label: 'Next station →', action: `guide:${remaining[0].id}` };
-    else if (current.npcs.some((n) => n.spawn.role === 'leader') && !owned.has(badgeForScene(current.id)?.id ?? '')) model.footerNote = 'Talk to Calvin for your badge.';
-    await openCard(model);
-    // The Weightroom has no leader: finishing its last stop earns the Explorer badge on the spot.
-    if (station.scene === 'exterior' && countedStations('exterior').every((s) => visited.has(s.id))) await award('explorer');
+    return stationSession(station.id);
   }
 
   let introSeen = false;
@@ -504,6 +583,7 @@ async function boot(): Promise<void> {
     player.setPath(null);
     marker.visible = false;
     navigator.vibrate?.(10);
+    audio.play(target.kind === 'door' ? 'door' : 'select');
     switch (target.kind) {
       case 'door':
         void useDoor(target.door!);
@@ -614,6 +694,7 @@ async function boot(): Promise<void> {
     if (!s || s.busy) return;
     s.busy = true;
     const made = await court.shoot();
+    audio.play(made ? 'swish' : 'rim');
     if (shooting !== s) return; // put the ball down mid-shot
     s.busy = false;
     s.taken++;
@@ -637,6 +718,7 @@ async function boot(): Promise<void> {
   function liftRep(): void {
     if (shooting) return void shootBall();
     if (!lift?.rep()) return;
+    audio.play('bounce');
     liftCount.textContent = `${lift.reps} ${lift.reps === 1 ? 'rep' : 'reps'}`;
     navigator.vibrate?.(15);
   }
@@ -763,11 +845,27 @@ async function boot(): Promise<void> {
     renderer.setPixelRatioCap(quality.pixelRatioCap);
     scene.fog = !current.def.interior && quality.fog ? fog : null;
   };
-  const watchdog = new FrameWatchdog(() => {
+  const watchdog = new FrameWatchdog((fps) => {
     if (picked.forced || state !== 'play' || busyCount > 0) return;
     if (quality.tier === 'high') applyTier('medium');
     else if (quality.tier === 'medium') applyTier('low');
+    else if (fps < 20 && !slowWarned && !fallbackOff) {
+      // Already on the lowest tier and still crawling: offer the fast version instead of a slideshow.
+      slowWarned = true;
+      const fallback = document.getElementById('fallback')!;
+      fallback.hidden = false;
+      fallback.classList.add('is-dismissable');
+      document.getElementById('fallback-stay')!.addEventListener('click', () => (fallback.hidden = true), { once: true });
+    }
   });
+  let slowWarned = false;
+  // The browser tests render in software, which is slow by nature. They opt out of the slow-device screen.
+  let fallbackOff = false;
+  try {
+    fallbackOff = localStorage.getItem('mypark:nofallback') === '1';
+  } catch {
+    /* storage unavailable */
+  }
 
   const projected = new THREE.Vector3();
   function toScreen(x: number, y: number, z: number): { x: number; y: number } {
@@ -838,6 +936,11 @@ async function boot(): Promise<void> {
   // ----- game loop -----
   const idleInput: InputState = { moveX: 0, moveY: 0, sprint: false, desktop: true, interact: false, tap: null };
   let stillFor = 0;
+  let stride = 0;
+  /** Grass unless the visitor is standing on a path, the plaza, the court, or the Weightroom floor. */
+  const surfaceAt = (x: number, z: number) =>
+    exteriorScene.def.zones.some((zn) => zn.kind !== 'water' && x >= zn.x && x < zn.x + zn.w && z >= zn.z && z < zn.z + zn.d) ? 'step-hard' : 'step-grass';
+  let courtHinted = false;
   let last = performance.now();
   let time = 0;
   let frozen = false;
@@ -875,8 +978,12 @@ async function boot(): Promise<void> {
 
     const polled = input.poll();
     let canAct = false;
-    if (current.id === 'exterior') updateCounter(); // cheap: only re-renders when the visitor enters or leaves the Weightroom
     const playing = state === 'play' && busyCount === 0;
+    if (!courtHinted && playing && current.id === 'exterior' && player.x > 30 && player.x < 46 && player.z > 3 && player.z < 17) {
+      courtHinted = true;
+      toast(document.body.classList.contains('is-touch') ? 'Loose balls on the court. Walk up to one and tap it to shoot around.' : 'Loose balls on the court. Walk up to one and press E to shoot around.');
+    }
+    if (current.id === 'exterior') updateCounter(); // cheap: only re-renders when the visitor enters or leaves the Weightroom
     // Scripted walks still move the player, but ignore the controls.
     const active = playing ? polled : { ...idleInput, desktop: polled.desktop };
     if (active.tap) moveTo(active.tap.x, active.tap.y);
@@ -895,6 +1002,17 @@ async function boot(): Promise<void> {
       if (player.path.length === 0) marker.visible = false;
       else marker.scale.setScalar(1 + Math.sin(time * 8) * 0.12);
     }
+
+    // Footsteps: one every stride, on whatever is underfoot.
+    if (audio.enabled && player.moving && !court.active) {
+      stride += player.speed * dt;
+      if (stride > 1.5) {
+        stride = 0;
+        audio.play(current.def.interior ? 'step-soft' : surfaceAt(player.x, player.z));
+      }
+    }
+    if (current.id === 'exterior') minimap.update(player.x, player.z, player.facing, time);
+    else if (minimap.isOpen) mapBtn.setAttribute('aria-pressed', String(minimap.toggle(false)));
 
     follow.update(dt, player.x, player.z, player.vx, player.vz, WALK_SPEED);
 
@@ -964,13 +1082,7 @@ async function boot(): Promise<void> {
     }
     if (route.spot === 'weightroom') window.__mypark!.teleport(38.5, 25);
     if (route.spot === 'court') window.__mypark!.teleport(35, 13);
-    if (route.station) {
-      const station = stationById(route.station);
-      const target = current.interactions.byId(route.station);
-      if (target) window.__mypark!.teleport(target.x, target.z);
-      const model = station && stationCard(station, chipFor(station.scene));
-      if (model) await openCard(model);
-    }
+    if (route.station) await stationSession(route.station);
   }
   window.addEventListener('hashchange', () => {
     const route = parseRoute(location.hash);

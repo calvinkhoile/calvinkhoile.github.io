@@ -55,9 +55,9 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | Station labels | `src/content/stations.ts` | Prompt names such as "Partnership Desk", "AI Lab", "Voice of the Customer" |
 | Photo captions | `src/content/stations.ts` | "BetMGM Product Summit." and "Meta HQ." are placeholders. Write the captions you want |
 | Card hints | `src/ui/card.ts` | "Drag the slider to compare before and after", "Tap A or B to zoom in" |
-| Leader choices | `src/content/dialogue.ts` | "Walk me through it" / "I'll look around" |
+| Leader choices | `src/content/dialogue.ts` | "Finish this gym" / "Walk me through it" / "I'll look around" |
 | Tracker | `src/ui/tracker.ts` | "Skip the walk: see all N →" |
-| Walkthrough footer | `src/main.ts` | "Stop 1 of 4", "Next: <station> →", "Finish" |
+| Station pop-up footer | `src/main.ts` | "Next: <station> →", "Finish" |
 | Card footer lines | `src/main.ts` | "Next station →", "Talk to Calvin for your badge." |
 
 ## Finale questions (`src/content/finale-questions.json`)
