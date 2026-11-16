@@ -516,20 +516,46 @@ async function boot(): Promise<void> {
 
   // ----- HUD: résumé + socials -----
   const hudLinks = document.getElementById('hud-links') as HTMLElement;
-  const contact = document.getElementById('hud-contact') as HTMLButtonElement;
+  const hudToggle = document.getElementById('hud-toggle') as HTMLButtonElement;
+  const emailBtn = document.getElementById('hud-email') as HTMLButtonElement;
+  document.getElementById('hud-email-text')!.textContent = profile.email;
   hudLinks.querySelectorAll<HTMLAnchorElement>('[data-social]').forEach((a) => (a.href = profile.links[a.dataset.social as keyof typeof profile.links]));
-  const setContactOpen = (open: boolean) => {
-    hudLinks.classList.toggle('is-open', open);
-    contact.setAttribute('aria-expanded', String(open));
+
+  // Accordion: expanded shows names (and the email spelled out), collapsed shows just the icons.
+  // Phones start collapsed to leave room for the world. The choice is remembered.
+  const LINKS_KEY = 'mypark:links';
+  const setLinksOpen = (open: boolean, remember = true) => {
+    hudLinks.classList.toggle('is-collapsed', !open);
+    hudToggle.setAttribute('aria-expanded', String(open));
+    hudToggle.setAttribute('aria-label', open ? 'Collapse quick links' : 'Expand quick links');
+    // On phones the expanded links are a column, so the second row has to move below it.
+    row2.classList.toggle('is-pushed', open);
+    document.body.classList.toggle('links-open', open);
+    if (!remember) return;
+    try {
+      localStorage.setItem(LINKS_KEY, open ? 'open' : 'closed');
+    } catch {
+      /* storage unavailable */
+    }
   };
-  contact.addEventListener('click', () => setContactOpen(!hudLinks.classList.contains('is-open')));
-  canvas.addEventListener('pointerdown', () => setContactOpen(false));
-  document.getElementById('hud-email')!.addEventListener('click', () => {
+  let savedLinks: string | null = null;
+  try {
+    savedLinks = localStorage.getItem(LINKS_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+  setLinksOpen(savedLinks ? savedLinks === 'open' : !matchMedia('(max-width: 700px)').matches, false);
+  hudToggle.addEventListener('click', () => setLinksOpen(hudLinks.classList.contains('is-collapsed')));
+
+  emailBtn.addEventListener('click', () => {
     // Copy the address. If the clipboard is off limits, fall back to opening a mail draft.
     const fallback = () => (location.href = `mailto:${profile.email}`);
     if (!navigator.clipboard) return fallback();
-    navigator.clipboard.writeText(profile.email).then(() => toast(`Copied ${profile.email}`), fallback);
-    setContactOpen(false);
+    navigator.clipboard.writeText(profile.email).then(() => {
+      toast(`Copied ${profile.email}`);
+      emailBtn.classList.add('is-copied');
+      setTimeout(() => emailBtn.classList.remove('is-copied'), 2000);
+    }, fallback);
   });
 
   // ----- HUD bits -----

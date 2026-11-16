@@ -6,6 +6,5 @@ dist/
 test-results/
 playwright-report/
 
-# Calvin's résumé PDF has his phone number on it. Not committed until he confirms it should be public.
-public/resume.pdf
+# The résumé ships as public/resume.pdf. The original in the repo root is just the source copy.
 [[]Le, Calvin - Resume[]].pdf

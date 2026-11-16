@@ -26,6 +26,12 @@ Gym exteriors, courts, fences, signs, and the fountain are built in code (`src/w
 | `public/images/logos/meta.svg` | `public/classic/assets/logos/meta.svg` | Same |
 | `public/images/logos/betmgm.webp` | `public/classic/assets/logos/betmgm.png` | Same |
 
+## Icons
+
+| Shipped | Source | License |
+|---|---|---|
+| Quick-link icons (inlined in `index.html`, copies in `public/images/icons/`) | Phosphor Icons 2.1.1 (phosphoricons.com) | MIT |
+
 ## Fonts
 
 | Font | Source | License |

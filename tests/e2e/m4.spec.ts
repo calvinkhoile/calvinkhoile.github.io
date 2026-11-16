@@ -196,23 +196,45 @@ test('walking into and out of a gym keeps the URL hash in step', async ({ page, 
   await expect.poll(() => page.evaluate(() => location.hash), { timeout: 20_000 }).toBe('#/');
 });
 
-test('HUD: résumé PDF and socials are always one click away', async ({ page, isMobile, context }) => {
+test('quick links: résumé PDF, socials, and the email spelled out with a copy button', async ({ page, isMobile, context }) => {
   await boot(page);
+  const links = page.locator('#hud-links');
   await expect(page.locator('.hud-resume')).toHaveAttribute('href', '/resume.pdf');
-  if (isMobile) {
-    // Phones: the four socials fold into a Contact menu.
-    await expect(page.locator('[data-social="linkedin"]')).toBeHidden();
-    await page.locator('#hud-contact').tap();
-  }
   await expect(page.locator('[data-social="linkedin"]')).toHaveAttribute('href', 'https://www.linkedin.com/in/calvinle13/');
   await expect(page.locator('[data-social="github"]')).toHaveAttribute('href', 'https://github.com/calvinkhoile');
   await expect(page.locator('[data-social="x"]')).toHaveAttribute('href', 'https://x.com/calvinle13');
-  await expect(page.locator('#hud-email')).toBeVisible();
+  // Every link is on screen in both states: icons when collapsed, icon plus name when expanded.
+  await expect(page.locator('#hud-items .hud-btn')).toHaveCount(5);
+  for (const btn of await page.locator('#hud-items .hud-btn').all()) await expect(btn).toBeVisible();
+
+  // Phones start collapsed (icons only), desktop starts expanded.
+  if (isMobile) {
+    await expect(links).toHaveClass(/is-collapsed/);
+    await expect(page.locator('#hud-email-text')).toBeHidden();
+    await page.locator('#hud-toggle').tap();
+  }
+  await expect(links).not.toHaveClass(/is-collapsed/);
+  await expect(page.locator('#hud-email-text')).toHaveText('calvinkhoile13@gmail.com');
+  await expect(page.locator('#hud-email .hud-copy')).toBeVisible();
+  await expect(page.locator('.hud-resume .hud-label')).toBeVisible();
+
+  // Collapse: names go away, icons stay. The choice survives a reload.
+  await page.locator('#hud-toggle').click();
+  await expect(links).toHaveClass(/is-collapsed/);
+  await expect(page.locator('.hud-resume .hud-label')).toBeHidden();
+  await expect(page.locator('.hud-resume .icon')).toBeVisible();
+  await page.reload();
+  await page.waitForFunction(() => window.__mypark?.ready === true);
+  await expect(links).toHaveClass(/is-collapsed/);
+  await page.locator('#hud-toggle').click();
+  await expect(links).not.toHaveClass(/is-collapsed/);
+
   // Touch emulation refuses clipboard access, which sends the button down its mailto fallback. Desktop checks the copy.
   if (isMobile) return;
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.locator('#hud-email').click();
   await expect(page.locator('#toast')).toContainText('Copied calvinkhoile13@gmail.com');
+  await expect(page.locator('#hud-email')).toHaveClass(/is-copied/);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('calvinkhoile13@gmail.com');
 });
 
