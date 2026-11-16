@@ -4,6 +4,7 @@ import { badgeById, badgeForScene, badges as allBadges, CAREER_BADGES } from './
 import { dialogue as dialogueNodes, toasts, type DialogueNode } from './content/dialogue';
 import { profile } from './content/profile';
 import { countedStations, stationById, type SceneId } from './content/stations';
+import { audio } from './engine/audio';
 import { FollowCamera } from './engine/camera';
 import { CourtScene } from './finale/court-scene';
 import { Finale } from './finale/game';
@@ -18,7 +19,11 @@ import { BadgeUi } from './ui/badges';
 import { CardOverlay } from './ui/card';
 import { aboutCard, careerCard, stationCard } from './ui/card-models';
 import { DialogueBox } from './ui/dialogue';
+import mapIcon from './ui/icons/map-trifold.svg?raw';
+import speakerOff from './ui/icons/speaker-slash.svg?raw';
+import speakerOn from './ui/icons/speaker-high.svg?raw';
 import { Lightbox } from './ui/lightbox';
+import { Minimap } from './ui/minimap';
 import { Prompt } from './ui/prompts';
 import { Screens } from './ui/screens';
 import { SelectStage } from './ui/select-stage';
@@ -229,6 +234,41 @@ async function boot(): Promise<void> {
     return sceneData;
   }
 
+  // ----- sound and map buttons, next to the badge case -----
+  const iconButton = (id: string, label: string, svg: string) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.id = id;
+    b.className = 'hud-btn hud-icon';
+    b.setAttribute('aria-label', label);
+    b.innerHTML = svg.replace('<svg ', '<svg class="icon" aria-hidden="true" focusable="false" ');
+    mini.appendChild(b);
+    return b;
+  };
+  const mini = document.createElement('div');
+  mini.className = 'hud-mini';
+  row2.appendChild(mini);
+  // Sound effects start off on every visit and never autoplay. One click turns them on.
+  const soundBtn = iconButton('hud-sound', 'Sound effects', speakerOff);
+  soundBtn.setAttribute('aria-pressed', 'false');
+  soundBtn.addEventListener('click', () => {
+    const on = !audio.enabled;
+    void audio.setEnabled(on);
+    soundBtn.setAttribute('aria-pressed', String(on));
+    soundBtn.innerHTML = (on ? speakerOn : speakerOff).replace('<svg ', '<svg class="icon" aria-hidden="true" focusable="false" ');
+    toast(on ? 'Sound effects on.' : 'Sound effects off.');
+  });
+  const mapBtn = iconButton('hud-map', 'Map', mapIcon);
+  mapBtn.setAttribute('aria-pressed', 'false');
+  const toggleMap = () => {
+    if (current.id !== 'exterior') return toast('The map works outside.');
+    mapBtn.setAttribute('aria-pressed', String(minimap.toggle()));
+  };
+  mapBtn.addEventListener('click', toggleMap);
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyM' && state === 'play' && busyCount === 0 && !e.repeat) toggleMap();
+  });
+
   // The Weightroom's footprint in the exterior map: the tracker shows its stops while the visitor is inside it.
   const inWeightroom = () => current.id === 'exterior' && player.x > 27 && player.x < 47 && player.z > 22 && player.z < 39;
   /** Which set of stations the tracker is about right now, or null when there's nothing to track here. */
@@ -283,6 +323,7 @@ async function boot(): Promise<void> {
     badgeUi.refresh(owned);
     refreshDoorBadges();
     begin();
+    audio.play('badge');
     await badgeUi.ceremony(badge);
     end();
     // Calvin "texts" at two and four career badges.
@@ -323,6 +364,7 @@ async function boot(): Promise<void> {
   };
 
   const exteriorScene = await loadScene('exterior');
+  const minimap = new Minimap(ui, exteriorScene.def);
   showScene(exteriorScene, exteriorScene.def.spawn.x, exteriorScene.def.spawn.z, Math.PI * 0.75);
   refreshDoorBadges();
 
@@ -335,6 +377,7 @@ async function boot(): Promise<void> {
     if (speakerOverride) node = { ...node, lines: node.lines.map((l) => ({ ...l, speaker: speakerOverride })) };
     begin();
     document.body.classList.add('is-talking');
+    talk.onAdvance = () => audio.play('advance');
     const result = await talk.play(node);
     document.body.classList.remove('is-talking');
     end();
@@ -415,6 +458,7 @@ async function boot(): Promise<void> {
         model.footer = next ? { label: `Next: ${next.label} →`, action: `swap:station:${next.id}` } : { label: 'Finish', action: 'finish' };
       }
       // Resolves with a swap ("station:<id>") while the card stays open, or null once it closes.
+      audio.play('open');
       const action = await new Promise<string | null>((resolve) => {
         void cards.open(model, { onLink: guideTo, onSwap: resolve }).then(() => resolve(null));
         syncHash();
@@ -422,6 +466,7 @@ async function boot(): Promise<void> {
       if (!action?.startsWith('station:')) break;
       id = action.slice(8);
     }
+    audio.play('close');
     syncHash();
     end();
     // All of this place seen: the badge is theirs, no extra trip to the gym leader.
@@ -538,6 +583,7 @@ async function boot(): Promise<void> {
     player.setPath(null);
     marker.visible = false;
     navigator.vibrate?.(10);
+    audio.play(target.kind === 'door' ? 'door' : 'select');
     switch (target.kind) {
       case 'door':
         void useDoor(target.door!);
@@ -648,6 +694,7 @@ async function boot(): Promise<void> {
     if (!s || s.busy) return;
     s.busy = true;
     const made = await court.shoot();
+    audio.play(made ? 'swish' : 'rim');
     if (shooting !== s) return; // put the ball down mid-shot
     s.busy = false;
     s.taken++;
@@ -671,6 +718,7 @@ async function boot(): Promise<void> {
   function liftRep(): void {
     if (shooting) return void shootBall();
     if (!lift?.rep()) return;
+    audio.play('bounce');
     liftCount.textContent = `${lift.reps} ${lift.reps === 1 ? 'rep' : 'reps'}`;
     navigator.vibrate?.(15);
   }
@@ -797,11 +845,27 @@ async function boot(): Promise<void> {
     renderer.setPixelRatioCap(quality.pixelRatioCap);
     scene.fog = !current.def.interior && quality.fog ? fog : null;
   };
-  const watchdog = new FrameWatchdog(() => {
+  const watchdog = new FrameWatchdog((fps) => {
     if (picked.forced || state !== 'play' || busyCount > 0) return;
     if (quality.tier === 'high') applyTier('medium');
     else if (quality.tier === 'medium') applyTier('low');
+    else if (fps < 20 && !slowWarned && !fallbackOff) {
+      // Already on the lowest tier and still crawling: offer the fast version instead of a slideshow.
+      slowWarned = true;
+      const fallback = document.getElementById('fallback')!;
+      fallback.hidden = false;
+      fallback.classList.add('is-dismissable');
+      document.getElementById('fallback-stay')!.addEventListener('click', () => (fallback.hidden = true), { once: true });
+    }
   });
+  let slowWarned = false;
+  // The browser tests render in software, which is slow by nature. They opt out of the slow-device screen.
+  let fallbackOff = false;
+  try {
+    fallbackOff = localStorage.getItem('mypark:nofallback') === '1';
+  } catch {
+    /* storage unavailable */
+  }
 
   const projected = new THREE.Vector3();
   function toScreen(x: number, y: number, z: number): { x: number; y: number } {
@@ -872,6 +936,10 @@ async function boot(): Promise<void> {
   // ----- game loop -----
   const idleInput: InputState = { moveX: 0, moveY: 0, sprint: false, desktop: true, interact: false, tap: null };
   let stillFor = 0;
+  let stride = 0;
+  /** Grass unless the visitor is standing on a path, the plaza, the court, or the Weightroom floor. */
+  const surfaceAt = (x: number, z: number) =>
+    exteriorScene.def.zones.some((zn) => zn.kind !== 'water' && x >= zn.x && x < zn.x + zn.w && z >= zn.z && z < zn.z + zn.d) ? 'step-hard' : 'step-grass';
   let courtHinted = false;
   let last = performance.now();
   let time = 0;
@@ -934,6 +1002,17 @@ async function boot(): Promise<void> {
       if (player.path.length === 0) marker.visible = false;
       else marker.scale.setScalar(1 + Math.sin(time * 8) * 0.12);
     }
+
+    // Footsteps: one every stride, on whatever is underfoot.
+    if (audio.enabled && player.moving && !court.active) {
+      stride += player.speed * dt;
+      if (stride > 1.5) {
+        stride = 0;
+        audio.play(current.def.interior ? 'step-soft' : surfaceAt(player.x, player.z));
+      }
+    }
+    if (current.id === 'exterior') minimap.update(player.x, player.z, player.facing, time);
+    else if (minimap.isOpen) mapBtn.setAttribute('aria-pressed', String(minimap.toggle(false)));
 
     follow.update(dt, player.x, player.z, player.vx, player.vz, WALK_SPEED);
 

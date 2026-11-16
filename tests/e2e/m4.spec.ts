@@ -494,3 +494,27 @@ test('phones swipe photo sets instead of using arrows', async ({ page, isMobile 
     await expect(gallery.locator('.gallery-dot').nth(1)).toHaveClass(/is-on/);
   }
 });
+
+test('sound is off by default and one click turns it on; the map toggles outdoors', async ({ page, isMobile }) => {
+  const errors = await boot(page);
+  const sound = page.locator('#hud-sound');
+  await expect(sound).toHaveAttribute('aria-pressed', 'false');
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#toast')).toHaveText('Sound effects on.');
+  // The sound files exist and load.
+  const res = await page.request.get('/audio/select.ogg');
+  expect(res.status()).toBe(200);
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-pressed', 'false');
+
+  const map = page.locator('.minimap');
+  await expect(map).toBeHidden();
+  if (isMobile) await page.locator('#hud-map').tap();
+  else await page.keyboard.press('m');
+  await expect(map).toBeVisible();
+  await expect(page.locator('#hud-map')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#hud-map').click();
+  await expect(map).toBeHidden();
+  expect(errors).toEqual([]);
+});

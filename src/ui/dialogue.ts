@@ -24,6 +24,8 @@ export class DialogueBox {
   private typing = false;
   private timer = 0;
   private resolve: ((r: DialogueResult) => void) | null = null;
+  /** Called each time a line is advanced (used for the blip sound). */
+  onAdvance: (() => void) | null = null;
 
   constructor(root: HTMLElement, reducedMotion: boolean) {
     this.instant = reducedMotion;
@@ -93,6 +95,7 @@ export class DialogueBox {
       return;
     }
     if (this.choices.childElementCount > 0) return; // a choice is required
+    this.onAdvance?.();
     this.index++;
     if (this.index >= this.node.lines.length) this.finish(null, false);
     else this.showLine();

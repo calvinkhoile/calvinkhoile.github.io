@@ -1,4 +1,5 @@
 import { profile } from '../content/profile';
+import { audio } from '../engine/audio';
 import type { CourtScene } from './court-scene';
 import type { Draw } from './questions';
 import { renderQuestion } from './renderers';
@@ -127,6 +128,7 @@ export class Finale {
       const body = this.card.querySelector<HTMLElement>('.q-body')!;
       const rendered = renderQuestion(q, body, async (picked) => {
         const right = picked === q.answer;
+        audio.play(right ? 'right' : 'wrong');
         await rendered.reveal();
         // Step aside so the play on the court is visible, then come back with the verdict.
         this.card.classList.add('is-watching');

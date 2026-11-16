@@ -43,6 +43,7 @@ src/
   main.ts           ← boot: capability check, scene, game loop
   engine/           ← renderer, camera, input (keyboard/mouse/touch), grid (collision + A*), debug overlay
   world/            ← player, NPCs, interactions, exterior and interior art, maps/ (one data file per scene)
+  finale/           ← the 1-on-1: question draw rules, renderers, court animations, game flow
   ui/               ← DOM overlays: cards, dialogue, prompts, title and select screens, styles/
   content/          ← all copy: career, profile, side builds, hobbies, dialogue, station registry
 public/

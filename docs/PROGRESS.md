@@ -12,8 +12,9 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M3 | Interaction + dialogue + cards ★ | Done. Reviewed by Calvin twice (Nov 15), changes applied |
 | M4 | All gyms + badges | Done (Nov 15, 2026) |
 | M5 | Calvin's avatar ★ | Tier A in the park. Calvin chose Tier B: **waiting on his generated model in `assets-src/calvin/`** |
-| M6 | Finale ★ | Built, tests green. **Waiting on Calvin: review all 15 questions and the basketball diagrams** |
-| M7–M8 | | Not started |
+| M6 | Finale ★ | Done. Calvin reviewed and confirmed the questions (Nov 15) |
+| M7 | Polish | Built. Music is the one piece missing (no track yet) |
+| M8 | Launch ★ | Not started. PR from `world` to `main` opened by Calvin |
 
 ## How to run
 
@@ -275,6 +276,22 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 - No broadcast-angle camera, crowd, or stadium lights. The camera zooms in on the same isometric angle. Sound is M7.
 - `?seed=` and `?set=` work in every build, not just debug builds, because the tests run against the production build. They change nothing unless typed into the URL.
 - Chess pieces are Unicode symbols, so there is no piece-set license to track.
+
+## M7: Polish (built)
+
+**What's in**
+- **Sound effects**, off by default, never autoplayed. A speaker button next to the badge case turns them on (that click is also what browsers require before audio can play). Footsteps change with the surface (grass, hard ground, indoor carpet), plus blips for interacting and advancing dialogue, a whoosh for doors, pop-up open and close, the badge fanfare, right and wrong in the 1-on-1, and swish or rim in the shootaround. 18 files, 136 KB, all Kenney (CC0). The audio library loads only when sound is first switched on.
+- **Minimap:** M on a keyboard, or the map button. A top-down sketch of the park with labels and the visitor's position and heading. Outdoors only.
+- **Accessibility audit:** axe-core runs in the browser tests against the title screen, character select, HUD, tracker, badge case, dialogue, every kind of station pop-up, every finale question type, and the result screen. Zero serious or critical violations. Three real problems were found and fixed: clickable players inside a diagram marked as an image, a link nested inside the loading progress bar, and photo strips that couldn't be reached by keyboard.
+- **Sharing and search:** Open Graph and Twitter card tags, a 1200 x 630 preview image of the park (`public/og.png`, captured by a test), a canonical URL, `sitemap.xml`, and `robots.txt`.
+- **Slow devices:** if a device is already on the lowest quality tier and still under 20 frames a second, a screen offers the résumé and the classic site, with "Keep going anyway". No WebGL at all shows the same screen without that button.
+- Already in from earlier milestones: haptics on interact and badges, reduced-motion handling (no camera lead, no confetti, instant fades, court animations skipped), and the no-JavaScript message.
+
+**Not done**
+- **Music.** The plan wants a looping track per zone. No CC0 or licensed track has been picked, so there is no music toggle yet. Needs a track from Calvin, or his OK to pick one from OpenGameArt.
+- **Older iPhones may stay silent.** The sounds are Ogg files, which Safari only plays in recent versions. Converting to AAC needs `ffmpeg`, which isn't installed here.
+- **Volume sliders and a menu.** The plan describes a menu with sliders and a quality override. Sound is a single on/off button for now, and quality is `?quality=low`.
+- **A generated `/resume` page.** Dropped when Calvin chose the PDF. A PDF is less accessible than HTML, so screen-reader users get the PDF and the classic site rather than a purpose-built page.
 
 ---
 

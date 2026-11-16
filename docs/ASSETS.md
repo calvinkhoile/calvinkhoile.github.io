@@ -17,6 +17,15 @@ Changes made to the originals: nature kit foliage and wood recolored, models mer
 
 Gym exteriors, courts, fences, signs, and the fountain are built in code (`src/world/art.ts`), not from third-party files.
 
+## Sound effects
+
+| Shipped files | Source pack | Author | License |
+|---|---|---|---|
+| `public/audio/select.ogg`, `advance.ogg`, `open.ogg`, `close.ogg`, `toggle.ogg`, `badge.ogg`, `right.ogg`, `wrong.ogg`, `door.ogg`, `swish.ogg` | Interface Sounds (kenney.nl/assets/interface-sounds) | Kenney | CC0 1.0 |
+| `public/audio/step-*.ogg`, `bounce.ogg`, `rim.ogg` | Impact Sounds (kenney.nl/assets/impact-sounds) | Kenney | CC0 1.0 |
+
+Code libraries that ship in the bundle: three.js (MIT), howler.js (MIT).
+
 ## Logos (signage only)
 
 | Shipped file | Source | Notes |
@@ -41,4 +50,4 @@ Gym exteriors, courts, fences, signs, and the fountain are built in code (`src/w
 
 ## Downloaded but not shipped yet
 
-Kenney Furniture Kit, Impact Sounds, Interface Sounds (CC0), Quaternius Ultimate Nature (CC0). They'll be listed above when something from them is used.
+Kenney Furniture Kit (CC0), Quaternius Ultimate Nature (CC0). They'll be listed above when something from them is used.

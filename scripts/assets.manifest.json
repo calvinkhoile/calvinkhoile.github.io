@@ -93,5 +93,25 @@
     ],
     "maxSize": 1600,
     "quality": 80
+  },
+  "audio": {
+    "select.ogg": "assets-src/kenney-interface-sounds/Audio/select_001.ogg",
+    "advance.ogg": "assets-src/kenney-interface-sounds/Audio/click_002.ogg",
+    "open.ogg": "assets-src/kenney-interface-sounds/Audio/open_001.ogg",
+    "close.ogg": "assets-src/kenney-interface-sounds/Audio/close_001.ogg",
+    "toggle.ogg": "assets-src/kenney-interface-sounds/Audio/switch_002.ogg",
+    "badge.ogg": "assets-src/kenney-interface-sounds/Audio/confirmation_002.ogg",
+    "right.ogg": "assets-src/kenney-interface-sounds/Audio/confirmation_001.ogg",
+    "wrong.ogg": "assets-src/kenney-interface-sounds/Audio/error_004.ogg",
+    "door.ogg": "assets-src/kenney-interface-sounds/Audio/maximize_006.ogg",
+    "bounce.ogg": "assets-src/kenney-impact-sounds/Audio/impactGeneric_light_002.ogg",
+    "rim.ogg": "assets-src/kenney-impact-sounds/Audio/impactMetal_light_000.ogg",
+    "swish.ogg": "assets-src/kenney-interface-sounds/Audio/drop_002.ogg",
+    "step-grass-1.ogg": "assets-src/kenney-impact-sounds/Audio/footstep_grass_000.ogg",
+    "step-grass-2.ogg": "assets-src/kenney-impact-sounds/Audio/footstep_grass_002.ogg",
+    "step-hard-1.ogg": "assets-src/kenney-impact-sounds/Audio/footstep_concrete_000.ogg",
+    "step-hard-2.ogg": "assets-src/kenney-impact-sounds/Audio/footstep_concrete_002.ogg",
+    "step-soft-1.ogg": "assets-src/kenney-impact-sounds/Audio/footstep_carpet_000.ogg",
+    "step-soft-2.ogg": "assets-src/kenney-impact-sounds/Audio/footstep_carpet_002.ogg"
   }
 }

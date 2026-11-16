@@ -51,7 +51,7 @@ const photo = (src: string, alt = '', cls = '') => `<img class="card-photo ${cls
 function galleryHTML(photos: string[]): string {
   const multi = photos.length > 1;
   return `<div class="gallery" data-gallery>
-    <div class="gallery-viewport"><div class="gallery-track">
+    <div class="gallery-viewport" tabindex="0" role="group" aria-label="Photos. Scroll or use the arrow keys."><div class="gallery-track">
       ${photos.map((src, i) => `<div class="gallery-slide">${photo(src, `Photo ${i + 1} of ${photos.length}`)}</div>`).join('')}
     </div></div>
     ${

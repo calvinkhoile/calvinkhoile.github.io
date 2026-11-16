@@ -14,9 +14,19 @@ export default defineConfig({
     baseURL: 'http://localhost:4173',
     // CI has no GPU and few cores. Start on the low quality tier there (no shadow pass) so the game runs near
     // real time. Tests that measure the high tier ask for it with ?quality=high, which wins over this.
-    storageState: process.env.CI
-      ? { cookies: [], origins: [{ origin: 'http://localhost:4173', localStorage: [{ name: 'mypark:quality', value: 'low' }] }] }
-      : undefined,
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'http://localhost:4173',
+          localStorage: [
+            // Software rendering is slow by nature, so the tests opt out of the "your device is too slow" screen.
+            { name: 'mypark:nofallback', value: '1' },
+            ...(process.env.CI ? [{ name: 'mypark:quality', value: 'low' }] : []),
+          ],
+        },
+      ],
+    },
     launchOptions: {
       // Software WebGL so the world renders in headless CI.
       args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],

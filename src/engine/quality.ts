@@ -61,9 +61,17 @@ export class FrameWatchdog {
   private frames = 0;
   private warmup = 2; // ignore the first seconds (shader compiles, asset uploads)
 
-  constructor(private readonly onSlow: () => void) {}
+  constructor(private readonly onSlow: (fps: number) => void) {}
 
   tick(rawDt: number): void {
+    // A long gap is a pause, not a slow frame: the tab was hidden, or a pop-up had the world frozen.
+    // Start the measurement over instead of reading it as 2 frames a second.
+    if (rawDt > 0.25) {
+      this.time = 0;
+      this.frames = 0;
+      this.warmup = Math.max(this.warmup, 0.5);
+      return;
+    }
     if (this.warmup > 0) {
       this.warmup -= rawDt;
       return;
@@ -76,7 +84,7 @@ export class FrameWatchdog {
       this.frames = 0;
       if (fps < 30) {
         this.warmup = 2;
-        this.onSlow();
+        this.onSlow(fps);
       }
     }
   }
