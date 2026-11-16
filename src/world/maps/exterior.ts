@@ -92,6 +92,9 @@ const props: Prop[] = [
   { model: 'bleachers', x: 32, z: 3, w: 12, d: 1, h: 1.6, color: C.bleacher, blocks: true, label: "CALVIN'S COURT" },
   { model: 'hoop', x: 45, z: 9, w: 1, d: 2, h: 3.6, color: 0xe5e7eb, rotation: -Math.PI / 2, blocks: true },
 
+  // A model jet on a stand, east of the court (the JetBlue challenge).
+  { model: 'airplane', x: 47, z: 6, w: 3, d: 5, h: 2.6, color: 0xf8fafc, blocks: true },
+
   // The Weightroom (outdoors). Five stops: two side builds along the north edge, three hobbies below.
   { model: 'ticker-board', x: 30, z: 24, w: 3, d: 1, h: 2.6, color: 0x111827, blocks: true },
   { model: 'workbench', x: 42, z: 24, w: 2, d: 1, h: 0.9, color: C.wood, blocks: true },
@@ -121,6 +124,10 @@ const interactables: Interactable[] = [
   { id: 'weightroom/chess', kind: 'station', label: 'Chess Table', x: 30.5, z: 32, radius: 1.2, station: 'weightroom/chess' },
   { id: 'weightroom/basketball', kind: 'station', label: 'Hoop', x: 42.6, z: 30.5, radius: 1.2, station: 'weightroom/basketball' },
   { id: 'weightroom/running', kind: 'station', label: 'Sprint Lane', x: 37.5, z: 36, radius: 1.2, station: 'weightroom/running' },
+  // Just for fun: pick up the dumbbells and press them overhead.
+  { id: 'weightroom/dumbbells', kind: 'lift', label: 'Dumbbells', x: 40, z: 32.8, radius: 1.1 },
+
+  { id: 'court/jetblue', kind: 'station', label: 'Mini Jet', x: 48.5, z: 12.2, radius: 1.3, station: 'court/jetblue' },
 ];
 
 // Trees: deterministic scatter on open grass, kept clear of paths, zones, and props.

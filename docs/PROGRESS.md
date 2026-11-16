@@ -190,6 +190,19 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 | ![meta](progress/m4-desktop-meta-interior.png) | ![ceremony](progress/m4-desktop-ceremony.png) |
 | ![weightroom](progress/m4-desktop-weightroom.png) | ![select](progress/m2-mobile-select.png) |
 
+### Calvin's fourth round of feedback (Nov 15) and what changed
+
+1. **Résumé PDF committed** (`public/resume.pdf`), at Calvin's say-so.
+2. **Quick links are a collapsible bar.** Expanded: icon plus name, and the email is spelled out with a copy icon that turns into a check when copied. Collapsed: icons only. Desktop starts expanded, phones start collapsed, and the choice is remembered. Icons are Phosphor Icons (MIT), inlined.
+3. **Deploy workflow builds the new site.** `deploy.yml` on `world` now runs install, unit tests, and the Vite build, and publishes `dist/`. Merging `world` into `main` swaps the live site. (This was planned for M8 and pulled forward because Calvin wants to share.)
+4. **Pull request:** not opened by me. Creating one needs GitHub API access with Calvin's credential, which I'm not permitted to use. He can open it from the compare page.
+5. **Workbench looks lived in:** two monitors of code, keyboard, mouse, mug, sticky notes, a lamp, and a mesh-back office chair.
+6. **Overhead press.** Walk up to the dumbbell rack, E (or tap) to pick them up, G (or the Press button) for a rep, Space (or Put back) to rack them. The arms are posed in code, since the animation library has no press clip.
+7. **Mini jet** on a stand east of the court. Its card tells the JetBlue 25 for 25 story in Calvin's words with his screenshot.
+8. **Tier B avatar approved.** Waiting on the generated model in `assets-src/calvin/`.
+
+Side effect worth knowing: plain-colored static geometry now merges into one mesh per building using vertex colors. Draw calls dropped from about 150 to about 100.
+
 ## M5: Calvin's avatar ★ (ready for review)
 
 **What's in**
@@ -243,6 +256,5 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 
 ## Open issues
 
-- **Résumé PDF is local only.** `public/resume.pdf` is gitignored because it shows a phone number and the repo is public. On Calvin's machine the links work. On CI and in a deploy they would 404 until the file is committed. Needs his yes or no (or a version without the phone number).
 - **LAN preview not verified from this laptop.** The dev server listens on all interfaces, but a connection from the laptop to its own LAN IP times out (CrowdStrike, FortiClient, and Tailscale network extensions are installed). Calvin has been testing on his phone, so it reaches him.
 - **Running tests locally:** stop the dev server first if the machine is busy. Each test page renders WebGL in software, and Playwright is capped at three workers for that reason.

@@ -1,4 +1,5 @@
 import { careerData, companies } from '../content/career';
+import { notes } from '../content/extras';
 import { hobbies } from '../content/hobbies';
 import { profile } from '../content/profile';
 import { sideBuilds } from '../content/side-builds';
@@ -101,6 +102,10 @@ export function stationCard(station: Station, chip?: string): CardModel | null {
       return sideBuildCard(c.key, opts);
     case 'hobbies':
       return hobbyCard(c.key, c.slice, opts);
+    case 'note': {
+      const n = notes[c.key];
+      return { id: station.id, tag: n.tag, title: n.title, paragraphs: n.paragraphs, screens: n.image ? [{ label: n.title, img: n.image.src, imgWidth: '300px' }] : [] };
+    }
     default:
       return null;
   }

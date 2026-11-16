@@ -25,6 +25,7 @@ import { Character } from './world/character';
 import { buildGrid } from './world/collision';
 import { Interactions, type Target } from './world/interactions';
 import { buildInterior } from './world/interior-art';
+import { LiftMode } from './world/lift';
 import { Kit } from './world/kit';
 import { CALVIN_LOOKS, CALVIN_PLAZA_LOOK, lookById, TRAINER_LOOKS } from './world/looks';
 import type { Door, MapDef } from './world/maps/types';
@@ -511,8 +512,54 @@ async function boot(): Promise<void> {
       case 'station':
         void openStation(target);
         break;
+      case 'lift':
+        startLift(target);
+        break;
     }
   }
+
+  // ----- overhead press (the Weightroom dumbbells) -----
+  let lift: LiftMode | null = null;
+  const liftHud = document.getElementById('lift-hud') as HTMLElement;
+  const liftCount = document.getElementById('lift-count') as HTMLElement;
+  function startLift(target: Target): void {
+    const body = player.body;
+    if (!body || lift) return;
+    begin();
+    // Face away from the rack, toward the camera side, so the press is in view.
+    player.teleport(target.x, target.z);
+    player.facing = Math.PI * 0.25;
+    player.object.rotation.y = player.facing;
+    lift = new LiftMode(body, player.object);
+    liftCount.textContent = '0 reps';
+    liftHud.hidden = false;
+    document.body.classList.add('is-lifting');
+  }
+  function liftRep(): void {
+    if (!lift?.rep()) return;
+    liftCount.textContent = `${lift.reps} ${lift.reps === 1 ? 'rep' : 'reps'}`;
+    navigator.vibrate?.(15);
+  }
+  function stopLift(): void {
+    if (!lift) return;
+    const reps = lift.reps;
+    lift.stop();
+    lift = null;
+    liftHud.hidden = true;
+    document.body.classList.remove('is-lifting');
+    end();
+    if (reps > 0) toast(`${reps} ${reps === 1 ? 'rep' : 'reps'}. Dumbbells back on the rack.`);
+  }
+  document.getElementById('lift-rep')!.addEventListener('click', liftRep);
+  document.getElementById('lift-done')!.addEventListener('click', stopLift);
+  window.addEventListener('keydown', (e) => {
+    if (!lift || e.repeat) return;
+    if (e.code === 'KeyG') liftRep();
+    else if (['Space', 'Escape', 'KeyE', 'Enter'].includes(e.code)) {
+      e.preventDefault();
+      stopLift();
+    }
+  });
 
   // ----- HUD: résumé + socials -----
   const hudLinks = document.getElementById('hud-links') as HTMLElement;
@@ -731,6 +778,7 @@ async function boot(): Promise<void> {
     if (active.moveX !== 0 || active.moveY !== 0) pending = null;
 
     player.update(dt, active, follow.basis(), current.grid);
+    lift?.update(dt);
     player.animate(dt);
     for (const npc of current.npcs) npc.update(dt, state === 'play' ? { x: player.x, z: player.z } : null);
     // How-to-move hint: hidden while moving, back after a few seconds of standing still.

@@ -167,7 +167,14 @@ export class Builder {
    */
   merge(): void {
     this.group.updateMatrixWorld(true);
-    const buckets = new Map<string, { material: THREE.Material; cast: boolean; receive: boolean; geos: THREE.BufferGeometry[]; meshes: THREE.Mesh[] }>();
+    interface Bucket {
+      material: THREE.Material;
+      cast: boolean;
+      receive: boolean;
+      geos: THREE.BufferGeometry[];
+      meshes: THREE.Mesh[];
+    }
+    const buckets = new Map<string, Bucket>();
     this.group.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh || (mesh as unknown as THREE.InstancedMesh).isInstancedMesh || mesh.userData.dynamic) return;
@@ -175,15 +182,29 @@ export class Builder {
       const g = mesh.geometry;
       const names = Object.keys(g.attributes).sort().join();
       if (names !== 'normal,position,uv' || !g.index || !(g.attributes.position.array instanceof Float32Array)) return;
-      const key = `${mesh.material.uuid}:${mesh.castShadow}:${mesh.receiveShadow}`;
+      const mat = mesh.material as THREE.MeshLambertMaterial;
+      // Plain flat colors (no texture, glow, or transparency) all share one vertex-colored material,
+      // so a building made of twenty colors is still one draw call.
+      const plain = mat.isMeshLambertMaterial && !mat.map && !mat.transparent && mat.emissive.getHex() === 0 && mat.side === THREE.FrontSide;
+      const key = `${plain ? 'plain' : mat.uuid}:${mesh.castShadow}:${mesh.receiveShadow}`;
       let bucket = buckets.get(key);
-      if (!bucket) buckets.set(key, (bucket = { material: mesh.material, cast: mesh.castShadow, receive: mesh.receiveShadow, geos: [], meshes: [] }));
-      bucket.geos.push(g.clone().applyMatrix4(mesh.matrixWorld));
+      if (!bucket) {
+        const material = plain ? this.plainMaterial() : mat;
+        buckets.set(key, (bucket = { material, cast: mesh.castShadow, receive: mesh.receiveShadow, geos: [], meshes: [] }));
+      }
+      const geo = g.clone().applyMatrix4(mesh.matrixWorld);
+      if (plain) {
+        const count = geo.attributes.position.count;
+        const colors = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) mat.color.toArray(colors, i * 3);
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      }
+      bucket.geos.push(geo);
       bucket.meshes.push(mesh);
     });
     const inv = this.group.matrixWorld.clone().invert();
-    for (const bucket of buckets.values()) {
-      if (bucket.meshes.length < 2) continue;
+    for (const [key, bucket] of buckets) {
+      if (bucket.meshes.length < 2 && !key.startsWith('plain')) continue;
       const merged = mergeGeometries(bucket.geos);
       if (!merged) continue;
       for (const m of bucket.meshes) {
@@ -195,6 +216,11 @@ export class Builder {
       mesh.receiveShadow = bucket.receive;
       this.group.add(mesh);
     }
+  }
+
+  private plain: THREE.MeshLambertMaterial | null = null;
+  private plainMaterial(): THREE.MeshLambertMaterial {
+    return (this.plain ??= new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
   }
 
   materials(): THREE.Material[] {
@@ -451,6 +477,9 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
         break;
       case 'workbench':
         buildWorkbench(shared, p);
+        break;
+      case 'airplane':
+        buildAirplane(shared, p);
         break;
       case 'squat-rack':
         buildSquatRack(shared, p);
@@ -1164,20 +1193,121 @@ function buildTickerBoard(b: Builder, p: Prop): void {
   b.panel(cx, 1.75, p.z + 0.62, p.w - 0.4, 1.5, 's', new THREE.MeshBasicMaterial({ map: tickerTexture() }), 0.02);
 }
 
+function codeTexture(seed: number): THREE.CanvasTexture {
+  return canvasTexture(128, 84, (ctx) => {
+    ctx.fillStyle = '#0b1220';
+    ctx.fillRect(0, 0, 128, 84);
+    const inks = ['#7dd3fc', '#a78bfa', '#86efac', '#fbbf24', '#e5e7eb'];
+    for (let row = 0; row < 9; row++) {
+      let x = 6 + ((row * 7 + seed) % 3) * 8;
+      for (let k = 0; k < 3; k++) {
+        const w = 10 + ((row * 13 + k * 29 + seed * 5) % 26);
+        ctx.fillStyle = inks[(row + k + seed) % inks.length];
+        ctx.fillRect(x, 6 + row * 8, w, 3);
+        x += w + 5;
+      }
+    }
+  });
+}
+
+/** Calvin's desk: two monitors of code, keyboard, mouse, mug, lamp, and a mesh-back office chair pulled up to it. */
 function buildWorkbench(b: Builder, p: Prop): void {
   const wood = b.mat(PALETTE.wood);
-  b.box(p.x + 0.05, p.h - 0.1, p.z + 0.15, p.w - 0.1, 0.1, 0.75, wood);
-  for (const [dx, dz] of [[0.1, 0.2], [p.w - 0.22, 0.2], [0.1, 0.75], [p.w - 0.22, 0.75]]) b.box(p.x + dx, 0, p.z + dz, 0.12, p.h - 0.1, 0.12, b.mat(0x5a3620));
-  // Two monitors, and a caution sign: this one is a work in progress.
-  const glow = new THREE.MeshBasicMaterial({ color: 0x7dd3fc });
-  for (const dx of [0.5, 1.3]) {
-    b.box(p.x + dx - 0.03, p.h, p.z + 0.4, 0.06, 0.18, 0.06, b.mat(0x374151));
-    b.box(p.x + dx - 0.32, p.h + 0.16, p.z + 0.38, 0.64, 0.44, 0.05, b.mat(0x0b0f17));
-    b.panel(p.x + dx, p.h + 0.38, p.z + 0.43, 0.58, 0.38, 's', glow, 0.01);
+  const dark = b.mat(0x1f2937);
+  const steel = b.mat(PALETTE.steel);
+  const top = p.h;
+  b.box(p.x + 0.05, top - 0.1, p.z + 0.15, p.w - 0.1, 0.1, 0.8, wood);
+  for (const [dx, dz] of [[0.1, 0.2], [p.w - 0.22, 0.2], [0.1, 0.8], [p.w - 0.22, 0.8]]) b.box(p.x + dx, 0, p.z + dz, 0.12, top - 0.1, 0.12, b.mat(0x5a3620));
+  // Two monitors showing code.
+  for (const [i, dx] of [0.52, 1.3].entries()) {
+    b.box(p.x + dx - 0.03, top, p.z + 0.36, 0.06, 0.18, 0.06, dark);
+    b.box(p.x + dx - 0.12, top, p.z + 0.32, 0.24, 0.02, 0.14, dark);
+    b.box(p.x + dx - 0.34, top + 0.16, p.z + 0.34, 0.68, 0.46, 0.05, b.mat(0x0b0f17));
+    b.panel(p.x + dx, top + 0.39, p.z + 0.39, 0.62, 0.4, 's', new THREE.MeshBasicMaterial({ map: codeTexture(i * 3 + 1) }), 0.01);
   }
+  // Keyboard, mouse, mug, sticky notes, desk lamp.
+  b.box(p.x + 0.62, top, p.z + 0.62, 0.52, 0.03, 0.18, b.mat(0x111827));
+  for (let r = 0; r < 3; r++) b.box(p.x + 0.65, top + 0.03, p.z + 0.645 + r * 0.05, 0.46, 0.012, 0.035, b.mat(0x374151));
+  b.box(p.x + 1.24, top, p.z + 0.66, 0.08, 0.035, 0.12, b.mat(0xe5e7eb));
+  b.mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.12, 10), b.mat(0xf8fafc), p.x + 0.3, top + 0.06, p.z + 0.7);
+  b.box(p.x + 1.5, top, p.z + 0.62, 0.12, 0.012, 0.12, b.mat(0xfde047));
+  b.box(p.x + 1.66, top, p.z + 0.66, 0.12, 0.012, 0.12, b.mat(0xf9a8d4));
+  b.box(p.x + 1.78, top, p.z + 0.36, 0.04, 0.42, 0.04, steel);
+  const shade = b.mesh(new THREE.ConeGeometry(0.12, 0.14, 10, 1, true), b.mat(0xfbbf24, { emissive: 0x7a5a00 }), p.x + 1.7, top + 0.42, p.z + 0.5);
+  shade.rotation.x = 0.5;
+
+  // The chair: five-star base, gas lift, seat, and a tall mesh back with a frame, turned a little as if just left.
+  const chair = new Builder(true);
+  const frame = chair.mat(0x111827);
+  const mesh = chair.mat(0x374151, { opacity: 0.75 });
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    const leg = chair.box(-0.03, 0.04, 0, 0.06, 0.04, 0.3, frame);
+    leg.position.set(Math.sin(a) * 0.15, 0.06, Math.cos(a) * 0.15);
+    leg.rotation.y = a;
+    chair.mesh(new THREE.SphereGeometry(0.04, 6, 4), frame, Math.sin(a) * 0.3, 0.04, Math.cos(a) * 0.3);
+  }
+  chair.mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.36, 8), b.mat(0x9ca3af), 0, 0.26, 0);
+  chair.box(-0.25, 0.44, -0.24, 0.5, 0.07, 0.48, mesh);
+  // Back: outer frame, mesh panel, lumbar bar.
+  chair.box(-0.25, 0.5, 0.22, 0.04, 0.72, 0.04, frame);
+  chair.box(0.21, 0.5, 0.22, 0.04, 0.72, 0.04, frame);
+  chair.box(-0.25, 1.18, 0.22, 0.5, 0.04, 0.04, frame);
+  const back = chair.box(-0.21, 0.56, 0.23, 0.42, 0.62, 0.02, mesh);
+  back.castShadow = false;
+  chair.box(-0.2, 0.7, 0.25, 0.4, 0.07, 0.03, frame);
+  for (const x of [-0.3, 0.26]) {
+    chair.box(x, 0.5, -0.02, 0.04, 0.2, 0.04, frame);
+    chair.box(x - 0.01, 0.7, -0.16, 0.06, 0.03, 0.3, frame);
+  }
+  chair.group.position.set(p.x + 0.9, 0, p.z + 1.42);
+  chair.group.rotation.y = 0.35;
+  b.add(chair.group);
+
+  // Caution sign: this one is a work in progress.
   const sign = b.mesh(new THREE.ConeGeometry(0.42, 0.7, 3).rotateY(Math.PI), b.mat(0xfacc15, { emissive: 0x4a3a05 }), p.x + p.w + 0.55, 0.55, p.z + 0.7);
   sign.scale.z = 0.18;
-  b.box(p.x + p.w + 0.52, 0, p.z + 0.68, 0.06, 0.25, 0.06, b.mat(PALETTE.steel));
+  b.box(p.x + p.w + 0.52, 0, p.z + 0.68, 0.06, 0.25, 0.06, steel);
+}
+
+/** A model jet on a stand: white fuselage, blue tail and belly. No airline markings. */
+function buildAirplane(b: Builder, p: Prop): void {
+  const cx = p.x + p.w / 2;
+  const cz = p.z + p.d / 2;
+  const white = b.mat(0xf8fafc);
+  const blue = b.mat(0x1d4ed8);
+  const navy = b.mat(0x0b2a5b);
+  b.mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.2, 12), b.mat(PALETTE.steel), cx, 0.1, cz);
+  b.mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.3, 8), b.mat(PALETTE.steel), cx, 0.8, cz);
+
+  const jet = new Builder(true);
+  const len = 4.0;
+  jet.mesh(new THREE.CylinderGeometry(0.42, 0.42, len, 14).rotateX(Math.PI / 2), white, 0, 0, 0);
+  jet.mesh(new THREE.SphereGeometry(0.42, 14, 10).scale(1, 1, 1.7), white, 0, 0, len / 2); // nose (points +z, toward the visitor)
+  jet.mesh(new THREE.ConeGeometry(0.42, 1.2, 14).rotateX(-Math.PI / 2), white, 0, 0.0, -len / 2 - 0.6); // tail cone
+  jet.mesh(new THREE.CylinderGeometry(0.425, 0.425, len, 14, 1, false, Math.PI * 0.75, Math.PI * 0.5).rotateX(Math.PI / 2), blue, 0, -0.01, 0); // belly
+  // Wings, swept back a little.
+  for (const side of [-1, 1]) {
+    const wing = jet.box(0, -0.12, -0.45, 1.9, 0.07, 0.9, white);
+    wing.position.set(side * 1.25, -0.12, -0.15);
+    wing.rotation.y = side * 0.32;
+    jet.mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.6, 10).rotateX(Math.PI / 2), navy, side * 0.95, -0.32, 0.15); // engine
+    const stab = jet.box(0, 0, 0, 0.75, 0.05, 0.4, white);
+    stab.position.set(side * 0.5, 0.12, -len / 2 - 0.55);
+    stab.rotation.y = side * 0.3;
+  }
+  // Tail fin.
+  const fin = jet.box(0, 0, 0, 0.07, 0.95, 0.8, blue);
+  fin.position.set(0, 0.6, -len / 2 - 0.45);
+  fin.rotation.x = -0.35;
+  // Cockpit and a row of windows on each side.
+  jet.mesh(new THREE.SphereGeometry(0.3, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2.4).rotateX(Math.PI / 2.2), navy, 0, 0.14, len / 2 + 0.28);
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 9; i++) jet.box(side * 0.415 - 0.01, 0.1, -1.5 + i * 0.36, 0.02, 0.1, 0.16, navy);
+  }
+  jet.group.position.set(cx, 1.75, cz);
+  jet.group.rotation.x = -0.12; // climbing
+  b.add(jet.group);
 }
 
 function buildSquatRack(b: Builder, p: Prop): void {

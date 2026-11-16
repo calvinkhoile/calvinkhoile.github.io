@@ -5,7 +5,7 @@ import type { Npc } from './npc';
 
 export interface Target {
   id: string;
-  kind: 'station' | 'sign' | 'kiosk' | 'npc' | 'door';
+  kind: 'station' | 'sign' | 'kiosk' | 'lift' | 'npc' | 'door';
   label: string;
   x: number;
   z: number;

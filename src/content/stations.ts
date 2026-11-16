@@ -11,6 +11,8 @@ export type StationContent =
   | { source: 'hobbies'; key: string; slice?: string }
   /** A single photo, opened in the lightbox. */
   | { source: 'photo'; src: string; alt: string; caption: string }
+  /** A short note with an optional image (src/content/extras.ts). */
+  | { source: 'note'; key: string }
   /** A dialogue line (easter eggs, teasers). */
   | { source: 'dialogue'; key: string };
 
@@ -57,6 +59,9 @@ export const stations: Station[] = [
   { id: 'weightroom/running', scene: 'exterior', label: 'Sprint Lane', content: { source: 'hobbies', key: 'running' }, counts: true },
   { id: 'weightroom/chess', scene: 'exterior', label: 'Chess Table', content: { source: 'hobbies', key: 'chess' }, counts: true },
   { id: 'weightroom/basketball', scene: 'exterior', label: 'Hoop', content: { source: 'hobbies', key: 'basketball' }, counts: true },
+
+  // Beside Calvin's Court: a model jet for the JetBlue challenge. A prop, not counted toward any badge.
+  { id: 'court/jetblue', scene: 'exterior', label: 'Mini Jet', content: { source: 'note', key: 'jetblue' }, counts: false },
 ];
 
 export const stationById = (id: string): Station | undefined => stations.find((s) => s.id === id);

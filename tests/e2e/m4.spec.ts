@@ -357,3 +357,51 @@ test('the prompt itself can be tapped', async ({ page }) => {
   await page.locator('.prompt').click();
   await expect(page.locator('.dialogue-speaker')).toHaveText('Signpost');
 });
+
+test('overhead press: grab the dumbbells, press a few reps, put them back', async ({ page, isMobile }, info) => {
+  const errors = await boot(page);
+  await standAt(page, 'weightroom/dumbbells', 'Dumbbells');
+  await interact(page, isMobile);
+  const hud = page.locator('#lift-hud');
+  await expect(hud).toBeVisible();
+  await expect(page.locator('#lift-count')).toHaveText('0 reps');
+  expect(await page.evaluate(() => window.__mypark!.busy)).toBe(true);
+
+  const press = async () => {
+    if (isMobile) await page.locator('#lift-rep').tap();
+    else await page.keyboard.press('g');
+  };
+  await press();
+  await expect(page.locator('#lift-count')).toHaveText('1 rep');
+  await page.waitForTimeout(450);
+  await page.screenshot({ path: `docs/progress/m5-${info.project.name}-press.png` });
+  // A second press mid-rep is ignored. One that lands after the rep finishes counts.
+  await expect
+    .poll(async () => {
+      await press();
+      return page.locator('#lift-count').textContent();
+    }, { timeout: 20_000 })
+    .toBe('2 reps');
+
+  if (isMobile) await page.locator('#lift-done').tap();
+  else await page.keyboard.press('Space');
+  await expect(hud).toBeHidden();
+  await expect(page.locator('#toast')).toContainText('2 reps');
+  await idle(page);
+  // Back to normal: the dumbbells didn't turn into an interaction loop.
+  await page.waitForTimeout(400);
+  await expect(hud).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('the mini jet by the court tells the JetBlue story', async ({ page, isMobile }, info) => {
+  await boot(page);
+  await standAt(page, 'court/jetblue', 'Mini Jet');
+  await page.screenshot({ path: `docs/progress/m5-${info.project.name}-jet.png` });
+  await interact(page, isMobile);
+  await expect(page.locator('.card-title')).toHaveText('JetBlue 25 for 25');
+  await expect(page.locator('.card-desc')).toHaveText(
+    'In 2025, I completed the JetBlue challenge that gave me 25 years of loyalty status, Mosaic 1. I hit 25 different airports in the span of 2 months. It was a crazy time!',
+  );
+  await expect.poll(() => page.locator('.card .card-photo').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+});

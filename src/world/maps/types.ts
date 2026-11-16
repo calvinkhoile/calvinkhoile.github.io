@@ -47,7 +47,7 @@ export interface Door {
 
 export interface Interactable {
   id: string;
-  kind: 'station' | 'sign' | 'kiosk';
+  kind: 'station' | 'sign' | 'kiosk' | 'lift';
   label: string;
   /** Where the visitor stands to use it (center of the floor ring). Must be walkable. */
   x: number;

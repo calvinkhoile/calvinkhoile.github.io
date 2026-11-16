@@ -40,6 +40,10 @@ export class Player {
     return this.speed > 0.05;
   }
 
+  get body(): Character | null {
+    return this.character;
+  }
+
   /** Swap the visible body (used when the visitor picks a look). */
   setCharacter(character: Character): void {
     if (this.character) this.object.remove(this.character.object);

@@ -31,6 +31,9 @@ export class Character {
   private readonly actions = new Map<string, THREE.AnimationAction>();
   private current: CharacterAnim | null = null;
   private readonly material: THREE.MeshLambertMaterial;
+  private readonly model: THREE.Object3D;
+  /** Runs after the animation each frame, to pose bones in code (the overhead press). */
+  onPose: (() => void) | null = null;
 
   private constructor(model: THREE.Object3D, clips: THREE.AnimationClip[], look: Look, shadows: boolean) {
     // Smooth shading: flat shading on this base mesh reads as a bodysuit, smooth reads as clothes.
@@ -42,6 +45,7 @@ export class Character {
       mesh.castShadow = shadows;
       mesh.frustumCulled = false; // the bind-pose bounds don't follow the animation
     });
+    this.model = model;
     this.object.add(model);
     // Accessories are placed while the skeleton is still in its T-pose, then handed to a bone so they ride the animation.
     for (const acc of (look.accessories ?? []) as Accessory[]) addAccessory(model, acc, look, shadows);
@@ -93,6 +97,11 @@ export class Character {
 
   update(dt: number): void {
     this.mixer.update(dt);
+    this.onPose?.();
+  }
+
+  bone(name: string): THREE.Object3D | undefined {
+    return this.model.getObjectByName(name);
   }
 }
 

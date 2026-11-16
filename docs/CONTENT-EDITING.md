@@ -9,6 +9,7 @@ Everything a visitor reads lives in `src/content/`. Edit the text there, save, a
 | `side-builds.ts` | Sports Betting, Building with AI | Migrated verbatim |
 | `hobbies.ts` | Running, Chess, Basketball and their photo slices | Migrated verbatim |
 | `dialogue.ts` | Every NPC line, sign, and toast | **Drafts, see below** |
+| `extras.ts` | One-off stops (the JetBlue note) | Calvin's own words |
 | `stations.ts` | Which station opens which piece of content | Wiring, rarely edited |
 
 Rules that apply to all of it: no em dashes, no banned words, real numbers (see `CLAUDE.md`).

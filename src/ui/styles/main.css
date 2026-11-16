@@ -2281,3 +2281,52 @@ body.is-talking .hud-row2 {
     display: none;
   }
 }
+
+/* ---------- overhead press ---------- */
+.lift-hud {
+  position: absolute;
+  left: 50%;
+  bottom: calc(26px + var(--safe-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 18px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: rgba(8, 12, 20, 0.92);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.lift-hud[hidden] {
+  display: none;
+}
+
+.lift-count {
+  min-width: 62px;
+  font: 400 22px/1 var(--font-display);
+}
+
+.lift-hud .btn {
+  min-width: 0;
+  padding: 11px 16px;
+  font-size: 14px;
+}
+
+.lift-hud kbd {
+  margin-right: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  font: 700 11px/1 var(--font-body);
+}
+
+.is-touch .lift-hud kbd {
+  display: none;
+}
+
+body.is-lifting .hint,
+body.is-lifting .joystick,
+body.is-lifting .a-button {
+  display: none;
+}
