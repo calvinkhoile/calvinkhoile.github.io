@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { loadModel } from '../engine/loader';
-import { paletteOf, type Look } from './looks';
+import { paletteOf, type Accessory, type Look } from './looks';
 
 export type CharacterAnim = 'Idle_Loop' | 'Walk_Loop' | 'Jog_Fwd_Loop' | 'Sprint_Loop' | 'Idle_Talking_Loop' | 'Interact';
 
@@ -43,6 +43,8 @@ export class Character {
       mesh.frustumCulled = false; // the bind-pose bounds don't follow the animation
     });
     this.object.add(model);
+    // Accessories are placed while the skeleton is still in its T-pose, then handed to a bone so they ride the animation.
+    for (const acc of (look.accessories ?? []) as Accessory[]) addAccessory(model, acc, look, shadows);
     if (!shadows) {
       const blob = new THREE.Mesh(
         new THREE.CircleGeometry(0.45, 20),
@@ -92,4 +94,76 @@ export class Character {
   update(dt: number): void {
     this.mixer.update(dt);
   }
+}
+
+// ----- accessories -----
+// Positions are in the base mesh's T-pose space: y up, facing +z, 1.81 tall, arms out along x.
+
+function numberTexture(text: string, color: number): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+  ctx.font = '800 96px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 64, 70);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function addAccessory(model: THREE.Object3D, kind: Accessory, look: Look, shadows: boolean): void {
+  const bone = (name: string) => model.getObjectByName(name);
+  const accent = look.accent ?? 0xffffff;
+  const lambert = (color: number) => new THREE.MeshLambertMaterial({ color });
+  const group = new THREE.Group();
+  let host: THREE.Object3D | undefined;
+
+  if (kind === 'backpack') {
+    host = bone('spine_03');
+    const pack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.42, 0.15), lambert(0x1f2937));
+    pack.position.set(0, 1.3, -0.215);
+    const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.05), lambert(accent));
+    pocket.position.set(0, 1.2, -0.305);
+    group.add(pack, pocket);
+    for (const x of [-0.12, 0.12]) {
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.36, 0.03), lambert(0x1f2937));
+      strap.position.set(x, 1.36, 0.135);
+      group.add(strap);
+    }
+  } else if (kind === 'laptop') {
+    host = bone('lowerarm_l');
+    const laptop = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.025, 0.24), lambert(0xc0c5cc));
+    laptop.position.set(0.56, 1.36, 0.02);
+    group.add(laptop);
+  } else if (kind === 'lanyard') {
+    host = bone('spine_03');
+    for (const side of [-1, 1]) {
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.3, 0.012), lambert(accent));
+      strap.position.set(side * 0.045, 1.37, 0.142);
+      strap.rotation.z = side * 0.3;
+      group.add(strap);
+    }
+    const card = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.1, 0.012), lambert(0xf8fafc));
+    card.position.set(0, 1.19, 0.15);
+    group.add(card);
+  } else if (kind === 'number') {
+    host = bone('spine_03');
+    const mat = new THREE.MeshBasicMaterial({ map: numberTexture('13', accent), transparent: true, depthWrite: false });
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), mat);
+    front.position.set(0, 1.3, 0.142);
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), mat);
+    back.position.set(0, 1.34, -0.165);
+    back.rotation.y = Math.PI;
+    group.add(front, back);
+  }
+  if (!host) return;
+  // Accessories are too small for their shadows to read, and skipping them saves a draw call each.
+  void shadows;
+  model.add(group);
+  model.updateMatrixWorld(true);
+  // attach() keeps each part where it is in the world while re-parenting it to the bone.
+  for (const child of [...group.children]) host.attach(child);
+  model.remove(group);
 }

@@ -178,7 +178,7 @@ test('deep links drop a first-time visitor straight at a project', async ({ page
   await idle(page);
   await page.evaluate(() => (location.hash = '#/court'));
   await expect.poll(() => page.evaluate(() => window.__mypark!.scene), { timeout: 20_000 }).toBe('exterior');
-  await expect.poll(async () => Math.hypot((await page.evaluate(() => window.__mypark!.player)).x - 38, (await page.evaluate(() => window.__mypark!.player)).z - 12)).toBeLessThan(0.5);
+  await expect.poll(async () => Math.hypot((await page.evaluate(() => window.__mypark!.player)).x - 36, (await page.evaluate(() => window.__mypark!.player)).z - 11)).toBeLessThan(0.5);
 
   await page.evaluate(() => (location.hash = '#/weightroom/chess'));
   await expect(page.locator('.card')).toHaveAttribute('data-card', 'weightroom/chess');

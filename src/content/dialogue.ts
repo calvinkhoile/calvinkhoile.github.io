@@ -133,6 +133,11 @@ export const dialogue: Record<string, DialogueNode> = {
     action: 'card:betmgm-overview',
   },
 
+  // Temporary, until the 1-on-1 is built (M6).
+  'court.soon': {
+    lines: [{ speaker: CALVIN, text: "Still warming up. The court opens soon, and when it does, you're first up." }],
+  },
+
   // Shown when a door leads to a scene that isn't built yet. The speaker is replaced with the place's name.
   'door.locked': {
     lines: [{ speaker: 'Door', text: 'Still under construction. This one opens in the next build.' }],

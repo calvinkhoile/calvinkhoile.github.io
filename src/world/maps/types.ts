@@ -67,7 +67,7 @@ export interface NpcSpawn {
   x: number;
   z: number;
   /** Which behavior the NPC has: the plaza guide, or a gym leader for a company. */
-  role: 'plaza' | 'leader';
+  role: 'plaza' | 'leader' | 'court';
   /** Dialogue prefix for leaders, e.g. "betmgm" -> betmgm.leader / betmgm.leaderDone. */
   dialogue: string;
   /** Point the NPC faces while idle. */

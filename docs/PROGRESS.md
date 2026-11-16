@@ -11,7 +11,8 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M2 | Exterior art pass | Done, with small items deferred (see M2 section) |
 | M3 | Interaction + dialogue + cards ★ | Done. Reviewed by Calvin twice (Nov 15), changes applied |
 | M4 | All gyms + badges | Done (Nov 15, 2026) |
-| M5–M8 | | Not started. M5 (Calvin's avatar) is next and ends at a ★ checkpoint |
+| M5 | Calvin's avatar ★ | Tier A built. **Waiting on Calvin: approve Tier A, or go Tier B** |
+| M6–M8 | | Not started |
 
 ## How to run
 
@@ -188,6 +189,29 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 | ![ucla](progress/m4-desktop-ucla-interior.png) | ![deloitte](progress/m4-desktop-deloitte-interior.png) |
 | ![meta](progress/m4-desktop-meta-interior.png) | ![ceremony](progress/m4-desktop-ceremony.png) |
 | ![weightroom](progress/m4-desktop-weightroom.png) | ![select](progress/m2-mobile-select.png) |
+
+## M5: Calvin's avatar ★ (ready for review)
+
+**What's in**
+- **Tier A Calvin** in six outfits, each worn where it belongs: black jacket at the plaza (from his headshot), blue hoodie and backpack at UCLA, charcoal blazer with a laptop at Deloitte, grey hoodie at Meta, navy quarter-zip with a lanyard at BetMGM, and a #13 jersey at his court.
+- Same mesh family and skeleton as the trainers, so every animation is shared. 4,518 triangles. Outfits are palette swaps, so all six cost no extra download. Accessories (backpack, laptop, lanyard, jersey number) are a few small boxes attached to bones.
+- **Court Calvin** now stands at the top of the key in the jersey. He has one temporary line until the 1-on-1 is built in M6.
+- **Lineup page** for review: `/?lineup=1`, and `/?lineup=1&close=1` for the face.
+- **Tier B instructions:** `docs/AVATAR-TIER-B.md`.
+
+**Screenshots**
+
+| Lineup | Close-up |
+|---|---|
+| ![lineup](progress/m5-desktop-lineup.png) | ![closeup](progress/m5-desktop-closeup.png) |
+
+**Honest assessment**
+- What works: hair (short, black, volume on top), skin tone, and the outfits read correctly from the park's camera distance. The #13 and the lanyard are legible.
+- What's weak: the body is the stock muscular base, so hoodies and the blazer look painted on. The face is generic and the heavy brows make him look stern, where the headshot is all smile. Feet are bare with shoe color. Up close it does not look like Calvin specifically.
+- Recommendation: Tier B, or a Blender pass on Tier A (slimmer build, softer brows, shoes, a collar). At gameplay distance Tier A is acceptable. In the lineup it is not a likeness.
+
+**Notes**
+- The plan asked for one material per character. The body is one material. The accessories add two or three tiny ones.
 
 ---
 

@@ -26,7 +26,7 @@ import { buildGrid } from './world/collision';
 import { Interactions, type Target } from './world/interactions';
 import { buildInterior } from './world/interior-art';
 import { Kit } from './world/kit';
-import { CALVIN_PLAZA_LOOK, lookById, TRAINER_LOOKS } from './world/looks';
+import { CALVIN_LOOKS, CALVIN_PLAZA_LOOK, lookById, TRAINER_LOOKS } from './world/looks';
 import type { Door, MapDef } from './world/maps/types';
 import { Npc } from './world/npc';
 import { OccluderFader } from './world/occlusion';
@@ -84,6 +84,8 @@ const INTERIOR_ZOOM = 0.62;
 const DOOR_FACING: Record<Door['facing'], [number, number]> = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 
 const params = new URLSearchParams(location.search);
+// `?lineup=1`: a review page showing Calvin in every outfit (for judging the avatar's likeness).
+const LINEUP = params.has('lineup');
 const canvas = document.getElementById('world') as HTMLCanvasElement;
 const ui = document.getElementById('ui') as HTMLElement;
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -196,10 +198,11 @@ async function boot(): Promise<void> {
     const art = def.interior ? buildInterior(def, quality) : buildArt(def, kit, quality);
     const root = new THREE.Group();
     root.add(art.root);
-    // TODO(M5): era outfits per gym leader. Every Calvin wears the plaza look for now.
+    // Calvin dresses for the era: plaza jacket, a different outfit in each gym, the jersey at his court.
     const npcs: Npc[] = [];
     for (const spawn of def.npcs) {
-      const npc = new Npc(spawn, await Character.create(CALVIN_PLAZA_LOOK, { shadows }));
+      const outfit = CALVIN_LOOKS[spawn.dialogue as keyof typeof CALVIN_LOOKS] ?? CALVIN_PLAZA_LOOK;
+      const npc = new Npc(spawn, await Character.create(outfit, { shadows }));
       root.add(npc.character.object);
       npcs.push(npc);
     }
@@ -453,6 +456,7 @@ async function boot(): Promise<void> {
 
   let introSeen = false;
   async function talkTo(npc: Npc): Promise<void> {
+    if (npc.spawn.role === 'court') return say('court.soon');
     if (npc.spawn.role === 'plaza') {
       const key = introSeen ? 'plaza.again' : 'plaza.intro';
       introSeen = true;
@@ -778,7 +782,7 @@ async function boot(): Promise<void> {
       }
     }
     if (route.spot === 'weightroom') window.__mypark!.teleport(38.5, 25);
-    if (route.spot === 'court') window.__mypark!.teleport(38, 12);
+    if (route.spot === 'court') window.__mypark!.teleport(36, 11);
     if (route.station) {
       const station = stationById(route.station);
       const target = current.interactions.byId(route.station);
@@ -828,4 +832,5 @@ async function boot(): Promise<void> {
   if (!calvin.walking && (calvin.x !== calvin.home.x || calvin.z !== calvin.home.z) && busyCount === 0) void sendHome(calvin);
 }
 
-void boot();
+if (LINEUP) void import('./dev/lineup').then((m) => m.runLineup(canvas));
+else void boot();

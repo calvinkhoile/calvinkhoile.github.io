@@ -155,7 +155,11 @@ export const exterior: MapDef = {
   props: [...props, ...scatterTrees(42)],
   doors,
   interactables,
-  npcs: [{ id: 'calvin-plaza', label: 'Calvin', x: 30, z: 51, role: 'plaza', dialogue: 'plaza', faceX: 33.5, faceZ: 52.5 }],
+  npcs: [
+    { id: 'calvin-plaza', label: 'Calvin', x: 30, z: 51, role: 'plaza', dialogue: 'plaza', faceX: 33.5, faceZ: 52.5 },
+    // Top of the key at his court, in the #13 jersey. The 1-on-1 itself arrives in M6.
+    { id: 'calvin-court', label: 'Calvin', x: 38, z: 10, role: 'court', dialogue: 'court', faceX: 30, faceZ: 10.5 },
+  ],
   spawn: { x: 33.5, z: 52.5 },
   cameraBounds: { minX: 4, maxX: W - 4, minZ: 4, maxZ: H - 4 },
   // Arrows lead from the plaza to UCLA, north past every gym, and on to the court. Short spurs point into each door.

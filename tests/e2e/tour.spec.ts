@@ -6,7 +6,7 @@ const STOPS: [string, number, number][] = [
   ['deloitte', 19.5, 37.5],
   ['meta', 19.5, 23.5],
   ['betmgm', 19.5, 9],
-  ['court', 38, 10.5],
+  ['court', 36, 11],
   ['weightroom', 37.5, 30],
 ];
 

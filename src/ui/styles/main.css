@@ -2200,3 +2200,28 @@ body.is-talking .hud-row2 {
     top: calc(158px + var(--safe-top));
   }
 }
+
+/* ---------- ?lineup=1 review page ---------- */
+.lineup-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  display: flex;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+.lineup-labels span {
+  flex: 1;
+  max-width: 190px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
