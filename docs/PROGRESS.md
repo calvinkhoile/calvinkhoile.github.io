@@ -158,6 +158,13 @@ URL knobs: `?debug=1` (grid, collision cells, interact radii, FPS), `?yaw=0` (sq
 5. **Same speed indoors:** interiors use a closer camera, which made the same world speed look faster. Indoor speed is now scaled by the camera zoom (0.62), so it looks identical on screen.
 6. **Smoother, fitted, combined pop-ups:** two or three simple screens (sliders, screenshots, photo sets) now sit side by side with their captions instead of behind tabs. That covers Rewards Store, Platform Enablement, AI at BetMGM, all three Meta projects, and the hobby cards. Images are sized by viewport height so a row fits on screen. Cards ease out on close as well as in, tabs cross-fade, and the phone sheet follows the finger.
 
+### Calvin's third round of feedback (Nov 15) and what changed
+
+1. **A fast way through each gym.** Talking to Calvin in a gym now offers "Walk me through it": every station's card, one after another, inside the pop-up, with "Next: <station> →" and "Finish". Each stop counts as visited and finishing earns the badge. "I'll look around" still opens the overview for exploring on foot.
+2. **Tracker moved and made expandable.** The station tracker and the badge case now sit under the résumé and social buttons, top-right. The tracker is collapsed by default. Expanded, it lists each station (tap one to jump there and open it) and has "Skip the walk: see all N", which starts the same walkthrough. It also appears for the Weightroom while the visitor is standing in it.
+3. **Pop-ups show one thing.** A station opened on its own shows only that station. The step-through footer appears only in a walkthrough.
+4. **Click or tap the thing itself.** Clicking the counter, the whiteboard, the door, or Calvin now walks over and uses it. Before, only the floor ring counted. The prompt bubble is tappable too, so phones no longer depend on the A button.
+
 ## M4: All gyms + badges (done)
 
 **What's in**

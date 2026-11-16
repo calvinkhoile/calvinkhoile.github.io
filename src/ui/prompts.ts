@@ -5,6 +5,8 @@ export class Prompt {
   private readonly label: HTMLElement;
   private readonly live: HTMLElement;
   private current: string | null = null;
+  /** Called when the prompt itself is clicked or tapped. */
+  onActivate: (() => void) | null = null;
 
   constructor(root: HTMLElement) {
     this.el = document.createElement('div');
@@ -15,6 +17,7 @@ export class Prompt {
     this.live.className = 'visually-hidden';
     this.live.setAttribute('aria-live', 'polite');
     root.append(this.el, this.live);
+    this.el.addEventListener('click', () => this.onActivate?.());
     this.key = this.el.querySelector('.prompt-key')!;
     this.label = this.el.querySelector('.prompt-label')!;
   }

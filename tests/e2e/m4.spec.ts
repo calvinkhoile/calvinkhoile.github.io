@@ -225,3 +225,113 @@ test('moving looks the same speed indoors as outdoors', async ({ page, isMobile 
   await expect.poll(() => page.evaluate(() => window.__mypark!.player.speed), { timeout: 20_000 }).toBeCloseTo(4.65, 1);
   await page.keyboard.up('KeyA');
 });
+
+test('talking to the gym leader offers a walkthrough that steps through every station in the pop-up', async ({ page, isMobile }) => {
+  test.setTimeout(120_000);
+  await boot(page, '/#/gym/deloitte');
+  await idle(page);
+  await standAt(page, 'calvin-deloitte', 'Talk to Calvin');
+  await interact(page, isMobile);
+  // Advance through his welcome until the choices come up.
+  for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
+    await page.locator('.dialogue').click();
+    await page.waitForTimeout(250);
+  }
+  await expect(page.locator('.dialogue-choice')).toHaveText(['Walk me through it', "I'll look around"]);
+  await page.getByRole('button', { name: 'Walk me through it' }).click();
+
+  const card = page.locator('.card');
+  const stops = countedStations('gym-deloitte');
+  for (const [i, s] of stops.entries()) {
+    await expect(card).toBeVisible();
+    await expect(card).toHaveAttribute('data-card', s.id);
+    await expect(page.locator('.card-footer-note')).toHaveText(`Stop ${i + 1} of ${stops.length}`);
+    const next = i < stops.length - 1 ? `Next: ${stops[i + 1].label} →` : 'Finish';
+    await expect(page.locator('.card-footer-btn')).toHaveText(next);
+    await page.locator('.card-footer-btn').click();
+  }
+  // Finishing counts every stop and earns the badge on the spot.
+  await expect(page.locator('.ceremony-name')).toHaveText('Consultant Badge');
+  await page.locator('.ceremony-continue').click();
+  await idle(page);
+  await expect(page.locator('#station-counter')).toHaveText('Deloitte Gym · 3/3 stations ✓');
+  expect(await page.evaluate(() => window.__mypark!.badges)).toEqual(['deloitte']);
+});
+
+test('tracker: sits with the quick links, expands to jump to a station or skip the walk', async ({ page }) => {
+  test.setTimeout(120_000);
+  await boot(page, '/#/gym/meta');
+  await idle(page);
+  const counter = page.locator('#station-counter');
+  await expect(counter).toHaveText('Meta Gym · 0/3 stations');
+  // Under the résumé and social buttons, on the right.
+  const links = (await page.locator('.hud-resume').boundingBox())!;
+  const box = (await counter.boundingBox())!;
+  expect(box.y).toBeGreaterThan(links.y + links.height - 1);
+  expect(box.x + box.width).toBeGreaterThan((page.viewportSize()!.width * 2) / 3);
+
+  await expect(page.locator('.tracker-panel')).toBeHidden();
+  await counter.click();
+  await expect(page.locator('.tracker-item')).toHaveText([/Feedback Kiosk/, /Feature Wall/, /Voice of the Customer/]);
+  await page.locator('.tracker-item', { hasText: 'Feature Wall' }).click();
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/highlighted-features');
+  // A jump shows only that station: no walkthrough footer.
+  await expect(page.locator('.card-footer-note')).toHaveCount(0);
+  await page.locator('.card-close').click();
+  await expect(page.locator('.card')).toBeHidden();
+  await idle(page);
+  await expect(counter).toHaveText('Meta Gym · 1/3 stations');
+
+  // Skip the walk, then bail out with X: the tour stops and no badge is given.
+  await counter.click();
+  await page.locator('.tracker-skip').click();
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'meta/external-feedback');
+  await expect(page.locator('.card-footer-note')).toHaveText('Stop 1 of 3');
+  await page.locator('.card-close').click();
+  await expect(page.locator('.card')).toBeHidden();
+  await idle(page);
+  expect(await page.evaluate(() => window.__mypark!.badges)).toEqual([]);
+});
+
+test('tracker shows the Weightroom stops only while the visitor is in the Weightroom', async ({ page }) => {
+  await boot(page);
+  await expect(page.locator('#station-counter')).toBeHidden();
+  await goTo(page, 37.5, 30);
+  await expect(page.locator('#station-counter')).toHaveText('The Weightroom · 0/5 stations');
+  await goTo(page, 33.5, 52.5);
+  await expect(page.locator('#station-counter')).toBeHidden();
+});
+
+test('clicking or tapping the station itself, or Calvin, walks over and uses it', async ({ page, isMobile }) => {
+  test.setTimeout(120_000);
+  await boot(page, '/#/gym/betmgm');
+  await idle(page);
+  // The Rewards Store counter (the object, not its floor ring).
+  const counter = await page.evaluate(() => window.__mypark!.project(1.6, 6.5));
+  if (isMobile) await page.touchscreen.tap(counter.x, counter.y);
+  else await page.mouse.click(counter.x, counter.y);
+  await expect(page.locator('.card')).toHaveAttribute('data-card', 'betmgm/rewards-store', { timeout: 30_000 });
+  await expect(page.locator('.card')).toBeVisible();
+  await page.locator('.card-close').click();
+  await expect(page.locator('.card')).toBeHidden();
+  await idle(page);
+
+  // Calvin himself. Stand mid-room first so he's on screen and clear of the HUD.
+  await goTo(page, 8.5, 6.5);
+  await page.waitForTimeout(400);
+  const calvin = await page.evaluate(() => {
+    const t = window.__mypark!.targets.find((x) => x.id === 'calvin-betmgm')!;
+    return window.__mypark!.project(t.x, t.z);
+  });
+  if (isMobile) await page.touchscreen.tap(calvin.x, calvin.y - 20);
+  else await page.mouse.click(calvin.x, calvin.y - 20);
+  await expect(page.locator('.dialogue')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.dialogue-speaker')).toHaveText('Calvin');
+});
+
+test('the prompt itself can be tapped', async ({ page }) => {
+  await boot(page);
+  await standAt(page, 'plaza/signpost', 'Signpost');
+  await page.locator('.prompt').click();
+  await expect(page.locator('.dialogue-speaker')).toHaveText('Signpost');
+});

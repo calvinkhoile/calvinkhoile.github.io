@@ -13,6 +13,7 @@ export class BadgeUi {
 
   constructor(
     root: HTMLElement,
+    caseHost: HTMLElement,
     private readonly opts: { reducedMotion: boolean; onReset(): void; onToggle(open: boolean): void },
   ) {
     this.caseBtn = document.createElement('button');
@@ -33,7 +34,8 @@ export class BadgeUi {
     this.ceremonyEl.hidden = true;
     this.ceremonyEl.setAttribute('role', 'dialog');
     this.ceremonyEl.setAttribute('aria-modal', 'true');
-    root.append(this.caseBtn, this.panel, this.ceremonyEl);
+    caseHost.appendChild(this.caseBtn);
+    root.append(this.panel, this.ceremonyEl);
 
     this.caseBtn.addEventListener('click', () => (this.panel.hidden ? this.openPanel() : this.closePanel()));
     this.panel.addEventListener('click', (e) => {

@@ -12,10 +12,30 @@ export interface Target {
   radius: number;
   /** Height the prompt floats at. */
   height: number;
+  /** The physical thing (prop, door, body) a click or tap should hit, in world space. */
+  anchor: { x: number; y: number; z: number };
   source?: Interactable;
   station?: Station;
   door?: Door;
   npc?: Npc;
+}
+
+/** Center of the solid prop nearest to a station's stand point: that's the object the station is "about". */
+function propAnchor(map: MapDef, x: number, z: number): { x: number; y: number; z: number } {
+  let best = { x, y: 0.8, z };
+  let bestD = 3.2;
+  for (const p of map.props) {
+    if (!p.blocks || ['wall', 'curb', 'hedge', 'fence', 'tree', 'lamp'].includes(p.model)) continue;
+    // Distance from the stand point to the prop's footprint, not its center, so long counters still match.
+    const dx = Math.max(p.x - x, 0, x - (p.x + p.w));
+    const dz = Math.max(p.z - z, 0, z - (p.z + p.d));
+    const d = Math.hypot(dx, dz);
+    if (d < bestD) {
+      bestD = d;
+      best = { x: p.x + p.w / 2, y: Math.min(p.h, 2.4) / 2, z: p.z + p.d / 2 };
+    }
+  }
+  return best;
 }
 
 const RING_TODO = 0x38bdf8;
@@ -58,15 +78,15 @@ export class Interactions {
     for (const i of map.interactables) {
       const station = i.station ? stationById(i.station) : undefined;
       if (i.kind === 'station' && !station) throw new Error(`map ${map.id}: unknown station "${i.station}"`);
-      const target: Target = { id: i.id, kind: i.kind, label: station?.label ?? i.label, x: i.x, z: i.z, radius: i.radius, height: 2.2, source: i, station };
+      const target: Target = { id: i.id, kind: i.kind, label: station?.label ?? i.label, x: i.x, z: i.z, radius: i.radius, height: 2.2, anchor: propAnchor(map, i.x, i.z), source: i, station };
       this.targets.push(target);
       if (i.kind === 'station') this.addRing(target);
     }
     for (const d of map.doors) {
-      this.targets.push({ id: d.id, kind: 'door', label: doorLabel(d), x: d.x + 0.5, z: d.z + 0.5, radius: 1.15, height: 2.7, door: d });
+      this.targets.push({ id: d.id, kind: 'door', label: doorLabel(d), x: d.x + 0.5, z: d.z + 0.5, radius: 1.15, height: 2.7, anchor: { x: d.x + 0.5, y: 1.2, z: d.z + 0.5 }, door: d });
     }
     for (const n of npcs) {
-      this.targets.push({ id: n.spawn.id, kind: 'npc', label: `Talk to ${n.spawn.label}`, x: n.x, z: n.z, radius: 1.9, height: 2.3, npc: n });
+      this.targets.push({ id: n.spawn.id, kind: 'npc', label: `Talk to ${n.spawn.label}`, x: n.x, z: n.z, radius: 1.9, height: 2.3, anchor: { x: n.x, y: 1, z: n.z }, npc: n });
     }
 
     // Bouncing arrow that points the visitor at a station ("Next station", "Find it in the gym").
@@ -125,6 +145,29 @@ export class Interactions {
       if (score < bestScore) {
         bestScore = score;
         best = t;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Target under a click or tap, in screen space. A hit on the floor ring or on the object itself both count,
+   * so visitors can click the counter, the whiteboard, or Calvin directly.
+   */
+  pick(sx: number, sy: number, project: (x: number, y: number, z: number) => { x: number; y: number }, reach: number): Target | null {
+    let best: Target | null = null;
+    let bestD = reach;
+    for (const t of this.targets) {
+      if (t.npc?.walking) continue;
+      const points = t.npc
+        ? [project(t.npc.x, 1.0, t.npc.z), project(t.npc.x, 0.2, t.npc.z), project(t.npc.x, 1.7, t.npc.z)]
+        : [project(t.x, 0, t.z), project(t.anchor.x, t.anchor.y, t.anchor.z), project(t.anchor.x, t.anchor.y * 2, t.anchor.z)];
+      for (const p of points) {
+        const d = Math.hypot(p.x - sx, p.y - sy);
+        if (d < bestD) {
+          bestD = d;
+          best = t;
+        }
       }
     }
     return best;

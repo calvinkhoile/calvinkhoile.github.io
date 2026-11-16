@@ -19,6 +19,7 @@ import { Lightbox } from './ui/lightbox';
 import { Prompt } from './ui/prompts';
 import { Screens } from './ui/screens';
 import { SelectStage } from './ui/select-stage';
+import { Tracker } from './ui/tracker';
 import { buildArt, createSun, type ArtScene } from './world/art';
 import { Character } from './world/character';
 import { buildGrid } from './world/collision';
@@ -129,7 +130,7 @@ async function boot(): Promise<void> {
   const cards = new CardOverlay(ui, lightbox);
   const talk = new DialogueBox(ui, reducedMotion);
   const prompt = new Prompt(ui);
-  const counter = document.getElementById('station-counter') as HTMLElement;
+  const row2 = document.getElementById('hud-row2') as HTMLElement;
   const fade = document.getElementById('fade') as HTMLElement;
   const toastEl = document.getElementById('toast') as HTMLElement;
   let toastTimer = 0;
@@ -139,7 +140,7 @@ async function boot(): Promise<void> {
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => (toastEl.hidden = true), 5000);
   };
-  const badgeUi = new BadgeUi(ui, {
+  const badgeUi = new BadgeUi(ui, row2, {
     reducedMotion,
     onReset: () => {
       clearSave();
@@ -149,6 +150,18 @@ async function boot(): Promise<void> {
     onToggle: (open) => (open ? begin() : end()),
   });
   badgeUi.refresh(owned);
+  const tracker = new Tracker(row2, {
+    // Jump: put the visitor on the station and open it, same as walking up and pressing E.
+    onJump: (id) => {
+      const target = current.interactions.byId(id);
+      if (!target || busyCount > 0) return;
+      window.__mypark!.teleport(target.x, target.z);
+      interact(target);
+    },
+    onSkipAll: () => {
+      if (busyCount === 0) void walkthrough(trackedScene());
+    },
+  });
 
   // ----- camera -----
   // Tuning knobs for comparing camera feel on a real device:
@@ -200,15 +213,17 @@ async function boot(): Promise<void> {
     return sceneData;
   }
 
+  // The Weightroom's footprint in the exterior map: the tracker shows its stops while the visitor is inside it.
+  const inWeightroom = () => current.id === 'exterior' && player.x > 27 && player.x < 47 && player.z > 22 && player.z < 39;
+  /** Which set of stations the tracker is about right now, or null when there's nothing to track here. */
+  const trackedScene = (): SceneId => current.id;
   function updateCounter(): void {
     const counted = countedStations(current.id);
-    if (!current.def.interior || counted.length === 0) {
-      counter.hidden = true;
-      return;
-    }
-    const done = counted.filter((s) => visited.has(s.id)).length;
-    counter.textContent = `${SCENE_NAMES[current.id]} · ${done}/${counted.length} stations${done === counted.length ? ' ✓' : ''}`;
-    counter.hidden = false;
+    const show = counted.length > 0 && (current.def.interior || inWeightroom());
+    tracker.set(
+      show ? (current.def.interior ? SCENE_NAMES[current.id] : 'The Weightroom') : null,
+      counted.map((st) => ({ id: st.id, label: st.label, done: visited.has(st.id) })),
+    );
   }
 
   function showScene(next: LoadedScene, x: number, z: number, facing: number): void {
@@ -271,6 +286,11 @@ async function boot(): Promise<void> {
 
   /** Target the visitor clicked or tapped; they interact with it on arrival. */
   let pending: Target | null = null;
+  /** Target the prompt is currently showing for. Clicking or tapping the prompt uses it. */
+  let nearTarget: Target | null = null;
+  prompt.onActivate = () => {
+    if (nearTarget && busyCount === 0 && performance.now() > ignoreInteractUntil) interact(nearTarget);
+  };
   /** Doors only fire after the visitor has stepped off them once (stops enter/exit loops). */
   let doorArmed = false;
   /** Number of things currently holding control (dialogue, card, scripted walk, scene change). */
@@ -319,11 +339,14 @@ async function boot(): Promise<void> {
     if (target) current.interactions.setGuide(target);
   };
 
-  async function openCard(model: Parameters<CardOverlay['open']>[0]): Promise<void> {
+  /** Open a card and wait for it to close. Resolves with the footer action that closed it, or null (X, Esc, swipe). */
+  async function openCard(model: Parameters<CardOverlay['open']>[0]): Promise<string | null> {
+    let picked: string | null = null;
     begin();
     const closed = cards.open(model, {
       onLink: guideTo,
       onFooter: (action) => {
+        picked = action;
         if (action.startsWith('guide:')) guideTo(action.slice(6));
       },
     });
@@ -331,12 +354,39 @@ async function boot(): Promise<void> {
     await closed;
     syncHash();
     end();
+    return picked;
+  }
+
+  /**
+   * The quick way through a place: every station's card, one after another, inside the pop-up.
+   * Each stop counts as visited, and finishing earns the badge. Closing a card early stops the tour.
+   */
+  async function walkthrough(sceneId: SceneId): Promise<void> {
+    const list = countedStations(sceneId);
+    for (let i = 0; i < list.length; i++) {
+      const station = list[i];
+      visited.add(station.id);
+      persist();
+      current.interactions.refresh(visited);
+      updateCounter();
+      const target = current.interactions.byId(station.id);
+      if (target) window.__mypark!.teleport(target.x, target.z);
+      const model = stationCard(station, `${i + 1}/${list.length} stations`);
+      if (!model) continue;
+      const last = i === list.length - 1;
+      model.footerNote = `Stop ${i + 1} of ${list.length}`;
+      model.footer = { label: last ? 'Finish' : `Next: ${list[i + 1].label} →`, action: 'step' };
+      if ((await openCard(model)) !== 'step') return;
+    }
+    const badge = sceneId === 'exterior' ? badgeById('explorer') : badgeForScene(sceneId);
+    if (badge) await award(badge.id);
   }
 
   async function runAction(action: string): Promise<void> {
-    if (action === 'about') return openCard(aboutCard());
+    if (action === 'about') return void (await openCard(aboutCard()));
     if (action.startsWith('badge:')) return award(action.slice(6));
-    if (action.startsWith('card:')) return openCard(careerCard(action.slice(5), { chip: chipFor(current.id) }));
+    if (action === 'walkthrough') return walkthrough(current.id);
+    if (action.startsWith('card:')) return void (await openCard(careerCard(action.slice(5), { chip: chipFor(current.id) })));
     if (action === 'tour') return say('plaza.tourStart');
     const calvin = exteriorScene.npcs[0];
     const grid = exteriorScene.grid;
@@ -510,7 +560,8 @@ async function boot(): Promise<void> {
   const moveTo = (clientX: number, clientY: number) => {
     const point = groundAt(clientX, clientY);
     if (!point) return;
-    const target = current.interactions.at(point.x, point.z);
+    // Clicking or tapping the thing itself (the counter, the board, Calvin) counts, not just its floor ring.
+    const target = current.interactions.pick(clientX, clientY, toScreen, document.body.classList.contains('is-touch') ? 50 : 42);
     const goal = target ? { x: target.npc ? target.npc.x : target.x, z: target.npc ? target.npc.z : target.z } : { x: point.x, z: point.z };
     pending = target;
     const path = current.grid.findPath({ x: player.x, z: player.z }, goal, PLAYER_RADIUS);
@@ -524,8 +575,7 @@ async function boot(): Promise<void> {
 
   canvas.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse' || state !== 'play' || busyCount > 0) return;
-    const point = groundAt(e.clientX, e.clientY);
-    canvas.style.cursor = point && current.interactions.at(point.x, point.z) ? 'pointer' : '';
+    canvas.style.cursor = current.interactions.pick(e.clientX, e.clientY, toScreen, 42) ? 'pointer' : '';
   });
 
   // ----- quality: step down a tier when the device can't hold ~30fps -----
@@ -542,11 +592,11 @@ async function boot(): Promise<void> {
   });
 
   const projected = new THREE.Vector3();
-  const toScreen = (x: number, y: number, z: number) => {
+  function toScreen(x: number, y: number, z: number): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
     projected.set(x, y, z).project(follow.camera);
     return { x: rect.left + ((projected.x + 1) / 2) * rect.width, y: rect.top + ((1 - projected.y) / 2) * rect.height };
-  };
+  }
 
   let currentLook = look.id;
   window.__mypark = {
@@ -643,6 +693,7 @@ async function boot(): Promise<void> {
 
     const polled = input.poll();
     let canAct = false;
+    if (current.id === 'exterior') updateCounter(); // cheap: only re-renders when the visitor enters or leaves the Weightroom
     const playing = state === 'play' && busyCount === 0;
     // Scripted walks still move the player, but ignore the controls.
     const active = playing ? polled : { ...idleInput, desktop: polled.desktop };
@@ -674,6 +725,7 @@ async function boot(): Promise<void> {
       } else if (pending && near === pending && canInteract) {
         interact(pending);
       } else if (near) {
+        nearTarget = near;
         const at = toScreen(near.npc ? near.npc.x : near.x, near.height, near.npc ? near.npc.z : near.z);
         prompt.set(near.label, at.x, at.y);
         if (active.interact && canInteract) interact(near);

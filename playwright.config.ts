@@ -3,7 +3,8 @@ import { defineConfig } from '@playwright/test';
 // Smoke tests run against the production build (vite preview).
 export default defineConfig({
   testDir: 'tests/e2e',
-  timeout: 60_000, // CI renders WebGL in software, so the game loop runs slowly there
+  timeout: process.env.CI ? 120_000 : 60_000, // CI renders WebGL in software, so the game loop runs slowly there
+  expect: { timeout: process.env.CI ? 15_000 : 8_000 },
   fullyParallel: true,
   // Each page renders WebGL in software. More than three at once starves them all.
   workers: process.env.CI ? 2 : 3,

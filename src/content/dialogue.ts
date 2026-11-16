@@ -31,6 +31,12 @@ const plazaChoices: DialogueChoice[] = [
   { label: 'Who are you?', action: 'about' },
 ];
 
+/** First talk with a gym leader: take the quick tour inside the pop-up, or explore on foot with the overview in hand. */
+const leaderChoices = (gym: string): DialogueChoice[] => [
+  { label: 'Walk me through it', action: 'walkthrough' },
+  { label: "I'll look around", action: `card:${gym}-overview` },
+];
+
 export const dialogue: Record<string, DialogueNode> = {
   'plaza.intro': {
     lines: [
@@ -68,7 +74,7 @@ export const dialogue: Record<string, DialogueNode> = {
       { speaker: CALVIN, text: 'Welcome to UCLA. Dream school, and where all of this started.' },
       { speaker: CALVIN, text: 'Three stops in here: the graduation stage, the club fair, and the internship board.' },
     ],
-    action: 'card:ucla-overview',
+    choices: leaderChoices('ucla'),
   },
   'ucla.leaderDone': {
     lines: [{ speaker: CALVIN, text: "That's all of UCLA. Go Bruins. This one's yours." }],
@@ -84,7 +90,7 @@ export const dialogue: Record<string, DialogueNode> = {
       { speaker: CALVIN, text: 'Deloitte. First real job, and where I figured out I wanted to build products.' },
       { speaker: CALVIN, text: 'Three whiteboards, three projects. The sushi bar has a story too.' },
     ],
-    action: 'card:deloitte-overview',
+    choices: leaderChoices('deloitte'),
   },
   'deloitte.leaderDone': {
     lines: [{ speaker: CALVIN, text: 'Three for three. You read whiteboards faster than most partners.' }],
@@ -100,7 +106,7 @@ export const dialogue: Record<string, DialogueNode> = {
       { speaker: CALVIN, text: 'Meta. Stories and Messaging, shipping to billions of people.' },
       { speaker: CALVIN, text: 'Check the kiosk, the feature wall, and the mailbox. The window is worth a look too.' },
     ],
-    action: 'card:meta-overview',
+    choices: leaderChoices('meta'),
   },
   'meta.leaderDone': {
     lines: [{ speaker: CALVIN, text: 'All three. Ship it.' }],
@@ -116,7 +122,7 @@ export const dialogue: Record<string, DialogueNode> = {
       { speaker: CALVIN, text: 'Welcome to BetMGM. This is where I work now, on the rewards program.' },
       { speaker: CALVIN, text: 'Four stations in here. Hit them all, then come back and see me.' },
     ],
-    action: 'card:betmgm-overview',
+    choices: leaderChoices('betmgm'),
   },
   'betmgm.leaderDone': {
     lines: [{ speaker: CALVIN, text: "That's all four. You know this place better than most new hires." }],
