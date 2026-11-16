@@ -21,6 +21,8 @@ export interface ArtScene {
   update(time: number): void;
   /** Light up the floating badge over a door once its gym's badge is earned. Keyed by the scene the door leads to. */
   setDoorBadge?(to: string, earned: boolean): void;
+  /** Stadium lights at the court: on when the visitor is close. */
+  setCourtLights?(on: boolean): void;
 }
 
 const PALETTE = {
@@ -513,6 +515,18 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
   const doorBadges = new Map<string, { mesh: THREE.Mesh; color: number }>();
   for (const door of map.doors) animated.push(buildDoor(shared, door, doorBadges));
   if (map.guides) animated.push(buildGuideArrows(root, map.guides));
+  // Stadium lights on the four corners of the court. They stay dark until the visitor walks up.
+  const court = map.zones.find((z) => z.kind === 'court');
+  const lampMat = new THREE.MeshBasicMaterial({ color: 0x4b5563 });
+  if (court) {
+    for (const [lx, lz] of [[court.x - 0.5, court.z - 0.5], [court.x + court.w + 0.5, court.z - 0.5], [court.x - 0.5, court.z + court.d + 0.5], [court.x + court.w + 0.5, court.z + court.d + 0.5]]) {
+      shared.box(lx - 0.08, 0, lz - 0.08, 0.16, 6.2, 0.16, shared.mat(PALETTE.steel));
+      const head = shared.add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.3), lampMat));
+      head.position.set(lx, 6.3, lz);
+      head.lookAt(court.x + court.w / 2, 0, court.z + court.d / 2);
+      head.userData.dynamic = true;
+    }
+  }
   buildSigns(shared, map);
   if (q.ambientDetail) scatterDecor(map, place, shared);
   shared.merge();
@@ -530,6 +544,9 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
     root,
     occluders,
     update: (time) => animated.forEach((fn) => fn(time)),
+    setCourtLights(on) {
+      lampMat.color.setHex(on ? 0xfff6d5 : 0x4b5563);
+    },
     setDoorBadge(to, earned) {
       const badge = doorBadges.get(to);
       if (!badge) return;

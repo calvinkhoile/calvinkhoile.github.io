@@ -24,6 +24,8 @@ Gym exteriors, courts, fences, signs, and the fountain are built in code (`src/w
 | `public/audio/select.ogg`, `advance.ogg`, `open.ogg`, `close.ogg`, `toggle.ogg`, `badge.ogg`, `right.ogg`, `wrong.ogg`, `door.ogg`, `swish.ogg` | Interface Sounds (kenney.nl/assets/interface-sounds) | Kenney | CC0 1.0 |
 | `public/audio/step-*.ogg`, `bounce.ogg`, `rim.ogg` | Impact Sounds (kenney.nl/assets/impact-sounds) | Kenney | CC0 1.0 |
 
+Each sound also ships as an AAC copy (`.m4a`) made from the same file. Music is generated in the browser and uses no third-party audio.
+
 Code libraries that ship in the bundle: three.js (MIT), howler.js (MIT).
 
 ## Logos (signage only)

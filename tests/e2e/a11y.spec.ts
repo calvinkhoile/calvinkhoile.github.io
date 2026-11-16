@@ -34,8 +34,12 @@ test('HUD, quick links, tracker, badge case, minimap', async ({ page }) => {
   await scan(page, 'tracker open');
   await page.keyboard.press('Escape');
   await page.locator('#badge-case').click();
-  await expect(page.locator('.badge-panel')).toBeVisible();
+  await expect(page.locator('.badge-panel:not(.settings-panel)').first()).toBeVisible();
   await scan(page, 'badge case');
+  await page.keyboard.press('Escape');
+  await page.locator('#hud-settings').click();
+  await expect(page.locator('.settings-panel')).toBeVisible();
+  await scan(page, 'settings');
 });
 
 test('dialogue with choices', async ({ page }) => {

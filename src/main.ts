@@ -5,6 +5,7 @@ import { dialogue as dialogueNodes, toasts, type DialogueNode } from './content/
 import { profile } from './content/profile';
 import { countedStations, stationById, type SceneId } from './content/stations';
 import { audio } from './engine/audio';
+import { music, type Zone } from './engine/music';
 import { FollowCamera } from './engine/camera';
 import { CourtScene } from './finale/court-scene';
 import { Finale } from './finale/game';
@@ -13,13 +14,15 @@ import { DebugOverlay } from './engine/debug';
 import { TILE_BLOCKED, type Grid } from './engine/grid';
 import { Input, type InputState } from './engine/input';
 import { loadAll, loadModel } from './engine/loader';
-import { FrameWatchdog, pickTier, settingsFor, type QualityTier } from './engine/quality';
+import { FrameWatchdog, pickTier, saveTier, settingsFor, type QualityTier } from './engine/quality';
 import { createRenderer, hasWebGL2, isCoarsePointer } from './engine/renderer';
 import { BadgeUi } from './ui/badges';
 import { CardOverlay } from './ui/card';
 import { aboutCard, careerCard, stationCard } from './ui/card-models';
 import { DialogueBox } from './ui/dialogue';
+import gearIcon from './ui/icons/gear-six.svg?raw';
 import mapIcon from './ui/icons/map-trifold.svg?raw';
+import musicIcon from './ui/icons/music-notes.svg?raw';
 import speakerOff from './ui/icons/speaker-slash.svg?raw';
 import speakerOn from './ui/icons/speaker-high.svg?raw';
 import { Lightbox } from './ui/lightbox';
@@ -27,6 +30,7 @@ import { Minimap } from './ui/minimap';
 import { Prompt } from './ui/prompts';
 import { Screens } from './ui/screens';
 import { SelectStage } from './ui/select-stage';
+import { Settings } from './ui/settings';
 import { Tracker } from './ui/tracker';
 import { buildArt, createSun, type ArtScene } from './world/art';
 import { Character } from './world/character';
@@ -251,13 +255,23 @@ async function boot(): Promise<void> {
   // Sound effects start off on every visit and never autoplay. One click turns them on.
   const soundBtn = iconButton('hud-sound', 'Sound effects', speakerOff);
   soundBtn.setAttribute('aria-pressed', 'false');
-  soundBtn.addEventListener('click', () => {
-    const on = !audio.enabled;
+  const setSfx = (on: boolean) => {
     void audio.setEnabled(on);
     soundBtn.setAttribute('aria-pressed', String(on));
     soundBtn.innerHTML = (on ? speakerOn : speakerOff).replace('<svg ', '<svg class="icon" aria-hidden="true" focusable="false" ');
     toast(on ? 'Sound effects on.' : 'Sound effects off.');
-  });
+  };
+  soundBtn.addEventListener('click', () => setSfx(!audio.enabled));
+  // Music is a separate switch. Also off until asked for.
+  const musicBtn = iconButton('hud-music', 'Music', musicIcon);
+  musicBtn.setAttribute('aria-pressed', 'false');
+  const setMusic = (on: boolean) => {
+    music.setEnabled(on);
+    musicBtn.setAttribute('aria-pressed', String(on));
+    toast(on ? 'Music on.' : 'Music off.');
+  };
+  musicBtn.addEventListener('click', () => setMusic(!music.enabled));
+  document.addEventListener('visibilitychange', () => music.setHidden(document.hidden));
   const mapBtn = iconButton('hud-map', 'Map', mapIcon);
   mapBtn.setAttribute('aria-pressed', 'false');
   const toggleMap = () => {
@@ -268,6 +282,38 @@ async function boot(): Promise<void> {
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyM' && state === 'play' && busyCount === 0 && !e.repeat) toggleMap();
   });
+
+  // ----- settings menu -----
+  let volume = 60;
+  let qualityChoice: QualityTier | 'auto' = picked.forced ? picked.tier : 'auto';
+  music.setVolume(volume / 100);
+  const settings = new Settings(
+    ui,
+    () => ({ sfx: audio.enabled, music: music.enabled, volume, quality: qualityChoice }),
+    {
+      sfx: setSfx,
+      music: setMusic,
+      volume: (v) => {
+        volume = v;
+        music.setVolume(v / 100);
+        void audio.setVolume(v / 100);
+      },
+      quality: (q) => {
+        qualityChoice = q;
+        // A fixed choice sticks (and switches off the automatic step-down). Auto goes back to a device guess.
+        saveTier(q === 'auto' ? null : q);
+        autoQuality = q === 'auto';
+        applyTier(q === 'auto' ? pickTier(new URLSearchParams()).tier : q);
+      },
+      reset: () => {
+        clearSave();
+        location.hash = '';
+        location.reload();
+      },
+      toggle: (open) => (open ? begin() : end()),
+    },
+  );
+  iconButton('hud-settings', 'Settings', gearIcon).addEventListener('click', () => settings.open());
 
   // The Weightroom's footprint in the exterior map: the tracker shows its stops while the visitor is inside it.
   const inWeightroom = () => current.id === 'exterior' && player.x > 27 && player.x < 47 && player.z > 22 && player.z < 39;
@@ -301,6 +347,7 @@ async function boot(): Promise<void> {
     next.interactions.refresh(visited);
     updateCounter();
     syncHash();
+    music.setZone(next.id === 'exterior' ? 'park' : (next.id as Zone));
   }
 
   /** Keep the URL hash on the current place (and open station card), without adding history entries. */
@@ -637,6 +684,7 @@ async function boot(): Promise<void> {
     let again = true;
     // Game mode: the camera moves in on the court.
     follow.setZoomOut(userZoom * GAME_ZOOM);
+    music.setZone('finale');
     while (again) {
       court.setup();
       follow.snapTo(player.x, player.z - 1.5);
@@ -652,6 +700,7 @@ async function boot(): Promise<void> {
       again = out.again;
     }
     court.teardown();
+    music.setZone('park');
     follow.setZoomOut(userZoom);
     follow.snapTo(player.x, player.z);
     document.body.classList.remove('in-finale');
@@ -835,7 +884,9 @@ async function boot(): Promise<void> {
 
   canvas.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse' || state !== 'play' || busyCount > 0) return;
-    canvas.style.cursor = current.interactions.pick(e.clientX, e.clientY, toScreen, 42) ? 'pointer' : '';
+    const over = current.interactions.pick(e.clientX, e.clientY, toScreen, 42);
+    canvas.style.cursor = over ? 'pointer' : '';
+    current.interactions.setHover(over);
   });
 
   // ----- quality: step down a tier when the device can't hold ~30fps -----
@@ -846,7 +897,7 @@ async function boot(): Promise<void> {
     scene.fog = !current.def.interior && quality.fog ? fog : null;
   };
   const watchdog = new FrameWatchdog((fps) => {
-    if (picked.forced || state !== 'play' || busyCount > 0) return;
+    if (!autoQuality || state !== 'play' || busyCount > 0) return;
     if (quality.tier === 'high') applyTier('medium');
     else if (quality.tier === 'medium') applyTier('low');
     else if (fps < 20 && !slowWarned && !fallbackOff) {
@@ -859,6 +910,7 @@ async function boot(): Promise<void> {
     }
   });
   let slowWarned = false;
+  let autoQuality = !picked.forced;
   // The browser tests render in software, which is slow by nature. They opt out of the slow-device screen.
   let fallbackOff = false;
   try {
@@ -937,6 +989,7 @@ async function boot(): Promise<void> {
   const idleInput: InputState = { moveX: 0, moveY: 0, sprint: false, desktop: true, interact: false, tap: null };
   let stillFor = 0;
   let stride = 0;
+  let courtLit = false;
   /** Grass unless the visitor is standing on a path, the plaza, the court, or the Weightroom floor. */
   const surfaceAt = (x: number, z: number) =>
     exteriorScene.def.zones.some((zn) => zn.kind !== 'water' && x >= zn.x && x < zn.x + zn.w && z >= zn.z && z < zn.z + zn.d) ? 'step-hard' : 'step-grass';
@@ -1011,7 +1064,12 @@ async function boot(): Promise<void> {
         audio.play(current.def.interior ? 'step-soft' : surfaceAt(player.x, player.z));
       }
     }
-    if (current.id === 'exterior') minimap.update(player.x, player.z, player.facing, time);
+    if (current.id === 'exterior') {
+      minimap.update(player.x, player.z, player.facing, time);
+      // Stadium lights come on as the visitor nears the court.
+      const nearCourt = player.x > 25 && player.z < 22;
+      if (nearCourt !== courtLit) exteriorScene.art.setCourtLights?.((courtLit = nearCourt));
+    }
     else if (minimap.isOpen) mapBtn.setAttribute('aria-pressed', String(minimap.toggle(false)));
 
     follow.update(dt, player.x, player.z, player.vx, player.vz, WALK_SPEED);

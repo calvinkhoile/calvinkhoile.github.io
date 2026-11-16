@@ -42,6 +42,7 @@ const RING_TODO = 0x38bdf8;
 const RING_DONE = 0x22c55e;
 /** Things to do rather than read (dumbbells, loose basketballs) get an orange ring. */
 const RING_PLAY = 0xfb923c;
+const WHITE = new THREE.Color(0xffffff);
 
 function checkSprite(): THREE.Sprite {
   const canvas = document.createElement('canvas');
@@ -135,12 +136,16 @@ export class Interactions {
 
   /** Recolor rings from the visited set. */
   refresh(visited: ReadonlySet<string>): void {
+    this.lastVisited = visited;
     const color = new THREE.Color();
     for (const t of this.targets) {
       const r = this.rings.get(t.id);
-      if (!r || !t.station || !this.ringMesh) continue;
-      const done = visited.has(t.station.id);
-      this.ringMesh.setColorAt(r.index, color.setHex(done ? RING_DONE : RING_TODO));
+      if (!r || !this.ringMesh) continue;
+      const done = !!t.station && visited.has(t.station.id);
+      color.setHex(done ? RING_DONE : r.color);
+      // Hovered: pushed most of the way to white, so it reads as "this one".
+      if (t.id === this.hovered) color.lerp(WHITE, 0.7);
+      this.ringMesh.setColorAt(r.index, color);
       r.check.visible = done;
     }
     if (this.ringMesh?.instanceColor) this.ringMesh.instanceColor.needsUpdate = true;
@@ -210,6 +215,17 @@ export class Interactions {
       }
     }
     return best;
+  }
+
+  private hovered: string | null = null;
+  private lastVisited: ReadonlySet<string> = new Set();
+
+  /** Desktop: brighten the ring of whatever the pointer is over. */
+  setHover(target: Target | null): void {
+    const id = target && this.rings.has(target.id) ? target.id : null;
+    if (id === this.hovered) return;
+    this.hovered = id;
+    this.refresh(this.lastVisited);
   }
 
   setGuide(target: Target | null): void {
