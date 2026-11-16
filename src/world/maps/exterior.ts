@@ -90,7 +90,12 @@ const props: Prop[] = [
   { model: 'fence', x: 30, z: 17, w: 7, d: 1, h: 2, color: C.fence, blocks: true },
   { model: 'fence', x: 40, z: 17, w: 6, d: 1, h: 2, color: C.fence, blocks: true },
   { model: 'bleachers', x: 32, z: 3, w: 12, d: 1, h: 1.6, color: C.bleacher, blocks: true, label: "CALVIN'S COURT" },
-  { model: 'hoop', x: 45, z: 9, w: 1, d: 2, h: 3.6, color: 0xe5e7eb, rotation: -Math.PI / 2, blocks: true },
+  // The hoop stands at the north end, in front of the bleachers, facing the camera.
+  { model: 'hoop', x: 37, z: 4, w: 2, d: 1, h: 3.6, color: 0xe5e7eb, rotation: 0, blocks: true },
+  // Loose balls for a shootaround (decor: you can walk through them).
+  { model: 'basketball', x: 34, z: 9, w: 1, d: 1, h: 0.34, color: 0xe8752a, blocks: false },
+  { model: 'basketball', x: 42, z: 12, w: 1, d: 1, h: 0.34, color: 0xe8752a, blocks: false },
+  { model: 'basketball', x: 43, z: 6, w: 1, d: 1, h: 0.34, color: 0xe8752a, blocks: false },
 
   // A model jet on a stand, east of the court (the JetBlue challenge).
   { model: 'airplane', x: 47, z: 6, w: 3, d: 5, h: 2.6, color: 0xf8fafc, blocks: true },
@@ -126,6 +131,9 @@ const interactables: Interactable[] = [
   { id: 'weightroom/running', kind: 'station', label: 'Sprint Lane', x: 37.5, z: 36, radius: 1.2, station: 'weightroom/running' },
   // Just for fun: pick up the dumbbells and press them overhead.
   { id: 'weightroom/dumbbells', kind: 'lift', label: 'Dumbbells', x: 40, z: 32.8, radius: 1.1 },
+
+  // Shootaround: pick up a loose ball and put up some shots.
+  { id: 'court/shootaround', kind: 'shoot', label: 'Basketball', x: 34.5, z: 9.6, radius: 1.2 },
 
   { id: 'court/jetblue', kind: 'station', label: 'Mini Jet', x: 48.5, z: 12.2, radius: 1.3, station: 'court/jetblue' },
 ];
@@ -165,7 +173,7 @@ export const exterior: MapDef = {
   npcs: [
     { id: 'calvin-plaza', label: 'Calvin', x: 30, z: 51, role: 'plaza', dialogue: 'plaza', faceX: 33.5, faceZ: 52.5 },
     // Top of the key at his court, in the #13 jersey. The 1-on-1 itself arrives in M6.
-    { id: 'calvin-court', label: 'Calvin', x: 38, z: 10, role: 'court', dialogue: 'court', faceX: 30, faceZ: 10.5 },
+    { id: 'calvin-court', label: 'Calvin', x: 38, z: 12, role: 'court', dialogue: 'court', faceX: 34, faceZ: 17 },
   ],
   spawn: { x: 33.5, z: 52.5 },
   cameraBounds: { minX: 4, maxX: W - 4, minZ: 4, maxZ: H - 4 },

@@ -5,6 +5,9 @@ import { dialogue as dialogueNodes, toasts, type DialogueNode } from './content/
 import { profile } from './content/profile';
 import { countedStations, stationById, type SceneId } from './content/stations';
 import { FollowCamera } from './engine/camera';
+import { CourtScene } from './finale/court-scene';
+import { Finale } from './finale/game';
+import { drawGame, fixedGame, rng } from './finale/questions';
 import { DebugOverlay } from './engine/debug';
 import { TILE_BLOCKED, type Grid } from './engine/grid';
 import { Input, type InputState } from './engine/input';
@@ -52,6 +55,8 @@ declare global {
       visited: string[];
       badges: string[];
       guide: string | null;
+      /** The finale question on screen, if a game is in progress. */
+      finale: { id: string; type: string; answer: string; options: string[]; matchups?: { a: string; b: string; answer: string }[] } | null;
       player: { x: number; z: number; speed: number; pathLength: number };
       targets: { id: string; kind: string; label: string; x: number; z: number }[];
       /** Screen position of a world point on the ground, in CSS pixels. */
@@ -82,6 +87,8 @@ interface LoadedScene {
 const SKY = 0xbfe3f5;
 const INTERIOR_BACKDROP = 0x05060a;
 const INTERIOR_ZOOM = 0.62;
+/** Camera distance during the 1-on-1 and the shootaround: closer than the park, not as close as a room. */
+const GAME_ZOOM = 0.72;
 const DOOR_FACING: Record<Door['facing'], [number, number]> = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
 
 const params = new URLSearchParams(location.search);
@@ -390,6 +397,7 @@ async function boot(): Promise<void> {
     if (action === 'about') return void (await openCard(aboutCard()));
     if (action.startsWith('badge:')) return award(action.slice(6));
     if (action === 'walkthrough') return walkthrough(current.id);
+    if (action === 'finale') return runFinale();
     if (action.startsWith('card:')) return void (await openCard(careerCard(action.slice(5), { chip: chipFor(current.id) })));
     if (action === 'tour') return say('plaza.tourStart');
     const calvin = exteriorScene.npcs[0];
@@ -457,7 +465,7 @@ async function boot(): Promise<void> {
 
   let introSeen = false;
   async function talkTo(npc: Npc): Promise<void> {
-    if (npc.spawn.role === 'court') return say('court.soon');
+    if (npc.spawn.role === 'court') return say('court.challenge');
     if (npc.spawn.role === 'plaza') {
       const key = introSeen ? 'plaza.again' : 'plaza.intro';
       introSeen = true;
@@ -515,7 +523,59 @@ async function boot(): Promise<void> {
       case 'lift':
         startLift(target);
         break;
+      case 'shoot':
+        startShootaround(target);
+        break;
     }
+  }
+
+  // ----- the 1-on-1 at Calvin's Court -----
+  const court = new CourtScene(exteriorScene.root, player, exteriorScene.npcs.find((n) => n.spawn.role === 'court')!, reducedMotion);
+  const finale = new Finale(ui, court, {
+    onWin: () => award('legend'),
+    onCopyEmail: () => emailBtn.click(),
+    onShare: (text) => {
+      const url = `${location.origin}/`;
+      // Phones get the native share sheet. Elsewhere the line is copied.
+      if (navigator.share && document.body.classList.contains('is-touch')) void navigator.share({ text, url }).catch(() => {});
+      else if (navigator.clipboard) void navigator.clipboard.writeText(`${text} ${url}`).then(() => toast('Copied. Paste it anywhere.'));
+    },
+  });
+  const LAST_GAME_KEY = 'mypark:finale-last';
+  async function runFinale(): Promise<void> {
+    begin();
+    document.body.classList.add('in-finale');
+    let previous: string[] = [];
+    try {
+      previous = JSON.parse(localStorage.getItem(LAST_GAME_KEY) ?? '[]') as string[];
+    } catch {
+      /* storage unavailable */
+    }
+    // `?set=a,b,c,d,e,f` plays a fixed game and `?seed=7` makes the draw repeatable (both for testing).
+    const fixed = params.get('set') ? fixedGame(params.get('set')!.split(',')) : null;
+    const seeded = params.has('seed') ? rng(Number(params.get('seed')) || 1) : null;
+    let again = true;
+    // Game mode: the camera moves in on the court.
+    follow.setZoomOut(userZoom * GAME_ZOOM);
+    while (again) {
+      court.setup();
+      follow.snapTo(player.x, player.z - 1.5);
+      const out = await finale.play(fixed ?? drawGame(seeded ?? rng((Math.random() * 2 ** 31) | 0), previous));
+      previous = out.result.ids;
+      try {
+        localStorage.setItem(LAST_GAME_KEY, JSON.stringify(previous));
+      } catch {
+        /* storage unavailable */
+      }
+      save.finaleBest = Math.max(save.finaleBest ?? 0, out.result.correct);
+      persist();
+      again = out.again;
+    }
+    court.teardown();
+    follow.setZoomOut(userZoom);
+    follow.snapTo(player.x, player.z);
+    document.body.classList.remove('in-finale');
+    end();
   }
 
   // ----- overhead press (the Weightroom dumbbells) -----
@@ -532,10 +592,50 @@ async function boot(): Promise<void> {
     player.object.rotation.y = player.facing;
     lift = new LiftMode(body, player.object);
     liftCount.textContent = '0 reps';
+    liftRepLabel.textContent = 'Press';
     liftHud.hidden = false;
     document.body.classList.add('is-lifting');
   }
+  // ----- shootaround: pick up a loose ball on the court and put up shots -----
+  let shooting: { made: number; taken: number; busy: boolean } | null = null;
+  function startShootaround(target: Target): void {
+    if (shooting || lift || court.active) return;
+    begin();
+    shooting = { made: 0, taken: 0, busy: false };
+    court.beginShootaround(target.x, target.z);
+    follow.setZoomOut(userZoom * GAME_ZOOM);
+    liftCount.textContent = '0 for 0';
+    liftRepLabel.textContent = 'Shoot';
+    liftHud.hidden = false;
+    document.body.classList.add('is-lifting');
+  }
+  async function shootBall(): Promise<void> {
+    const s = shooting;
+    if (!s || s.busy) return;
+    s.busy = true;
+    const made = await court.shoot();
+    if (shooting !== s) return; // put the ball down mid-shot
+    s.busy = false;
+    s.taken++;
+    if (made) s.made++;
+    liftCount.textContent = `${s.made} for ${s.taken}`;
+    navigator.vibrate?.(made ? [15, 30, 15] : 10);
+  }
+  function stopShootaround(): void {
+    const s = shooting;
+    if (!s) return;
+    shooting = null;
+    court.endShootaround();
+    follow.setZoomOut(userZoom);
+    liftHud.hidden = true;
+    document.body.classList.remove('is-lifting');
+    end();
+    if (s.taken > 0) toast(`${s.made} for ${s.taken} from the floor.`);
+  }
+
+  const liftRepLabel = document.getElementById('lift-rep-label') as HTMLElement;
   function liftRep(): void {
+    if (shooting) return void shootBall();
     if (!lift?.rep()) return;
     liftCount.textContent = `${lift.reps} ${lift.reps === 1 ? 'rep' : 'reps'}`;
     navigator.vibrate?.(15);
@@ -551,13 +651,14 @@ async function boot(): Promise<void> {
     if (reps > 0) toast(`${reps} ${reps === 1 ? 'rep' : 'reps'}. Dumbbells back on the rack.`);
   }
   document.getElementById('lift-rep')!.addEventListener('click', liftRep);
-  document.getElementById('lift-done')!.addEventListener('click', stopLift);
+  const stopActivity = () => (shooting ? stopShootaround() : stopLift());
+  document.getElementById('lift-done')!.addEventListener('click', stopActivity);
   window.addEventListener('keydown', (e) => {
-    if (!lift || e.repeat) return;
+    if ((!lift && !shooting) || e.repeat) return;
     if (e.code === 'KeyG') liftRep();
     else if (['Space', 'Escape', 'KeyE', 'Enter'].includes(e.code)) {
       e.preventDefault();
-      stopLift();
+      stopActivity();
     }
   });
 
@@ -707,6 +808,10 @@ async function boot(): Promise<void> {
     get guide() {
       return current.interactions.guideId;
     },
+    get finale() {
+      const q = finale.current;
+      return q ? { id: q.id, type: q.type, answer: q.answer, options: q.options, matchups: q.matchups } : null;
+    },
     get player() {
       return { x: player.x, z: player.z, speed: player.speed, pathLength: player.path.length };
     },
@@ -777,7 +882,9 @@ async function boot(): Promise<void> {
     if (active.tap) moveTo(active.tap.x, active.tap.y);
     if (active.moveX !== 0 || active.moveY !== 0) pending = null;
 
-    player.update(dt, active, follow.basis(), current.grid);
+    // During the 1-on-1 the court scene moves the player along scripted paths.
+    if (!court.active) player.update(dt, active, follow.basis(), current.grid);
+    court.update(dt);
     lift?.update(dt);
     player.animate(dt);
     for (const npc of current.npcs) npc.update(dt, state === 'play' ? { x: player.x, z: player.z } : null);
@@ -856,7 +963,7 @@ async function boot(): Promise<void> {
       }
     }
     if (route.spot === 'weightroom') window.__mypark!.teleport(38.5, 25);
-    if (route.spot === 'court') window.__mypark!.teleport(36, 11);
+    if (route.spot === 'court') window.__mypark!.teleport(35, 13);
     if (route.station) {
       const station = stationById(route.station);
       const target = current.interactions.byId(route.station);

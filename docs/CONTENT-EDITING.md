@@ -10,6 +10,7 @@ Everything a visitor reads lives in `src/content/`. Edit the text there, save, a
 | `hobbies.ts` | Running, Chess, Basketball and their photo slices | Migrated verbatim |
 | `dialogue.ts` | Every NPC line, sign, and toast | **Drafts, see below** |
 | `extras.ts` | One-off stops (the JetBlue note) | Calvin's own words |
+| `finale-questions.json` | The 15 questions for the 1-on-1 | **Drafts, see the table at the bottom** |
 | `stations.ts` | Which station opens which piece of content | Wiring, rarely edited |
 
 Rules that apply to all of it: no em dashes, no banned words, real numbers (see `CLAUDE.md`).
@@ -38,6 +39,7 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | `<gym>.leaderDone` | Gym leader, every station visited (awards the badge) | One line each. Example: "That's all of UCLA. Go Bruins. This one's yours." |
 | `<gym>.leaderAgain` | Gym leader, after the badge | One line each, pointing at the next gym. Example: "Ship-It Badge is yours. BetMGM is at the top of the path." |
 | `toasts.twoBadges`, `toasts.fourBadges` | "Text from Calvin" at two and four badges | The two lines from the plan |
+| `court.challenge`, `court.later` | Calvin at his court | The challenge lines from the plan, and "I'll be here. Ball's not going anywhere." |
 | `door.locked` | Safety net for a door with no room behind it | Not reachable now that all four gyms exist |
 | `toasts.welcomeBack` | Returning visitors | "Welcome back. Your progress is saved." |
 
@@ -57,3 +59,27 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | Tracker | `src/ui/tracker.ts` | "Skip the walk: see all N →" |
 | Walkthrough footer | `src/main.ts` | "Stop 1 of 4", "Next: <station> →", "Finish" |
 | Card footer lines | `src/main.ts` | "Next station →", "Talk to Calvin for your badge." |
+
+## Finale questions (`src/content/finale-questions.json`)
+
+Review every one before launch. To change a question, edit its entry: `setup` is Calvin's lead-in, `prompt` is the question, `options` are the choices, `answer` must match one option exactly, `explain` shows after answering, `calvinWin` is his line when the visitor misses, `calvinLose` when they score. `difficulty: "hard"` makes it worth 3. Run `npm test` after editing: it rejects malformed entries and wrong chess answers.
+
+| # | Category | Pts | Prompt | Answer |
+|---|---|---|---|---|
+| 1 | chess | 2 | Find the move. | Re8# |
+| 2 | chess | 2 | Finish it. | Qxf7# |
+| 3 | chess | 2 | Mate in one. | Rg8# |
+| 4 | chess | 3 | Find the fork. | Nf6+ |
+| 5 | hoops | 2 | Who's open? | O2 |
+| 6 | hoops | 2 | Where does the ball go? | O5 |
+| 7 | hoops | 3 | What's the play? | O2 |
+| 8 | hoops | 2 | Who gets it? | O3 |
+| 9 | points | 2 | You've got 100k transferable credit card points. Usually the highest-value move? | Transfer to an airline or hotel partner for premium travel |
+| 10 | points | 3 | Which airline gave away 25 years of elite status to people who completed its challenge? | JetBlue |
+| 11 | points | 2 | Fastest way to earn a big chunk of points at once? | A credit card welcome bonus |
+| 12 | betting | 2 | Which book do you take it at? | Book B |
+| 13 | betting | 3 | To make money sports betting, do you need to know a lot about sports? | No. Learning line movement and price shopping matters more |
+| 14 | betting | 2 | You bet $100 at +200 and win. How much profit? | $200 |
+| 15 | rivalry | 2 | Pick the team I root for in each matchup. All three to score. | UCLA, Lakers, Rams |
+
+The four chess answers are verified by a chess engine in the tests. The basketball diagrams (player positions in `play`) were drawn by me from the plan's descriptions and need your check: does each picture actually show the read?

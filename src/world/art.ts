@@ -296,6 +296,7 @@ export function logoSign(url: string, bg: number, aspect: number): THREE.MeshBas
 
 function courtTexture(w: number, d: number): THREE.CanvasTexture {
   const s = 32; // px per world unit
+  // Half court with the hoop at the top of the image, which is the north end of the zone.
   return canvasTexture(w * s, d * s, (ctx) => {
     const W = w * s;
     const D = d * s;
@@ -304,31 +305,31 @@ function courtTexture(w: number, d: number): THREE.CanvasTexture {
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 5;
     const m = 0.6 * s; // sideline margin
-    const base = W - 1.2 * s; // baseline, hoop end (east)
-    const cy = D / 2;
-    const hoopX = base - 1.6 * s;
+    const base = 1.9 * s; // baseline (leaves room for the bleachers behind the hoop)
+    const cx = W / 2;
+    const hoopY = base + 0.6 * s;
     // Paint.
     ctx.fillStyle = '#d9773a';
-    ctx.fillRect(base - 5.8 * s, cy - 2.45 * s, 5.8 * s, 4.9 * s);
-    ctx.strokeRect(base - 5.8 * s, cy - 2.45 * s, 5.8 * s, 4.9 * s);
+    ctx.fillRect(cx - 2.45 * s, base, 4.9 * s, 5.8 * s);
+    ctx.strokeRect(cx - 2.45 * s, base, 4.9 * s, 5.8 * s);
     // Free-throw circle.
     ctx.beginPath();
-    ctx.arc(base - 5.8 * s, cy, 1.8 * s, 0, Math.PI * 2);
+    ctx.arc(cx, base + 5.8 * s, 1.8 * s, 0, Math.PI * 2);
     ctx.stroke();
     // Three-point line: straight corners + arc.
-    const r = 6.2 * s;
-    const corner = Math.min(cy - m - 0.3 * s, r);
-    const dx = Math.sqrt(Math.max(0, r * r - corner * corner));
+    const r = 6.6 * s;
+    const corner = cx - m - 0.5 * s;
+    const dy = Math.sqrt(Math.max(0, r * r - corner * corner));
     ctx.beginPath();
-    ctx.moveTo(base, cy - corner);
-    ctx.lineTo(hoopX - dx, cy - corner);
-    ctx.arc(hoopX, cy, r, Math.PI + Math.asin(corner / r), Math.PI - Math.asin(corner / r), true);
-    ctx.lineTo(base, cy + corner);
+    ctx.moveTo(cx - corner, base);
+    ctx.lineTo(cx - corner, hoopY + dy);
+    ctx.arc(cx, hoopY, r, Math.PI - Math.acos(corner / r), Math.acos(corner / r), true);
+    ctx.lineTo(cx + corner, base);
     ctx.stroke();
-    // Boundary and half-court circle.
-    ctx.strokeRect(m, m, base - m, D - m * 2);
+    // Boundary and half-court circle at the south end.
+    ctx.strokeRect(m, base, W - m * 2, D - base - m);
     ctx.beginPath();
-    ctx.arc(m, cy, 1.8 * s, -Math.PI / 2, Math.PI / 2);
+    ctx.arc(cx, D - m, 1.8 * s, Math.PI, 0);
     ctx.stroke();
   });
 }
@@ -472,6 +473,11 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
       case 'chess-table':
         buildChessTable(shared, p);
         break;
+      case 'basketball': {
+        const ball = shared.mesh(new THREE.SphereGeometry(0.17, 12, 10), shared.mat(p.color), cx, 0.17, cz);
+        ball.receiveShadow = false;
+        break;
+      }
       case 'ticker-board':
         buildTickerBoard(shared, p);
         break;
@@ -1028,9 +1034,10 @@ function buildBleachers(b: Builder, p: Prop): void {
   const steel = b.mat(0x9ca3af);
   for (let i = 0; i < 3; i++) b.box(p.x, 0, p.z + (i * p.d) / 3, p.w, p.h - i * 0.5, p.d / 3, steel);
   // Scoreboard-style name board above the top row, facing the court.
-  b.box(p.x + p.w / 2 - 3.3, p.h + 0.2, p.z - 0.05, 6.6, 1.5, 0.25, b.mat(0x111827));
-  b.panel(p.x + p.w / 2, p.h + 0.95, p.z + 0.2, 6.2, 1.2, 's', textSign("CALVIN'S COURT", 0x111827, 0xfbbf24, 6.2 / 1.2), 0.02);
-  for (const dx of [-3, 3]) b.box(p.x + p.w / 2 + dx - 0.08, 0, p.z, 0.16, p.h + 0.3, 0.16, steel);
+  // Raised high enough to read over the backboard that stands in front of it.
+  b.box(p.x + p.w / 2 - 3.3, p.h + 2.6, p.z - 0.05, 6.6, 1.5, 0.25, b.mat(0x111827));
+  b.panel(p.x + p.w / 2, p.h + 3.35, p.z + 0.2, 6.2, 1.2, 's', textSign("CALVIN'S COURT", 0x111827, 0xfbbf24, 6.2 / 1.2), 0.02);
+  for (const dx of [-3, 3]) b.box(p.x + p.w / 2 + dx - 0.08, 0, p.z, 0.16, p.h + 2.7, 0.16, steel);
 }
 
 function buildHoop(b: Builder, p: Prop): void {

@@ -109,7 +109,7 @@ describe('Exterior map', () => {
   });
 
   it('has a walkable route from spawn to the court and to every station', () => {
-    expect(grid.findPath(exterior.spawn, { x: 36, z: 11 }, R)).not.toBeNull();
+    expect(grid.findPath(exterior.spawn, { x: 35, z: 13 }, R)).not.toBeNull();
     for (const i of exterior.interactables) {
       expect(grid.circleBlocked(i.x, i.z, R), `${i.id} stand point is blocked`).toBe(false);
       expect(grid.findPath(exterior.spawn, { x: i.x, z: i.z }, R), `no route to ${i.id}`).not.toBeNull();

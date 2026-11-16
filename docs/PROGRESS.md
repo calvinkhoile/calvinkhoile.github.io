@@ -11,8 +11,9 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M2 | Exterior art pass | Done, with small items deferred (see M2 section) |
 | M3 | Interaction + dialogue + cards ★ | Done. Reviewed by Calvin twice (Nov 15), changes applied |
 | M4 | All gyms + badges | Done (Nov 15, 2026) |
-| M5 | Calvin's avatar ★ | Tier A built. **Waiting on Calvin: approve Tier A, or go Tier B** |
-| M6–M8 | | Not started |
+| M5 | Calvin's avatar ★ | Tier A in the park. Calvin chose Tier B: **waiting on his generated model in `assets-src/calvin/`** |
+| M6 | Finale ★ | Built, tests green. **Waiting on Calvin: review all 15 questions and the basketball diagrams** |
+| M7–M8 | | Not started |
 
 ## How to run
 
@@ -225,6 +226,40 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 
 **Notes**
 - The plan asked for one material per character. The body is one material. The accessories add two or three tiny ones.
+
+## M6: Finale ★ (ready for review)
+
+**What's in**
+- **The challenge:** talk to Calvin at his court (in the #13 jersey). "Run it" starts the game, "Not yet" backs out.
+- **Game mode:** the camera moves in on the court, the HUD clears, and a pixel-font scoreboard shows YOU, CALVIN, and the possession.
+- **Five possessions**, each a question. Right answer: the visitor drives and scores (or pulls up from deep on a 3-point question). Wrong answer: Calvin blocks the shot, then buries one for the same points. The question card ducks away while the play runs, then returns with the verdict, the explanation, and Calvin's line.
+- **Four question types:** a chess board built from a FEN string (the winning move slides across the board on reveal), a half-court diagram with Os and Xs (tap a teammate or use the buttons, and the pass is drawn on reveal), multiple choice (with an odds board for line shopping), and the Rivalry Round (three matchups in team colors, all three needed, revealed one at a time).
+- **Draw rules:** possessions 1 to 4 come from chess, hoops, points, and betting with at least one chess and one hoops, at most two per category, and no repeats from the last game. Possession 5 is always the Rivalry Round. Options are shuffled every draw.
+- **Ties** go to one sudden-death possession.
+- **Result screen:** "You beat Calvin." or "Calvin wins, 6-4.", "You answered N/5", Calvin's line, LinkedIn / Email / Twitter, Share your score (native share sheet on phones, copied elsewhere), Run it back, Back to the park. A win earns the Park Legend badge first.
+- **Shootaround:** loose balls sit on the court. Pick one up, press G (or the Shoot button) to put up shots, Space (or Put back) to stop. It keeps a "3 for 5" tally.
+- **Court turned:** the hoop now stands at the north end under the "Calvin's Court" board, facing the camera.
+
+**Tests**
+- Vitest: 50 passing. Every question is checked against the schema. Every chess position is checked with chess.js: legal position, every option a legal move, the answer the only mate (or the only fork) among the options, and the "Qd1 mate" detail in the fork explanation. Draw rules are checked across 200 seeded draws, plus the tie case.
+- Playwright: 78 passing. Win, loss with Run it back, tie into sudden death, the animations with motion on, a keyboard-only game, a seeded normal draw, and the shootaround.
+
+**Screenshots**
+
+| | |
+|---|---|
+| ![chess](progress/m6-desktop-chess.png) | ![play](progress/m6-mobile-play.png) |
+| ![rivalry](progress/m6-desktop-rivalry.png) | ![result](progress/m6-desktop-result.png) |
+| ![shot](progress/m6-desktop-shot.png) | ![shootaround](progress/m6-desktop-shootaround.png) |
+
+**For Calvin to review**
+1. All 15 questions: `src/content/finale-questions.json`, listed in `docs/CONTENT-EDITING.md`. Chess is machine-checked. The four basketball diagrams, the points and betting answers, and every Calvin line need your eye.
+2. Whether a wrong answer should cost the same points it would have earned (it does now, per the plan).
+
+**Deviations**
+- No broadcast-angle camera, crowd, or stadium lights. The camera zooms in on the same isometric angle. Sound is M7.
+- `?seed=` and `?set=` work in every build, not just debug builds, because the tests run against the production build. They change nothing unless typed into the URL.
+- Chess pieces are Unicode symbols, so there is no piece-set license to track.
 
 ---
 

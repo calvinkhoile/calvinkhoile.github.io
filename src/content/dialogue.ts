@@ -133,9 +133,19 @@ export const dialogue: Record<string, DialogueNode> = {
     action: 'card:betmgm-overview',
   },
 
-  // Temporary, until the 1-on-1 is built (M6).
-  'court.soon': {
-    lines: [{ speaker: CALVIN, text: "Still warming up. The court opens soon, and when it does, you're first up." }],
+  // The finale challenge (lines from the plan).
+  'court.challenge': {
+    lines: [
+      { speaker: CALVIN, text: 'So you made it. First to the most buckets after 5 possessions.' },
+      { speaker: CALVIN, text: "Every possession, I'm giving you a read. Get it right, you score. Get it wrong, I'm cooking you." },
+    ],
+    choices: [
+      { label: 'Run it', action: 'finale' },
+      { label: 'Not yet', next: 'court.later' },
+    ],
+  },
+  'court.later': {
+    lines: [{ speaker: CALVIN, text: "I'll be here. Ball's not going anywhere." }],
   },
 
   // Shown when a door leads to a scene that isn't built yet. The speaker is replaced with the place's name.
