@@ -141,7 +141,7 @@ test('the Weightroom: five stops, then the Explorer badge', async ({ page, isMob
 test('badge case: lists all six badges, and reset clears progress', async ({ page }) => {
   await boot(page, '/', { look: 'c', badges: ['ucla'], visitedStations: ['ucla/clubs'] });
   await page.locator('#badge-case').click();
-  const panel = page.locator('.badge-panel');
+  const panel = page.locator('.badge-panel:not(.settings-panel)');
   await expect(panel).toBeVisible();
   await expect(panel.locator('.badge-row')).toHaveCount(badges.length);
   await expect(panel.locator('.badge-row.is-earned')).toHaveCount(1);
@@ -516,5 +516,42 @@ test('sound is off by default and one click turns it on; the map toggles outdoor
   await expect(page.locator('#hud-map')).toHaveAttribute('aria-pressed', 'true');
   await page.locator('#hud-map').click();
   await expect(map).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('music and the settings menu: switches, volume, graphics quality', async ({ page }) => {
+  const errors = await boot(page);
+  // Music is its own switch, off until asked for, and the generated loop actually starts an audio clock.
+  const musicBtn = page.locator('#hud-music');
+  await expect(musicBtn).toHaveAttribute('aria-pressed', 'false');
+  await musicBtn.click();
+  await expect(musicBtn).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#toast')).toHaveText('Music on.');
+
+  await page.locator('#hud-settings').click();
+  const panel = page.locator('.settings-panel');
+  await expect(panel).toBeVisible();
+  expect(await page.evaluate(() => window.__mypark!.busy)).toBe(true);
+  await expect(panel.locator('[data-switch="music"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(panel.locator('[data-switch="sfx"]')).toHaveAttribute('aria-checked', 'false');
+  await panel.locator('[data-switch="sfx"]').click();
+  await expect(panel.locator('[data-switch="sfx"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('#hud-sound')).toHaveAttribute('aria-pressed', 'true');
+  await panel.locator('[data-switch="music"]').click();
+  await expect(musicBtn).toHaveAttribute('aria-pressed', 'false');
+
+  await panel.locator('#settings-volume').fill('20');
+  // Graphics: pick Low, and it sticks across a reload.
+  await panel.locator('[data-quality="low"]').click();
+  await expect(panel.locator('[data-quality="low"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => window.__mypark!.quality)).toBe('low');
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await idle(page);
+  await page.reload();
+  await page.waitForFunction(() => window.__mypark?.ready === true);
+  expect(await page.evaluate(() => window.__mypark!.quality)).toBe('low');
+  // AAC copies exist for older Safari.
+  expect((await page.request.get('/audio/select.m4a')).status()).toBe(200);
   expect(errors).toEqual([]);
 });

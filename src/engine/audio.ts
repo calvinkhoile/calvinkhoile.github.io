@@ -23,6 +23,14 @@ class Audio {
     }
   }
 
+  /** Overall effects volume, 0 to 1. */
+  async setVolume(v: number): Promise<void> {
+    this.volume = v;
+    if (this.loading) (await import('howler')).Howler.volume(v);
+  }
+
+  private volume = 1;
+
   async setEnabled(on: boolean): Promise<void> {
     this.enabled = on;
     try {
@@ -37,13 +45,15 @@ class Audio {
   }
 
   private async load(): Promise<void> {
-    const { Howl } = await import('howler');
+    const { Howl, Howler } = await import('howler');
+    Howler.volume(this.volume);
     const names: Sfx[] = ['select', 'advance', 'open', 'close', 'toggle', 'badge', 'right', 'wrong', 'door', 'bounce', 'rim', 'swish', 'step-grass', 'step-hard', 'step-soft'];
     for (const name of names) {
       const n = VARIANTS[name] ?? 1;
       for (let i = 1; i <= n; i++) {
         const key = n > 1 ? `${name}-${i}` : name;
-        this.sounds.set(key, new Howl({ src: [`/audio/${key}.ogg`], volume: VOLUME[name] ?? 0.6 }));
+        // AAC first (plays everywhere, including older Safari), Ogg as the fallback.
+        this.sounds.set(key, new Howl({ src: [`/audio/${key}.m4a`, `/audio/${key}.ogg`], volume: VOLUME[name] ?? 0.6 }));
       }
     }
   }

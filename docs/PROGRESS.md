@@ -13,7 +13,7 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M4 | All gyms + badges | Done (Nov 15, 2026) |
 | M5 | Calvin's avatar ★ | Tier A in the park. Calvin chose Tier B: **waiting on his generated model in `assets-src/calvin/`** |
 | M6 | Finale ★ | Done. Calvin reviewed and confirmed the questions (Nov 15) |
-| M7 | Polish | Built. Music is the one piece missing (no track yet) |
+| M7 | Polish | Done |
 | M8 | Launch ★ | **Live.** Calvin merged PR #1 on Nov 16, 2026 (03:05 UTC) and the new deploy workflow published it on its first run. Two later commits on `world` (the fifth feedback round and M7) are waiting on a second PR. `v1.0` tag not cut yet |
 
 ## How to run
@@ -287,11 +287,17 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 - **Slow devices:** if a device is already on the lowest quality tier and still under 20 frames a second, a screen offers the résumé and the classic site, with "Keep going anyway". No WebGL at all shows the same screen without that button.
 - Already in from earlier milestones: haptics on interact and badges, reduced-motion handling (no camera lead, no confetti, instant fades, court animations skipped), and the no-JavaScript message.
 
+**Added in the second M7 pass (Nov 16)**
+- **Music:** a slow lo-fi loop generated in the browser with Web Audio (soft chords and plucked notes), so there is nothing to download or license. Each gym plays in its own key, and the 1-on-1 picks up the tempo with a bass pulse. Off by default, with its own button. It's a placeholder: a real track can replace it.
+- **Settings menu** (gear button): sound effects, music, a volume slider, graphics quality (Auto, High, Medium, Low, remembered), and reset progress.
+- **Sound on older iPhones:** every effect now has an AAC copy that plays first, with Ogg as the fallback. `scripts/audio-aac.mjs` regenerates them (it decodes in a headless browser and encodes with macOS's `afconvert`, since `ffmpeg` isn't installed).
+- **Hover highlight:** on desktop, the ring of whatever the pointer is over turns white.
+- **Court lights:** four stadium lights on the court's corners switch on as the visitor approaches.
+
 **Not done**
-- **Music.** The plan wants a looping track per zone. No CC0 or licensed track has been picked, so there is no music toggle yet. Needs a track from Calvin, or his OK to pick one from OpenGameArt.
-- **Older iPhones may stay silent.** The sounds are Ogg files, which Safari only plays in recent versions. Converting to AAC needs `ffmpeg`, which isn't installed here.
-- **Volume sliders and a menu.** The plan describes a menu with sliders and a quality override. Sound is a single on/off button for now, and quality is `?quality=low`.
+- **A real music track.** The generated loop is pleasant but simple. Swap in a CC0 or licensed track when there is one.
 - **A generated `/resume` page.** Dropped when Calvin chose the PDF. A PDF is less accessible than HTML, so screen-reader users get the PDF and the classic site rather than a purpose-built page.
+- **Finale atmosphere:** no broadcast-angle camera or crowd.
 
 ---
 
