@@ -14,7 +14,7 @@ Plan: [mypark-world-plan.md](mypark-world-plan.md). All world work is on the `wo
 | M5 | Calvin's avatar ★ | Tier A in the park. Calvin chose Tier B: **waiting on his generated model in `assets-src/calvin/`** |
 | M6 | Finale ★ | Done. Calvin reviewed and confirmed the questions (Nov 15) |
 | M7 | Polish | Built. Music is the one piece missing (no track yet) |
-| M8 | Launch ★ | Not started. PR from `world` to `main` opened by Calvin |
+| M8 | Launch ★ | **Live.** Calvin merged PR #1 on Nov 16, 2026 (03:05 UTC) and the new deploy workflow published it on its first run. Two later commits on `world` (the fifth feedback round and M7) are waiting on a second PR. `v1.0` tag not cut yet |
 
 ## How to run
 
@@ -320,6 +320,13 @@ Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want 
 | Character select | Rotating models on their own screen | Drawn over the live park | Calvin's call: keep the world in view so people don't bail |
 | Deep-link visitors | Default look | Default look, and nothing is saved until they pick one | A shared link shouldn't lock a look in for the next real visit |
 | `deploy.yml` on `world` | Changed to build + `dist/` at M8 | Left as the M0 version for now | It only triggers on `main`, so it's inert here. Swapped at M8 as planned |
+
+## Launch notes (M8)
+
+- **Live site:** https://calvinkhoile.github.io is MyPark as of PR #1, which contains everything through M6. Verified after the deploy: the world loads, `/resume.pdf` and `/classic/` are served, and `/CLAUDE.md` and `/docs/` return 404.
+- **Not live yet:** the one-pop-up-per-place change, Finish and jump shortcuts, keyboard advance, swipeable galleries, the workbench as scenery, and all of M7 (sound, minimap, accessibility fixes, the social preview image and tags). They are on `world`, CI is green, and they go live with the next merge to `main`.
+- **Rollback:** revert the merge commit on `main`.
+- **Still to do before calling it v1.0:** Calvin's pass on a real iPhone and Android phone, the Tier B avatar, music (needs a track), and the `v1.0` tag.
 
 ## Open issues
 
