@@ -70,7 +70,9 @@ function checkSprite(): THREE.Sprite {
 export class Interactions {
   readonly root = new THREE.Group();
   readonly targets: Target[] = [];
-  private readonly rings = new Map<string, { ring: THREE.Mesh; check: THREE.Sprite }>();
+  /** All floor rings are one instanced mesh (one draw call), colored per instance. */
+  private ringMesh: THREE.InstancedMesh | null = null;
+  private readonly rings = new Map<string, { index: number; x: number; z: number; check: THREE.Sprite }>();
   private readonly guide: THREE.Mesh;
   private guideTarget: Target | null = null;
 
@@ -89,6 +91,8 @@ export class Interactions {
       this.targets.push({ id: n.spawn.id, kind: 'npc', label: `Talk to ${n.spawn.label}`, x: n.x, z: n.z, radius: 1.9, height: 2.3, anchor: { x: n.x, y: 1, z: n.z }, npc: n });
     }
 
+    this.buildRings();
+
     // Bouncing arrow that points the visitor at a station ("Next station", "Find it in the gym").
     this.guide = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.7, 4).rotateX(Math.PI), new THREE.MeshBasicMaterial({ color: 0xfbbf24, depthTest: false, transparent: true }));
     this.guide.renderOrder = 13;
@@ -97,28 +101,47 @@ export class Interactions {
   }
 
   private addRing(t: Target): void {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.72, 0.92, 40).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: RING_TODO, transparent: true, opacity: 0.9, depthWrite: false }),
-    );
-    ring.position.set(t.x, 0.05, t.z);
-    // Visited is never shown by color alone: a check mark sits beside the ring too.
+    // Visited is never shown by color alone: a check mark sits on the ring too.
     const check = checkSprite();
     check.position.set(t.x, 0.5, t.z);
     check.visible = false;
-    this.root.add(ring, check);
-    this.rings.set(t.id, { ring, check });
+    this.root.add(check);
+    this.rings.set(t.id, { index: this.rings.size, x: t.x, z: t.z, check });
+  }
+
+  private buildRings(): void {
+    if (this.rings.size === 0) return;
+    const mesh = new THREE.InstancedMesh(
+      new THREE.RingGeometry(0.72, 0.92, 40).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false }),
+      this.rings.size,
+    );
+    const todo = new THREE.Color(RING_TODO);
+    for (const r of this.rings.values()) mesh.setColorAt(r.index, todo);
+    mesh.frustumCulled = false;
+    this.ringMesh = mesh;
+    this.root.add(mesh);
+    this.placeRings(1);
+  }
+
+  private placeRings(scale: number): void {
+    if (!this.ringMesh) return;
+    const m = new THREE.Matrix4();
+    for (const r of this.rings.values()) this.ringMesh.setMatrixAt(r.index, m.makeScale(scale, 1, scale).setPosition(r.x, 0.05, r.z));
+    this.ringMesh.instanceMatrix.needsUpdate = true;
   }
 
   /** Recolor rings from the visited set. */
   refresh(visited: ReadonlySet<string>): void {
+    const color = new THREE.Color();
     for (const t of this.targets) {
       const r = this.rings.get(t.id);
-      if (!r || !t.station) continue;
+      if (!r || !t.station || !this.ringMesh) continue;
       const done = visited.has(t.station.id);
-      (r.ring.material as THREE.MeshBasicMaterial).color.setHex(done ? RING_DONE : RING_TODO);
+      this.ringMesh.setColorAt(r.index, color.setHex(done ? RING_DONE : RING_TODO));
       r.check.visible = done;
     }
+    if (this.ringMesh?.instanceColor) this.ringMesh.instanceColor.needsUpdate = true;
   }
 
   byId(id: string): Target | undefined {
@@ -197,7 +220,7 @@ export class Interactions {
   }
 
   update(time: number, playerX: number, playerZ: number): void {
-    for (const { ring } of this.rings.values()) ring.scale.setScalar(1 + Math.sin(time * 3) * 0.04);
+    this.placeRings(1 + Math.sin(time * 3) * 0.04);
     const g = this.guideTarget;
     if (!g) return;
     this.guide.position.set(g.x, 2.6 + Math.sin(time * 5) * 0.18, g.z);
