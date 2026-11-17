@@ -21,6 +21,7 @@ export function show(el: HTMLElement, opts: { replay?: boolean } = {}): void {
     window.clearTimeout(leaving.timer);
     pending.delete(el);
     el.classList.remove('is-leaving');
+    el.inert = false;
     if (!opts.replay) return;
   } else if (!el.hidden && !opts.replay) {
     return;
@@ -52,6 +53,8 @@ export function hide(el: HTMLElement): Promise<void> {
   return new Promise((resolve) => {
     el.classList.remove('is-entering');
     el.classList.add('is-leaving');
+    // On its way out: no more clicks, focus, or screen-reader reading.
+    el.inert = true;
     const entry = {
       timer: 0,
       done: () => resolve(),
@@ -62,6 +65,7 @@ export function hide(el: HTMLElement): Promise<void> {
       el.removeEventListener('animationend', onEnd);
       window.clearTimeout(entry.timer);
       el.classList.remove('is-leaving');
+      el.inert = false;
       el.hidden = true;
       entry.done();
     };

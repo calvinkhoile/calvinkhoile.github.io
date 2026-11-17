@@ -24,6 +24,9 @@ test('title and character select', async ({ page }) => {
   await scan(page, 'title screen');
   await page.locator('#title-start').click();
   await expect(page.locator('#select')).toBeVisible();
+  // Let the title finish fading out and the select finish fading in: half-faded text isn't a real state.
+  await expect(page.locator('#title')).toBeHidden();
+  await expect(page.locator('#select')).not.toHaveClass(/is-entering/);
   await scan(page, 'character select');
 });
 

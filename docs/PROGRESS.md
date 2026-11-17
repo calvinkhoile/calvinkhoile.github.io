@@ -316,7 +316,7 @@ Calvin asked for a polish milestone after M7: smooth, animated transitions every
   - slow-device screen no longer interrupts a session;
   - keyboard: lightbox and gallery arrows, tabs, focus traps;
   - touch: focus rings, tap targets, badge count and named jump buttons;
-  - result-screen Résumé button and "Show me your latest work" intro shortcut;
+  - result-screen Résumé button;
   - Meta logo on Safari (the SVG had no size).
 - **Calvin's calls (Nov 17):**
   - The AI at BetMGM screenshots are now blurred: internal links, names, faces, repo path and repo stats. This also covers the unused `team-os.webp`.

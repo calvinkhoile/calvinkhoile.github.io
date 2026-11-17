@@ -26,8 +26,6 @@ export interface DialogueNode {
 const CALVIN = 'Calvin';
 
 const plazaChoices: DialogueChoice[] = [
-  // TODO(calvin): review. A shortcut for recruiters: straight to the BetMGM gym with the Rewards Store open.
-  { label: 'Show me your latest work', action: 'latest' },
   { label: 'Show me around', action: 'tour' },
   { label: "I'll explore", next: 'plaza.explore' },
   { label: 'Who are you?', action: 'about' },

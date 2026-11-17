@@ -550,12 +550,6 @@ async function boot(): Promise<void> {
     if (action === 'finale') return runFinale();
     if (action.startsWith('card:')) return void (await openCard(careerCard(action.slice(5), { chip: chipFor(current.id) })));
     if (action === 'tour') return say('plaza.tourStart');
-    if (action === 'latest') {
-      // Same as the deep link: into the BetMGM gym with the headline project open.
-      const route = parseRoute('#/gym/betmgm/rewards-store');
-      if (route) await applyRoute(route);
-      return;
-    }
     const calvin = exteriorScene.npcs[0];
     const grid = exteriorScene.grid;
     if (action === 'tour-walk') {

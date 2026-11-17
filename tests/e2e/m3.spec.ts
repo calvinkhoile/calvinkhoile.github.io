@@ -87,8 +87,7 @@ test('plaza Calvin: choices, the About card, and the tour to UCLA', async ({ pag
   await boot(page);
   await standAt(page, 'calvin-plaza', 'Talk to Calvin');
   await interact(page, isMobile);
-  // Latest work, the tour, explore, and who are you.
-  await expect(page.locator('.dialogue-choice')).toHaveCount(4, { timeout: 15_000 });
+  await expect(page.locator('.dialogue-choice')).toHaveCount(3, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Who are you?' }).click();
   await expect(page.locator('.card')).toBeVisible();
   await expect(page.locator('.card-title')).toHaveText('Calvin Le');
