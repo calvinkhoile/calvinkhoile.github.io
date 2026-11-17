@@ -48,6 +48,8 @@ import { formatRoute, parseRoute, type Route } from './world/routes';
 import { clearSave, loadSave, writeSave } from './world/save';
 import { SCENE_NAMES, SCENES } from './world/scenes';
 import { hide, show } from './ui/motion';
+import { Highlights } from './ui/highlights';
+import { LooseBalls } from './world/loose-balls';
 import { callout, shake } from './ui/callout';
 
 declare global {
@@ -258,6 +260,25 @@ async function boot(): Promise<void> {
   const mini = document.createElement('div');
   mini.className = 'hud-mini';
   row2.appendChild(mini);
+  // Highlights: every gym and stop on one sheet. Labeled, first in the row, and never collapsed away.
+  const highlights = new Highlights(ui, {
+    onJump: (route) => {
+      const target = parseRoute(`#/${route}`);
+      if (target) void applyRoute(target);
+    },
+    onToggle: (open) => {
+      if (open) closeMap();
+      return open ? begin() : end();
+    },
+    visited: () => visited,
+  });
+  const highlightsBtn = document.createElement('button');
+  highlightsBtn.type = 'button';
+  highlightsBtn.id = 'hud-highlights';
+  highlightsBtn.className = 'hud-btn hud-highlights';
+  highlightsBtn.innerHTML = `<svg class="icon" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128 20l32 72 78 7-59 52 18 77-69-41-69 41 18-77-59-52 78-7z"/></svg><span>Highlights</span>`;
+  highlightsBtn.addEventListener('click', () => highlights.open());
+  mini.appendChild(highlightsBtn);
   // Sound effects start off on every visit and never autoplay. One click turns them on.
   const soundBtn = iconButton('hud-sound', 'Sound effects', speakerOff);
   soundBtn.setAttribute('aria-pressed', 'false');
@@ -551,20 +572,48 @@ async function boot(): Promise<void> {
     if (action.startsWith('card:')) return void (await openCard(careerCard(action.slice(5), { chip: chipFor(current.id) })));
     if (action === 'tour') return say('plaza.tourStart');
     const calvin = exteriorScene.npcs[0];
-    const grid = exteriorScene.grid;
-    if (action === 'tour-walk') {
-      // Calvin leads, the visitor is walked along behind him. Any manual input hands control back.
-      begin();
-      releaseHome(calvin);
-      player.setPath(grid.findPath({ x: player.x, z: player.z }, { x: 19.6, z: 49.5 }, PLAYER_RADIUS));
-      await calvin.walk(grid.findPath({ x: calvin.x, z: calvin.z }, { x: 17.5, z: 50.6 }, PLAYER_RADIUS));
-      for (let i = 0; i < 40 && player.path.length > 0; i++) await wait(150);
-      end();
-      return say('plaza.tourEnd');
+    if (action === 'tour-walk') return tourGo(0);
+    if (action === 'tour-next') return tourGo(tourAt + 1);
+    if (action === 'tour-in') {
+      const stop = TOUR[tourAt];
+      const door = stop.door ? exteriorScene.def.doors.find((d) => d.id === stop.door) : undefined;
+      void sendHome(calvin);
+      if (door) await useDoor(door);
+      return;
     }
     if (action === 'tour-return') {
       void sendHome(calvin);
     }
+  }
+
+  // ----- Calvin's tour: every gym in career order, then the court -----
+  const TOUR: { line: string; door?: string; at?: { x: number; z: number } }[] = [
+    { line: 'tour.ucla', door: 'door-ucla' },
+    { line: 'tour.deloitte', door: 'door-deloitte' },
+    { line: 'tour.meta', door: 'door-meta' },
+    { line: 'tour.betmgm', door: 'door-betmgm' },
+    { line: 'tour.court', at: { x: 31.5, z: 15.5 } },
+  ];
+  let tourAt = 0;
+
+  /** Walk to tour stop i (Calvin a step ahead), then his line for it. */
+  async function tourGo(i: number): Promise<void> {
+    const stop = TOUR[i];
+    if (!stop) return;
+    tourAt = i;
+    const calvin = exteriorScene.npcs[0];
+    const grid = exteriorScene.grid;
+    // Doors all face east onto the path: the visitor stops a couple of steps out, Calvin just north of them.
+    const door = stop.door ? exteriorScene.def.doors.find((d) => d.id === stop.door) : undefined;
+    const spot = door ? { x: door.x + 0.5 + 2.2, z: door.z + 0.5 } : stop.at!;
+    const cSpot = { x: spot.x - 0.3, z: spot.z - 1.3 };
+    begin();
+    releaseHome(calvin);
+    player.setPath(grid.findPath({ x: player.x, z: player.z }, spot, PLAYER_RADIUS));
+    await calvin.walk(grid.findPath({ x: calvin.x, z: calvin.z }, cSpot, PLAYER_RADIUS));
+    for (let k = 0; k < 60 && player.path.length > 0; k++) await wait(150);
+    end();
+    return say(stop.line);
   }
 
   // NPC home tiles are solid while the NPC stands on them and free while it roams.
@@ -665,11 +714,19 @@ async function boot(): Promise<void> {
       case 'shoot':
         startShootaround(target);
         break;
+      case 'poster':
+        highlights.open();
+        break;
     }
   }
 
   // ----- the 1-on-1 at Calvin's Court -----
   const court = new CourtScene(exteriorScene.root, player, exteriorScene.npcs.find((n) => n.spawn.role === 'court')!, reducedMotion);
+  // Loose balls roll around the court (the fence line, minus the baseline under the hoop).
+  const looseBalls = new LooseBalls(exteriorScene.root, exteriorScene.interactions.targets, { minX: 30.6, maxX: 45.4, minZ: 5.8, maxZ: 16.4 }, (id, hidden) =>
+    exteriorScene.interactions.setRingHidden(id, hidden),
+  );
+  let heldBall: string | null = null;
   court.cue = (text, tone, strength) => {
     callout(text, tone);
     if (strength) shake(strength);
@@ -749,7 +806,20 @@ async function boot(): Promise<void> {
   const meter = document.getElementById('shot-meter') as HTMLElement;
   const meterFill = meter.querySelector('.shot-meter-fill') as HTMLElement;
   const METER_FILL_S = 0.62; // press to the top of the meter
-  const GREEN = [0.86, 1.06]; // the green window, as a fraction of the fill
+  const meterZone = meter.querySelector('.shot-meter-zone') as HTMLElement;
+  // The green window, as a fraction of the fill. It shrinks with distance: layups are forgiving, deep threes aren't.
+  let GREEN: [number, number] = [0.86, 1.06];
+  let CLOSE: [number, number] = [0.66, 1.2];
+  let distK = 0; // 0 at the rim, 1 from deep
+  function sizeGreen(dist: number): void {
+    distK = Math.min(1, Math.max(0, (dist - 2.5) / 8.5));
+    const width = THREE.MathUtils.lerp(0.34, 0.07, distK);
+    GREEN = [1 - width * 0.75, 1 + width * 0.25];
+    CLOSE = [GREEN[0] - 0.2, GREEN[1] + 0.14];
+    // Draw the zone where it really is on the meter (the meter shows 0 to 1).
+    meterZone.style.top = `${(1 - Math.min(1, GREEN[1])) * 100}%`;
+    meterZone.style.height = `${(Math.min(1, GREEN[1]) - GREEN[0]) * 100}%`;
+  }
   let meterStart = 0;
   let meterRelease: ((made: boolean) => void) | null = null;
   let meterTimer = 0;
@@ -759,6 +829,8 @@ async function boot(): Promise<void> {
     if (shooting || lift || court.active) return;
     begin();
     shooting = { made: 0, taken: 0, busy: false, streak: 0 };
+    heldBall = target.id;
+    looseBalls.hold(target.id);
     court.beginShootaround(target.x, target.z);
     follow.setZoomOut(userZoom * GAME_ZOOM);
     liftCount.textContent = '0 for 0';
@@ -778,6 +850,7 @@ async function boot(): Promise<void> {
     const s = shooting;
     if (!s || s.busy) return;
     s.busy = true;
+    sizeGreen(court.shotDistance());
     meterStart = performance.now();
     meter.classList.remove('is-green', 'is-late');
     meterFill.style.transform = 'scaleY(0)';
@@ -796,13 +869,14 @@ async function boot(): Promise<void> {
     window.clearTimeout(meterTimer);
     const v = meterValue();
     const green = v >= GREEN[0] && v <= GREEN[1];
-    const close = v >= 0.66 && v <= 1.2;
+    const close = v >= CLOSE[0] && v <= CLOSE[1];
     meterGrade = green ? 'green' : v < GREEN[0] ? (close ? 'Slightly early' : 'Way early') : close ? 'Slightly late' : 'Way late';
     meterFill.style.transform = `scaleY(${Math.min(1, v)})`;
     meter.classList.toggle('is-green', green);
     meter.classList.toggle('is-late', !green && v > GREEN[1]);
     window.setTimeout(() => (meter.hidden = true), 650);
-    resolve(green || Math.random() < (close ? 0.5 : 0.12));
+    // Near misses still fall sometimes, less often from deep.
+    resolve(green || Math.random() < (close ? THREE.MathUtils.lerp(0.6, 0.3, distK) : THREE.MathUtils.lerp(0.2, 0.05, distK)));
   }
 
   async function runShot(s: NonNullable<typeof shooting>, release: Promise<boolean>): Promise<void> {
@@ -847,6 +921,9 @@ async function boot(): Promise<void> {
     meter.hidden = true;
     court.setOnFire(false);
     court.endShootaround();
+    // The ball goes down where the visitor is standing, not back to where it was found.
+    if (heldBall) looseBalls.drop(heldBall, player.x, player.z, player.facing);
+    heldBall = null;
     follow.setZoomOut(userZoom);
     void hide(liftHud);
     document.body.classList.remove('is-lifting');
@@ -1156,6 +1233,10 @@ async function boot(): Promise<void> {
     // During the 1-on-1 the court scene moves the player along scripted paths.
     if (!court.active) player.update(dt, active, follow.basis(), current.grid);
     court.update(dt);
+    if (current === exteriorScene) {
+      looseBalls.setSuspended(court.active);
+      looseBalls.update(dt, player, false);
+    }
     lift?.update(dt);
     player.animate(dt);
     for (const npc of current.npcs) npc.update(dt, state === 'play' ? { x: player.x, z: player.z } : null);

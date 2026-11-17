@@ -4125,3 +4125,154 @@ body.is-talking .a-button {
   background: linear-gradient(to bottom, rgba(11, 13, 18, 0), rgba(11, 13, 18, 0.9));
   pointer-events: none;
 }
+
+/* ---------- highlights poster: the four gyms on one sheet ---------- */
+.hl-sheet {
+  width: min(860px, 100%);
+}
+
+.hl-kicker {
+  margin: 0 0 2px;
+  color: #9ecbff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hl-sheet h2 {
+  margin: 0;
+  font: 400 30px/1 var(--font-display);
+}
+
+.hl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hl-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--hairline);
+  border-top: 4px solid var(--hl, var(--accent));
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.hl-tile--betmgm {
+  --hl: #c5a15a;
+}
+
+.hl-tile--meta {
+  --hl: #0866ff;
+}
+
+.hl-tile--deloitte {
+  --hl: #86bc25;
+}
+
+.hl-tile--ucla {
+  --hl: #2774ae;
+}
+
+.hl-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hl-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.hl-head h3 {
+  margin: 0;
+  font: 400 22px/1.1 var(--font-display);
+}
+
+.hl-head p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.hl-stops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hl-stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1.2 var(--font-body);
+  cursor: pointer;
+}
+
+.hl-stop.is-done span[aria-hidden] {
+  color: #4ade80;
+}
+
+.hl-stop:hover,
+.hl-go:hover {
+  border-color: var(--hl, var(--accent));
+}
+
+.hl-go {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--hl, var(--accent));
+  color: #000;
+  font: 700 14px/1 var(--font-body);
+  cursor: pointer;
+}
+
+.hl-tile--meta .hl-go,
+.hl-tile--ucla .hl-go {
+  color: #fff;
+}
+
+.hl-stop:focus-visible,
+.hl-go:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .hl-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hl-stop {
+    min-height: 44px;
+  }
+}
+
+/* Deloitte's wordmark is white, so its logo tile is dark. */
+.hl-tile--deloitte .hl-logo {
+  background: #000;
+}

@@ -97,7 +97,7 @@ test('plaza Calvin: choices, the About card, and the tour to UCLA', async ({ pag
   await expect(page.locator('.card')).toBeHidden();
   await idle(page);
 
-  // Tour: Calvin leads the visitor to the UCLA door.
+  // Tour: Calvin leads the visitor past every gym. First stop is the UCLA door, then on to Deloitte.
   await standAt(page, 'calvin-plaza', 'Talk to Calvin');
   await interact(page, isMobile);
   await page.getByRole('button', { name: 'Show me around' }).click();
@@ -108,6 +108,12 @@ test('plaza Calvin: choices, the About card, and the tour to UCLA', async ({ pag
   const p = await page.evaluate(() => window.__mypark!.player);
   expect(p.x).toBeLessThan(22);
   expect(Math.abs(p.z - 49.5)).toBeLessThan(2);
+  await page.getByRole('button', { name: 'Next stop' }).click();
+  await expect(page.locator('.dialogue-text')).toContainText('Deloitte', { timeout: 60_000 });
+  const q = await page.evaluate(() => window.__mypark!.player);
+  expect(Math.abs(q.z - 37.5)).toBeLessThan(2);
+  await page.getByRole('button', { name: "I'll take it from here" }).click();
+  await expect(page.locator('.dialogue')).toBeHidden();
 });
 
 test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and progress persists', async ({ page, isMobile }, info) => {

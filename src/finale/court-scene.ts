@@ -18,6 +18,7 @@ const JUMP = 0.38; // how high the visitor leaves the floor on a jumper
 const BALL_R = 0.17;
 
 const ease = (k: number) => k * k * (3 - 2 * k);
+const L = THREE.MathUtils.lerp;
 
 type Tween = { t: number; dur: number; step(k: number): void; done(): void };
 
@@ -83,6 +84,7 @@ export class CourtScene {
   }
 
   update(dt: number): void {
+    if (this.dribbling) this.dribbleT += dt;
     for (const tw of [...this.tweens]) {
       tw.t += dt;
       const k = Math.min(1, tw.t / tw.dur);
@@ -126,6 +128,44 @@ export class CourtScene {
     this.player.facing = Math.atan2(RIM.x - x, RIM.z - z);
     this.player.object.rotation.y = this.player.facing;
     this.holdBall(x, z);
+    this.startDribble();
+  }
+
+  // ----- dribbling: from the moment the ball is picked up until the shot -----
+
+  private dribbling = false;
+  private dribbleT = 0;
+  private readonly DRIBBLE_S = 0.52; // one bounce, hand to floor to hand
+
+  private startDribble(): void {
+    if (this.skip) return; // reduced motion: the ball is just held
+    this.dribbling = true;
+    const body = this.player.body;
+    if (body) body.onPose = () => this.poseDribble();
+  }
+
+  private stopDribble(): void {
+    this.dribbling = false;
+  }
+
+  /** Hand height (0 at the floor end, 1 at the top) for the current point of the bounce. */
+  private dribbleHeight(): number {
+    return Math.abs(Math.cos((this.dribbleT / this.DRIBBLE_S) * Math.PI));
+  }
+
+  private poseDribble(): void {
+    const body = this.player.body;
+    if (!body || !this.dribbling) return;
+    const h = this.dribbleHeight();
+    const hands = this.poseArms(body, this.player.object, 1, 'dribble', h);
+    // The ball follows the dribbling hand across the floor, and bounces between it and the ground.
+    const hand = hands[0];
+    if (hand) this.ball.position.set(hand.x, BALL_R + (hand.y - 0.08 - BALL_R) * h, hand.z);
+  }
+
+  /** How far the shooter is from the rim, on the floor. Drives the size of the green window. */
+  shotDistance(): number {
+    return Math.hypot(RIM.x - this.player.x, RIM.z - this.player.z);
   }
 
   // ----- the jump shot: gather, rise, release at the top, land -----
@@ -139,7 +179,7 @@ export class CourtScene {
   private readonly tmp2 = new THREE.Vector3();
 
   /** Raise a character's arms toward a pose: a jump shot (shooting arm under the ball) or a block (both hands high). */
-  private poseArms(body: Character, holder: THREE.Object3D, amount: number, style: 'shot' | 'block'): THREE.Vector3[] {
+  private poseArms(body: Character, holder: THREE.Object3D, amount: number, style: 'shot' | 'block' | 'dribble', bounce = 0): THREE.Vector3[] {
     holder.getWorldQuaternion(this.facingQ);
     const k = ease(Math.min(1, amount));
     const inv = this.facingQ.clone().invert();
@@ -153,7 +193,12 @@ export class CourtScene {
       const sx = Math.sign(holder.worldToLocal(upper.getWorldPosition(this.tmp)).x) || side;
       let up: THREE.Vector3;
       let fore: THREE.Vector3;
-      if (style === 'block') {
+      if (style === 'dribble') {
+        // Only the dribbling hand: elbow by the hip, forearm pumping as the ball comes up and goes down.
+        if (!lead) continue;
+        up = new THREE.Vector3(sx * 0.3, -0.8, 0.42);
+        fore = new THREE.Vector3(sx * 0.12, L(-0.75, -0.15, bounce), 0.7);
+      } else if (style === 'block') {
         // Both arms straight up, the lead hand reaching a bit forward for the ball.
         up = new THREE.Vector3(sx * 0.22, 1, lead ? 0.35 : 0.15);
         fore = new THREE.Vector3(sx * 0.05, 1, lead ? 0.4 : 0.15);
@@ -262,6 +307,9 @@ export class CourtScene {
     const dist = Math.hypot(RIM.x - x, RIM.z - z);
     this.player.facing = Math.atan2(RIM.x - x, RIM.z - z);
     this.player.object.rotation.y = this.player.facing;
+    // Pick up the dribble: the ball comes up into the shooting pocket.
+    this.stopDribble();
+    this.holdBall(x, z);
     const { landed } = await this.rise(release?.then((m) => (made = m)));
     const flight = 0.55 + dist * 0.06;
     const lift = 1.5 + dist * 0.12;
@@ -278,6 +326,7 @@ export class CourtScene {
     }
     await landed;
     this.holdBall(this.player.x, this.player.z);
+    this.startDribble();
     return made;
   }
 
@@ -297,6 +346,7 @@ export class CourtScene {
   }
 
   endShootaround(): void {
+    this.stopDribble();
     this.tweens = [];
     this.ball.visible = false;
     this.arms = 0;

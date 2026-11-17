@@ -57,6 +57,8 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 | Shootaround how-to | `src/main.ts` | "Hold Shoot, let go at the top of the meter." (touch) / "Hold G, let go at the top of the meter." |
 | Slow-device notice | `src/content/dialogue.ts` (`toasts.slow`) | "Running slow on this device? The résumé button up top is the fast version." |
 | Badge how-to lines | `src/content/badges.ts` | "See every stop in the <gym> gym." (the old lines said to talk to Calvin, which isn't needed) |
+| Calvin's tour | `src/content/dialogue.ts` (`tour.*`) | One line at each gym door ("UCLA. Best years of my life. This is where it all started.", "Deloitte. Where my career started. Three projects inside.", "Meta. Three stops on feedback and features.", "BetMGM. Where I am now. Four stops inside, the most in the park.") and at the court. Choices: "Next stop", "Take me in", "I'll take it from here" |
+| Highlights poster | `src/ui/highlights.ts`, `src/world/art.ts` | "The park in one place" / "Highlights", "Go to the <company> gym →". The board in the plaza reads "HIGHLIGHTS" with a tile per gym |
 | Result screen buttons | `src/finale/game.ts` | Added "Résumé"; "Email" is now "Copy email" |
 | Station labels | `src/content/stations.ts` | Prompt names such as "Partnership Desk", "AI Lab", "Voice of the Customer" |
 | Photo captions | `src/content/stations.ts` | "BetMGM Product Summit." and "Meta HQ." are placeholders. Write the captions you want |
