@@ -324,7 +324,7 @@ export const careerData: Record<string, CareerEntry> = {
     tag: 'Education',
     title: 'UCLA',
     company: 'B.A. Business Economics · Graduated Dec 2019',
-    desc: 'UCLA was my dream school and some of the best years of my life! I always get nostalgia thinking about it. Go Bruins!',
+    desc: 'UCLA was my dream school and some of the best years of my life! I always get nostalgic thinking about it. Go Bruins!',
     impact: [],
     screens: [
       {

@@ -81,6 +81,8 @@ const props: Prop[] = [
   { model: 'fountain', x: 32, z: 47, w: 3, d: 3, h: 1.2, color: C.stone, blocks: true, label: 'SPAWN PLAZA' },
   { model: 'signpost', x: 28, z: 45, w: 1, d: 1, h: 2.4, color: C.wood, blocks: true },
   { model: 'resume-kiosk', x: 37, z: 45, w: 1, d: 1, h: 1.8, color: C.kiosk, blocks: true },
+  // The highlights poster: every gym and stop on one sheet, right by spawn.
+  { model: 'poster-board', x: 36.4, z: 49.6, w: 2.4, d: 0.4, h: 2.5, color: C.wood, blocks: true },
 
   // Calvin's Court: fence with gaps at the west path and the south walk, bleachers, hoop.
   { model: 'fence', x: 29, z: 2, w: 18, d: 1, h: 2, color: C.fence, blocks: true },
@@ -92,10 +94,8 @@ const props: Prop[] = [
   { model: 'bleachers', x: 32, z: 3, w: 12, d: 1, h: 1.6, color: C.bleacher, blocks: true, label: "CALVIN'S COURT" },
   // The hoop stands at the north end, in front of the bleachers, facing the camera.
   { model: 'hoop', x: 37, z: 4, w: 2, d: 1, h: 3.6, color: 0xe5e7eb, rotation: 0, blocks: true },
-  // Loose balls for a shootaround (decor: you can walk through them).
-  { model: 'basketball', x: 34, z: 9, w: 1, d: 1, h: 0.34, color: 0xe8752a, blocks: false },
-  { model: 'basketball', x: 42, z: 12, w: 1, d: 1, h: 0.34, color: 0xe8752a, blocks: false },
-  { model: 'basketball', x: 43, z: 6, w: 1, d: 1, h: 0.34, color: 0xe8752a, blocks: false },
+  // Loose balls for a shootaround are live objects (src/world/loose-balls.ts) that roll around the court,
+  // so they aren't props. Their pick-up spots below are just where they start.
 
   // A model jet on a stand, east of the court (the JetBlue challenge).
   { model: 'airplane', x: 47, z: 6, w: 3, d: 5, h: 2.6, color: 0xf8fafc, blocks: true },
@@ -122,6 +122,7 @@ const doors: Door[] = [
 const interactables: Interactable[] = [
   { id: 'plaza/signpost', kind: 'sign', label: 'Signpost', x: 28.5, z: 46.7, radius: 1.3, dialogue: 'plaza.signpost' },
   { id: 'plaza/resume-kiosk', kind: 'kiosk', label: 'Résumé Kiosk', x: 37.5, z: 46.7, radius: 1.3, href: '/resume.pdf' },
+  { id: 'plaza/highlights', kind: 'poster', label: 'Highlights', x: 37.6, z: 51.0, radius: 1.4 },
 
   // The Weightroom.
   { id: 'weightroom/sports-betting', kind: 'station', label: 'Sportsbook Ticker', x: 31.5, z: 26, radius: 1.2, station: 'weightroom/sports-betting' },
@@ -131,7 +132,7 @@ const interactables: Interactable[] = [
   // Just for fun: pick up the dumbbells and press them overhead.
   { id: 'weightroom/dumbbells', kind: 'lift', label: 'Grab the dumbbells', x: 40, z: 32.8, radius: 1.1 },
 
-  // Shootaround: every loose ball on the court can be picked up and shot from where it lies.
+  // Shootaround: every loose ball on the court can be picked up and shot from wherever it has rolled to.
   { id: 'court/ball-1', kind: 'shoot', label: 'Pick up the ball', x: 34.5, z: 9.5, radius: 1.3 },
   { id: 'court/ball-2', kind: 'shoot', label: 'Pick up the ball', x: 42.5, z: 12.5, radius: 1.3 },
   { id: 'court/ball-3', kind: 'shoot', label: 'Pick up the ball', x: 43.5, z: 6.5, radius: 1.3 },

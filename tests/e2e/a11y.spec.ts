@@ -24,6 +24,9 @@ test('title and character select', async ({ page }) => {
   await scan(page, 'title screen');
   await page.locator('#title-start').click();
   await expect(page.locator('#select')).toBeVisible();
+  // Let the title finish fading out and the select finish fading in: half-faded text isn't a real state.
+  await expect(page.locator('#title')).toBeHidden();
+  await expect(page.locator('#select')).not.toHaveClass(/is-entering/);
   await scan(page, 'character select');
 });
 
@@ -34,7 +37,7 @@ test('HUD, quick links, tracker, badge case, minimap', async ({ page }) => {
   await scan(page, 'tracker open');
   await page.keyboard.press('Escape');
   await page.locator('#badge-case').click();
-  await expect(page.locator('.badge-panel:not(.settings-panel)').first()).toBeVisible();
+  await expect(page.locator('.badge-panel:not(.settings-panel):not(.highlights-panel)').first()).toBeVisible();
   await scan(page, 'badge case');
   await page.keyboard.press('Escape');
   await page.locator('#hud-settings').click();
@@ -78,7 +81,7 @@ test('the 1-on-1: each question type and the result screen', async ({ page }) =>
   await page.waitForTimeout(320);
   await page.locator('.prompt').click();
   for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
-    await page.locator('.dialogue').click();
+    await page.locator('.dialogue:not(.is-leaving)').click();
     await page.waitForTimeout(250);
   }
   await page.getByRole('button', { name: 'Run it' }).click();

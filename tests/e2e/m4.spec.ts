@@ -45,7 +45,7 @@ async function standAt(page: Page, id: string, label: RegExp | string): Promise<
 async function dismiss(page: Page): Promise<void> {
   const card = page.locator('.card');
   const photo = page.locator('.lightbox');
-  const talk = page.locator('.dialogue');
+  const talk = page.locator('.dialogue:not(.is-leaving)');
   await expect.poll(async () => (await card.isVisible()) || (await photo.isVisible()) || (await talk.isVisible()), { timeout: 15_000 }).toBe(true);
   if (await photo.isVisible()) await page.locator('.lightbox-close').click();
   else if (await card.isVisible()) await page.locator('.card-close').click();
@@ -92,7 +92,7 @@ test('UCLA, Deloitte, and Meta: visit every station, earn each badge from the gy
     expect(await page.evaluate(() => window.__mypark!.badges)).toContain(gym.prefix);
     await expect(page.locator('#badge-case .medal.is-earned')).toHaveCount(n + 1);
     if (n === 1) await expect(page.locator('#toast')).toContainText('Two badges already?');
-    const talk = page.locator('.dialogue');
+    const talk = page.locator('.dialogue:not(.is-leaving)');
 
     // Talking again doesn't award twice: a new line, then the overview card.
     await standAt(page, `calvin-${gym.prefix}`, 'Talk to Calvin');
@@ -141,7 +141,7 @@ test('the Weightroom: five stops, then the Explorer badge', async ({ page, isMob
 test('badge case: lists all six badges, and reset clears progress', async ({ page }) => {
   await boot(page, '/', { look: 'c', badges: ['ucla'], visitedStations: ['ucla/clubs'] });
   await page.locator('#badge-case').click();
-  const panel = page.locator('.badge-panel:not(.settings-panel)');
+  const panel = page.locator('.badge-panel:not(.settings-panel):not(.highlights-panel)');
   await expect(panel).toBeVisible();
   await expect(panel.locator('.badge-row')).toHaveCount(badges.length);
   await expect(panel.locator('.badge-row.is-earned')).toHaveCount(1);
@@ -149,7 +149,7 @@ test('badge case: lists all six badges, and reset clears progress', async ({ pag
   expect(await page.evaluate(() => window.__mypark!.busy)).toBe(true);
 
   await panel.locator('.badge-reset').click();
-  await expect(panel.locator('.badge-reset')).toHaveText('Tap again to clear everything');
+  await expect(panel.locator('.badge-reset')).toHaveText(/^(Tap|Click) again to clear everything$/);
   await panel.locator('.badge-reset').click();
   // Back to a first visit: title screen, nothing saved.
   await expect(page.locator('#title')).toBeVisible({ timeout: 30_000 });
@@ -249,8 +249,8 @@ test('talking to the gym leader offers a walkthrough that steps through every st
   await idle(page);
   await standAt(page, 'calvin-deloitte', 'Talk to Calvin');
   await interact(page, isMobile);
-  // His welcome is one line, and the choices are there as soon as it finishes typing. Finish comes first.
-  await expect(page.locator('.dialogue-choice')).toHaveText(['Finish this gym', 'Walk me through it', "I'll look around"], { timeout: 20_000 });
+  // His welcome is one line, and the choices are there as soon as it finishes typing. The walkthrough comes first.
+  await expect(page.locator('.dialogue-choice')).toHaveText(['Walk me through it', 'Skip to the badge', "I'll look around"], { timeout: 20_000 });
   await page.getByRole('button', { name: 'Walk me through it' }).click();
 
   const card = page.locator('.card');
@@ -347,7 +347,7 @@ test('clicking or tapping the station itself, or Calvin, walks over and uses it'
   });
   if (isMobile) await page.touchscreen.tap(calvin.x, calvin.y - 20);
   else await page.mouse.click(calvin.x, calvin.y - 20);
-  await expect(page.locator('.dialogue')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('.dialogue-speaker')).toHaveText('Calvin');
 });
 
@@ -406,16 +406,19 @@ test('the mini jet by the court tells the JetBlue story', async ({ page, isMobil
   await expect.poll(() => page.locator('.card .card-photo').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
 });
 
-test('Finish: one choice with the gym leader completes the gym and awards the badge', async ({ page, isMobile }) => {
+test('Skip to the badge: one choice with the gym leader completes the gym and awards the badge', async ({ page, isMobile }) => {
   await boot(page, '/#/gym/ucla');
   await idle(page);
   await standAt(page, 'calvin-ucla', 'Talk to Calvin');
   await interact(page, isMobile);
-  await expect(page.locator('.dialogue-choice').first()).toHaveText('Finish this gym', { timeout: 20_000 });
-  // It's the focused choice, so Enter is enough on a keyboard.
-  if (isMobile) await page.locator('.dialogue-choice').first().click();
+  const skip = page.getByRole('button', { name: 'Skip to the badge' });
+  await expect(skip).toBeVisible({ timeout: 20_000 });
+  // The walkthrough has focus; on a keyboard it's one arrow over, then Enter.
+  if (isMobile) await skip.click();
   else {
     await expect(page.locator('.dialogue-choice').first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(skip).toBeFocused();
     await page.keyboard.press('Enter');
   }
   await expect(page.locator('.ceremony-name')).toHaveText('Bruin Badge');
@@ -429,7 +432,7 @@ test('Finish: one choice with the gym leader completes the gym and awards the ba
 test('badge case has a jump button for every badge', async ({ page }) => {
   await boot(page);
   await page.locator('#badge-case').click();
-  await expect(page.locator('.badge-go')).toHaveText(['Jump to gym →', 'Jump to gym →', 'Jump to gym →', 'Jump to gym →', 'Jump to the Weightroom →', 'Jump to the court →']);
+  await expect(page.locator('.badge-go')).toHaveText(['Jump to UCLA →', 'Jump to Deloitte →', 'Jump to Meta →', 'Jump to BetMGM →', 'Jump to the Weightroom →', 'Jump to the court →']);
   await page.locator('.badge-row', { hasText: 'High Roller Badge' }).locator('.badge-go').click();
   await expect.poll(() => page.evaluate(() => window.__mypark!.scene), { timeout: 20_000 }).toBe('gym-betmgm');
   await idle(page);
@@ -465,7 +468,7 @@ test('"I\'ll look around" closes the conversation with no pop-up', async ({ page
   await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
   await interact(page, isMobile);
   await page.getByRole('button', { name: "I'll look around" }).click();
-  await expect(page.locator('.dialogue')).toBeHidden();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeHidden();
   await idle(page);
   await page.waitForTimeout(400);
   await expect(page.locator('.card')).toBeHidden();

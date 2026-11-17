@@ -301,6 +301,29 @@ Side effect worth knowing: plain-colored static geometry now merges into one mes
 
 ---
 
+## M7.5: Motion, feel, and review fixes ★ (ready for review)
+
+Calvin asked for a polish milestone after M7: smooth, animated transitions everywhere, better basketball, and a full mobile + desktop review.
+
+- **Motion.** One enter/leave helper (`src/ui/motion.ts`). Every overlay now animates out instead of vanishing. Dialogue opens and closes like an old TV (dot, scanline, box). Doors close and open as an iris on the player. Cards ease in and out, and the camera eases its zoom.
+- **Phone sheet.** Drag down from anywhere (once scrolled to the top) to dismiss. Short cards size to their content. Sideways swipe changes station. The header folds to one line on scroll. Short landscape screens get the sheet too. Before/after rows stack.
+- **Basketball.**
+  - Shootaround: real jump shots with a 2K-style hold-and-release meter (green release always falls), streaks (HEATING UP, ON FIRE), and rebounds back to the shooter.
+  - 1-on-1: possessions play as a step-back three, a crossover dunk, a Euro step, or Calvin's block and pull-up, with callouts and screen shake. The game ends with one last play: a layup on Calvin, or a block.
+- **Weightroom.** Curl (G) and overhead press (H).
+- **Loading screen.** Sunset over the park's skyline, a dribbling ball, live percentage, résumé button.
+- **Review fixes.** The two review agents' main findings, fixed:
+  - slow-device screen no longer interrupts a session;
+  - keyboard: lightbox and gallery arrows, tabs, focus traps;
+  - touch: focus rings, tap targets, badge count and named jump buttons;
+  - result-screen Résumé button;
+  - Meta logo on Safari (the SVG had no size).
+- **Calvin's calls (Nov 17):**
+  - The AI at BetMGM screenshots are now blurred: internal links, names, faces, repo path and repo stats. This also covers the unused `team-os.webp`.
+  - The station names stay as they are.
+  - "Walk me through it" is now the first gym leader choice, followed by "Skip to the badge".
+  - "nostalgic" is fixed.
+
 ## Decisions and deviations from the plan
 
 Defaults I picked where the plan was ambiguous or didn't fit. Flag any you want reversed.

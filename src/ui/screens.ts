@@ -1,13 +1,14 @@
 import { TRAINER_LOOKS, type Look } from '../world/looks';
+import { hide, show as reveal } from './motion';
 import type { SelectStage } from './select-stage';
 
 // Loading, title, and character select. Plain DOM over the canvas.
 
 // TODO(calvin): review loading tips.
 const TIPS = [
-  "Tip: there's a résumé button in the top right if you're in a hurry.",
   'Tip: tap or click the ground and you walk there.',
   'Tip: on a phone, push the joystick all the way to sprint.',
+  "Tip: on the court, hold Shoot and let go at the top of the meter. That's a green release.",
 ];
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -24,13 +25,19 @@ export class Screens {
     let i = 0;
     this.tip.textContent = TIPS[0];
     this.tipTimer = window.setInterval(() => {
-      i = (i + 1) % TIPS.length;
-      this.tip.textContent = TIPS[i];
-    }, 2600);
+      // Fade out, swap, fade back in.
+      this.tip.classList.add('is-swapping');
+      window.setTimeout(() => {
+        i = (i + 1) % TIPS.length;
+        this.tip.textContent = TIPS[i];
+        this.tip.classList.remove('is-swapping');
+      }, 300);
+    }, 3200);
   }
 
   setProgress(fraction: number): void {
     this.bar.style.transform = `scaleX(${Math.max(0.04, Math.min(1, fraction))})`;
+    el('loading-pct').textContent = `${Math.round(Math.max(0, Math.min(1, fraction)) * 100)}%`;
     document.getElementById('loading-track')!.setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
   }
 
@@ -48,7 +55,7 @@ export class Screens {
     return new Promise((resolve) => {
       const go = () => {
         window.removeEventListener('keydown', onKey);
-        this.title.hidden = true;
+        void hide(this.title);
         resolve();
       };
       const onKey = (e: KeyboardEvent) => {
@@ -65,7 +72,7 @@ export class Screens {
 
   /** Character select. Arrow keys, buttons, or swipe to browse; Enter or the button confirms. */
   showSelect(stage: SelectStage, initial: number): Promise<Look> {
-    this.select.hidden = false;
+    reveal(this.select);
     const name = el('select-name');
     const dots = el('select-dots');
     const confirm = el<HTMLButtonElement>('select-confirm');
@@ -87,7 +94,7 @@ export class Screens {
         window.removeEventListener('keydown', onKey);
         this.select.removeEventListener('pointerdown', onDown);
         this.select.removeEventListener('pointerup', onUp);
-        this.select.hidden = true;
+        void hide(this.select);
         resolve(TRAINER_LOOKS[stage.index]);
       };
       const onKey = (e: KeyboardEvent) => {

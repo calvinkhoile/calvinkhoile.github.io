@@ -19,6 +19,7 @@ export interface CameraOptions {
 }
 
 const SMOOTH_TIME = 0.15; // critically damped follow
+const ZOOM_TIME = 0.22; // zoom changes ease in about 0.4s
 const LEAD = 1.4; // world units the camera looks ahead at full walk speed
 const BASE_DISTANCE = 46;
 const MIN_VISIBLE_WIDTH = 17; // world units across the screen, so portrait phones zoom out
@@ -42,6 +43,7 @@ export class FollowCamera {
     this.pitch = THREE.MathUtils.degToRad(opts.pitchDeg ?? 50);
     this.reducedMotion = opts.reducedMotion ?? false;
     this.zoomOut = opts.zoomOut ?? 1;
+    this.zoomGoal = this.zoomOut;
     this.camera = new THREE.PerspectiveCamera(opts.fovDeg ?? 30, 1, 1, 400);
   }
 
@@ -50,10 +52,19 @@ export class FollowCamera {
   }
 
   /** Distance multiplier: under 1 moves in (interiors), over 1 pulls back. */
-  setZoomOut(k: number): void {
-    this.zoomOut = k;
-    this.resize(this.aspect);
+  /** Zoom eases to the new level over ~0.4s (instant with reduced motion). */
+  setZoomOut(k: number, instant = false): void {
+    this.zoomGoal = k;
+    if (instant || this.reducedMotion) {
+      this.zoomOut = k;
+      this.zoomVel = 0;
+      this.resize(this.aspect);
+    }
   }
+
+  private zoomGoal = 1;
+  private zoomVel = 0;
+  private fitDistance = BASE_DISTANCE;
 
   resize(aspect: number): void {
     this.aspect = aspect;
@@ -61,6 +72,7 @@ export class FollowCamera {
     const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2);
     const widthAtBase = 2 * BASE_DISTANCE * Math.tan(halfFov) * aspect;
     const fit = widthAtBase < MIN_VISIBLE_WIDTH ? BASE_DISTANCE * (MIN_VISIBLE_WIDTH / widthAtBase) : BASE_DISTANCE;
+    this.fitDistance = fit;
     this.distance = fit * this.zoomOut;
     this.camera.updateProjectionMatrix();
     this.place();
@@ -90,6 +102,12 @@ export class FollowCamera {
     this.velX = sx.velocity;
     this.target.z = sz.value;
     this.velZ = sz.velocity;
+    if (this.zoomOut !== this.zoomGoal) {
+      const zz = smoothDamp(this.zoomOut, this.zoomGoal, this.zoomVel, ZOOM_TIME, dt);
+      this.zoomOut = Math.abs(zz.value - this.zoomGoal) < 0.0005 ? this.zoomGoal : zz.value;
+      this.zoomVel = zz.velocity;
+      this.distance = this.fitDistance * this.zoomOut;
+    }
     this.place();
   }
 

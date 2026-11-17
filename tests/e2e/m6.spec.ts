@@ -34,7 +34,7 @@ async function challenge(page: Page): Promise<void> {
   await page.locator('.prompt').click();
   await expect(page.locator('.dialogue-text')).toContainText('So you made it');
   for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
-    await page.locator('.dialogue').click();
+    await page.locator('.dialogue:not(.is-leaving)').click();
     await page.waitForTimeout(250);
   }
   await page.getByRole('button', { name: 'Run it' }).click();
@@ -115,7 +115,9 @@ test('win: five right answers, Park Legend badge, result screen with contact and
   await expect(page.locator('.result-headline')).toHaveText('You beat Calvin.');
   await expect(page.locator('.result-score')).toContainText('You answered 5/5.');
   await expect(page.locator('.finale-result')).toContainText("Respect. Let's actually talk.");
-  await expect(page.locator('.result-contact a').first()).toHaveAttribute('href', 'https://www.linkedin.com/in/calvinle13/');
+  // Résumé first, then LinkedIn.
+  await expect(page.locator('.result-contact a').first()).toHaveAttribute('href', '/resume.pdf');
+  await expect(page.locator('.result-contact a').nth(1)).toHaveAttribute('href', 'https://www.linkedin.com/in/calvinle13/');
   await page.screenshot({ path: `docs/progress/m6-${info.project.name}-result.png` });
   if (!isMobile) {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -182,16 +184,16 @@ test('the court animations play, and "Not yet" backs out of the challenge', asyn
   await page.waitForTimeout(320);
   await page.locator('.prompt').click();
   for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
-    await page.locator('.dialogue').click();
+    await page.locator('.dialogue:not(.is-leaving)').click();
     await page.waitForTimeout(250);
   }
   await page.getByRole('button', { name: 'Not yet' }).click();
   await expect(page.locator('.dialogue-text')).toContainText("I'll be here");
-  for (let i = 0; i < 4 && (await page.locator('.dialogue').isVisible()); i++) {
-    await page.locator('.dialogue').click({ timeout: 2000 }).catch(() => {});
+  for (let i = 0; i < 4 && (await page.locator('.dialogue:not(.is-leaving)').isVisible()); i++) {
+    await page.locator('.dialogue:not(.is-leaving)').click({ timeout: 2000 }).catch(() => {});
     await page.waitForTimeout(200);
   }
-  await expect(page.locator('.dialogue')).toBeHidden();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeHidden();
   await expect(page.locator('.finale')).toBeHidden();
   await expect.poll(() => page.evaluate(() => window.__mypark!.busy)).toBe(false);
 
@@ -215,7 +217,7 @@ test('keyboard only: play the whole finale without a mouse', async ({ page, isMo
   await expect(page.locator('.prompt')).toContainText('Talk to Calvin');
   await page.waitForTimeout(320);
   await page.keyboard.press('e');
-  await expect(page.locator('.dialogue')).toBeVisible();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeVisible();
   for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
     await page.keyboard.press(i % 2 ? 'Enter' : 'ArrowRight');
     await page.waitForTimeout(250);

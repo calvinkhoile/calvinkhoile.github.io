@@ -1,4 +1,6 @@
 import { badges, type Badge } from '../content/badges';
+import { trapTab } from './focus';
+import { hide, isLeaving, show } from './motion';
 
 const medal = (b: Badge, cls = '') =>
   `<span class="medal ${cls}" style="--medal:${b.color};--medal-accent:${b.accent}" aria-hidden="true"><span>${b.glyph}</span></span>`;
@@ -37,7 +39,8 @@ export class BadgeUi {
     caseHost.appendChild(this.caseBtn);
     root.append(this.panel, this.ceremonyEl);
 
-    this.caseBtn.addEventListener('click', () => (this.panel.hidden ? this.openPanel() : this.closePanel()));
+    // A panel still fading out counts as closed, so a quick second click reopens it instead of doing nothing.
+    this.caseBtn.addEventListener('click', () => (this.panelOpen ? this.closePanel() : this.openPanel()));
     this.panel.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
       if (t === this.panel || t.closest('.badge-panel-close')) return this.closePanel();
@@ -53,27 +56,29 @@ export class BadgeUi {
       if (reset.dataset.armed) this.opts.onReset();
       else {
         reset.dataset.armed = '1';
-        reset.textContent = 'Tap again to clear everything';
+        reset.textContent = `${document.body.classList.contains('is-touch') ? 'Tap' : 'Click'} again to clear everything`;
       }
     });
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Escape' && !this.panel.hidden) {
+      if (this.panel.hidden) return;
+      if (e.code === 'Escape') {
         e.preventDefault();
         this.closePanel();
-      }
+      } else trapTab(this.panel, e);
     });
     this.refresh(this.owned);
   }
 
   get panelOpen(): boolean {
-    return !this.panel.hidden;
+    return !this.panel.hidden && !isLeaving(this.panel);
   }
 
   refresh(owned: ReadonlySet<string>): void {
     this.owned = owned;
     const count = badges.filter((b) => owned.has(b.id)).length;
     this.caseBtn.setAttribute('aria-label', `Badges: ${count} of ${badges.length} earned. Open badge case.`);
-    this.caseBtn.innerHTML = badges.map((b) => medal(b, owned.has(b.id) ? 'is-earned' : '')).join('');
+    // A count up front, so the row of empty circles reads as "badges to collect".
+    this.caseBtn.innerHTML = `<span class="badge-count" aria-hidden="true">${count}/${badges.length}</span>` + badges.map((b) => medal(b, owned.has(b.id) ? 'is-earned' : '')).join('');
     if (!this.panel.hidden) this.renderPanel();
   }
 
@@ -90,7 +95,8 @@ export class BadgeUi {
             const earned = this.owned.has(b.id);
             // Every badge has a shortcut to the place that awards it.
             const route = b.scene ? `gym/${b.id}` : b.id === 'explorer' ? 'weightroom' : 'court';
-            const where = b.scene ? 'Jump to gym' : b.id === 'explorer' ? 'Jump to the Weightroom' : 'Jump to the court';
+            const gym: Record<string, string> = { ucla: 'UCLA', deloitte: 'Deloitte', meta: 'Meta', betmgm: 'BetMGM' };
+            const where = b.scene ? `Jump to ${gym[b.id] ?? 'the gym'}` : b.id === 'explorer' ? 'Jump to the Weightroom' : 'Jump to the court';
             return `<li class="badge-row${earned ? ' is-earned' : ''}">${medal(b, earned ? 'is-earned' : '')}
               <div><strong>${b.name}</strong><p>${earned ? 'Earned ✓' : b.how}</p></div>
               <button type="button" class="badge-go" data-go="${route}">${where} →</button></li>`;
@@ -103,15 +109,15 @@ export class BadgeUi {
 
   private openPanel(): void {
     this.returnFocus = document.activeElement as HTMLElement | null;
-    this.panel.hidden = false;
+    show(this.panel);
     this.renderPanel();
     this.opts.onToggle(true);
     (this.panel.querySelector('.badge-panel-close') as HTMLElement).focus({ preventScroll: true });
   }
 
   closePanel(): void {
-    if (this.panel.hidden) return;
-    this.panel.hidden = true;
+    if (this.panel.hidden || isLeaving(this.panel)) return;
+    void hide(this.panel);
     this.opts.onToggle(false);
     this.returnFocus?.focus?.({ preventScroll: true });
   }
@@ -132,7 +138,7 @@ export class BadgeUi {
         <h2 class="ceremony-name">${badge.name}</h2>
         <button type="button" class="btn btn-primary ceremony-continue">Continue</button>
       </div>`;
-    this.ceremonyEl.hidden = false;
+    show(this.ceremonyEl, { replay: true });
     navigator.vibrate?.([30, 40, 60]);
     const button = this.ceremonyEl.querySelector('.ceremony-continue') as HTMLButtonElement;
     button.focus({ preventScroll: true });
@@ -145,8 +151,7 @@ export class BadgeUi {
         'click',
         () => {
           window.removeEventListener('keydown', onKey);
-          this.ceremonyEl.hidden = true;
-          this.ceremonyEl.replaceChildren();
+          void hide(this.ceremonyEl).then(() => this.ceremonyEl.replaceChildren());
           resolve();
         },
         { once: true },

@@ -286,9 +286,12 @@ export function logoSign(url: string, bg: number, aspect: number): THREE.MeshBas
   const img = new Image();
   img.onload = () => {
     const pad = 0.14;
-    const scale = Math.min((w * (1 - pad * 2)) / img.width, (h * (1 - pad * 2)) / img.height);
-    const dw = img.width * scale;
-    const dh = img.height * scale;
+    // An SVG without width/height has no intrinsic size in Safari and Firefox: treat it as square.
+    const iw = img.naturalWidth || h;
+    const ih = img.naturalHeight || h;
+    const scale = Math.min((w * (1 - pad * 2)) / iw, (h * (1 - pad * 2)) / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
     ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
     tex.needsUpdate = true;
   };
@@ -458,6 +461,9 @@ export function buildArt(map: MapDef, kit: Kit, q: QualitySettings): ArtScene {
         break;
       case 'resume-kiosk':
         animated.push(buildKiosk(shared, p));
+        break;
+      case 'poster-board':
+        buildPosterBoard(shared, p);
         break;
       case 'fence':
         buildFence(shared, p);
@@ -1028,6 +1034,44 @@ function buildKiosk(b: Builder, p: Prop): (time: number) => void {
   return (time) => screenMat.color.lerpColors(c, a, 0.5 + Math.sin(time * 3) * 0.5);
 }
 
+/** The highlights poster in the plaza: two posts and a board with a tile per gym, facing the camera (south). */
+function buildPosterBoard(b: Builder, p: Prop): void {
+  const wood = b.mat(PALETTE.wood ?? 0x8b5a2b);
+  const z = p.z + p.d / 2;
+  for (const x of [p.x + 0.15, p.x + p.w - 0.27]) b.box(x, 0, z - 0.06, 0.12, p.h - 0.2, 0.12, wood);
+  b.box(p.x, 0.75, z - 0.08, p.w, p.h - 0.85, 0.1, b.mat(0x1f2937));
+  const W = 512;
+  const H = Math.round((W * (p.h - 0.95)) / (p.w - 0.1));
+  const tex = canvasTexture(W, H, (ctx) => {
+    ctx.fillStyle = '#0b0d12';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.round(H * 0.16)}px "Lilita One", Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('HIGHLIGHTS', W / 2, H * 0.2);
+    // A tile per gym, latest first, in each one's colors.
+    const tiles: [string, string, string][] = [
+      ['BetMGM', '#c5a15a', '#000'],
+      ['Meta', '#0866ff', '#fff'],
+      ['Deloitte', '#86bc25', '#000'],
+      ['UCLA', '#2774ae', '#ffd100'],
+    ];
+    const pad = W * 0.05;
+    const tw = (W - pad * 3) / 2;
+    const th = (H * 0.72 - pad * 3) / 2;
+    tiles.forEach(([name, bg, fg], i) => {
+      const x = pad + (i % 2) * (tw + pad);
+      const y = H * 0.28 + pad / 2 + Math.floor(i / 2) * (th + pad);
+      ctx.fillStyle = bg;
+      ctx.fillRect(x, y, tw, th);
+      ctx.fillStyle = fg;
+      ctx.font = `bold ${Math.round(th * 0.38)}px "Lilita One", Inter, sans-serif`;
+      ctx.fillText(name, x + tw / 2, y + th * 0.64);
+    });
+  });
+  b.panel(p.x + p.w / 2, 0.75 + (p.h - 0.85) / 2, z, p.w - 0.1, p.h - 0.95, 's', new THREE.MeshBasicMaterial({ map: tex }), 0.08);
+}
+
 function buildFence(b: Builder, p: Prop): void {
   // Chain-link: posts, a top rail, and a see-through panel, so the court stays visible from outside.
   const steel = b.mat(PALETTE.steel);
@@ -1456,7 +1500,7 @@ export function createSun(renderer: THREE.WebGLRenderer, mapSize: number): Sun {
   const setShadows = (size: number) => {
     const on = size > 0;
     renderer.shadowMap.enabled = on;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     sun.castShadow = on;
     if (on && sun.shadow.mapSize.x !== size) {
       sun.shadow.mapSize.set(size, size);

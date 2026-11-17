@@ -5,7 +5,7 @@ import type { Npc } from './npc';
 
 export interface Target {
   id: string;
-  kind: 'station' | 'sign' | 'kiosk' | 'lift' | 'shoot' | 'npc' | 'door';
+  kind: 'station' | 'sign' | 'kiosk' | 'lift' | 'shoot' | 'poster' | 'npc' | 'door';
   label: string;
   x: number;
   z: number;
@@ -85,7 +85,8 @@ export class Interactions {
       if (i.kind === 'station' && !station) throw new Error(`map ${map.id}: unknown station "${i.station}"`);
       const target: Target = { id: i.id, kind: i.kind, label: station?.label ?? i.label, x: i.x, z: i.z, radius: i.radius, height: 2.2, anchor: propAnchor(map, i.x, i.z), source: i, station };
       this.targets.push(target);
-      if (i.kind === 'station' || i.kind === 'lift' || i.kind === 'shoot') this.addRing(target);
+      if (i.kind === 'station') this.addRing(target);
+      else if (i.kind === 'lift' || i.kind === 'shoot') this.addPlayRing(target);
     }
     for (const d of map.doors) {
       this.targets.push({ id: d.id, kind: 'door', label: doorLabel(d), x: d.x + 0.5, z: d.z + 0.5, radius: 1.15, height: 2.7, anchor: { x: d.x + 0.5, y: 1.2, z: d.z + 0.5 }, door: d });
@@ -110,6 +111,28 @@ export class Interactions {
     check.visible = false;
     this.root.add(check);
     this.rings.set(t.id, { index: this.rings.size, x: t.x, z: t.z, check, color: t.kind === 'station' ? RING_TODO : RING_PLAY });
+  }
+
+  /**
+   * Things to do (dumbbells, loose balls) get their own orange ring that follows the target (balls roll)
+   * and flashes every couple of seconds instead of glowing all the time.
+   */
+  private readonly playRings = new Map<string, { mesh: THREE.Mesh; target: Target; phase: number; hidden: boolean }>();
+  private static playGeo: THREE.RingGeometry | null = null;
+
+  private addPlayRing(t: Target): void {
+    Interactions.playGeo ??= new THREE.RingGeometry(0.72, 0.92, 40).rotateX(-Math.PI / 2) as THREE.RingGeometry;
+    const mesh = new THREE.Mesh(Interactions.playGeo, new THREE.MeshBasicMaterial({ color: RING_PLAY, transparent: true, opacity: 0.2, depthWrite: false }));
+    mesh.position.set(t.x, 0.05, t.z);
+    this.root.add(mesh);
+    // Spread the flashes out so the rings don't blink in unison.
+    this.playRings.set(t.id, { mesh, target: t, phase: this.playRings.size * 0.83, hidden: false });
+  }
+
+  /** Hide a play ring (a ball that's been picked up, or one that's out of play). */
+  setRingHidden(id: string, hidden: boolean): void {
+    const r = this.playRings.get(id);
+    if (r) r.hidden = hidden;
   }
 
   private buildRings(): void {
@@ -222,7 +245,7 @@ export class Interactions {
 
   /** Desktop: brighten the ring of whatever the pointer is over. */
   setHover(target: Target | null): void {
-    const id = target && this.rings.has(target.id) ? target.id : null;
+    const id = target && (this.rings.has(target.id) || this.playRings.has(target.id)) ? target.id : null;
     if (id === this.hovered) return;
     this.hovered = id;
     this.refresh(this.lastVisited);
@@ -239,6 +262,21 @@ export class Interactions {
 
   update(time: number, playerX: number, playerZ: number): void {
     this.placeRings(1 + Math.sin(time * 3) * 0.04);
+    // Play rings: faint most of the time, a quick flash every 2.6s. Full strength when hovered or in reach.
+    const FLASH_EVERY = 2.6;
+    const FLASH_FOR = 0.7;
+    for (const r of this.playRings.values()) {
+      const t = r.target;
+      r.mesh.visible = !r.hidden;
+      if (r.hidden) continue;
+      r.mesh.position.set(t.x, 0.05, t.z);
+      const k = ((time + r.phase) % FLASH_EVERY) / FLASH_FOR;
+      const flash = k < 1 ? Math.sin(k * Math.PI) : 0;
+      const near = Math.hypot(t.x - playerX, t.z - playerZ) < t.radius || this.hovered === t.id;
+      const mat = r.mesh.material as THREE.MeshBasicMaterial;
+      mat.opacity = near ? 0.9 : 0.14 + flash * 0.76;
+      r.mesh.scale.setScalar(1 + flash * 0.12);
+    }
     const g = this.guideTarget;
     if (!g) return;
     this.guide.position.set(g.x, 2.6 + Math.sin(time * 5) * 0.18, g.z);

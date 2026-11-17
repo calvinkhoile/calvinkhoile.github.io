@@ -1,4 +1,5 @@
 import type { DialogueChoice, DialogueNode } from '../content/dialogue';
+import { hide, show } from './motion';
 
 const CHARS_PER_SECOND = 40;
 
@@ -82,7 +83,7 @@ export class DialogueBox {
     this.finish(null, true); // close anything already open
     this.node = node;
     this.index = 0;
-    this.box.hidden = false;
+    show(this.box);
     this.showLine();
     return new Promise((resolve) => (this.resolve = resolve));
   }
@@ -103,7 +104,12 @@ export class DialogueBox {
 
   private showLine(): void {
     const line = this.node!.lines[this.index];
-    this.speaker.textContent = line.speaker;
+    if (this.speaker.textContent !== line.speaker) {
+      this.speaker.textContent = line.speaker;
+      this.speaker.classList.remove('is-new');
+      void this.speaker.offsetWidth;
+      this.speaker.classList.add('is-new');
+    }
     this.live.textContent = `${line.speaker}: ${line.text}`;
     this.choices.replaceChildren();
     this.more.hidden = true;
@@ -129,10 +135,11 @@ export class DialogueBox {
     this.typing = false;
     const last = this.index === node.lines.length - 1;
     if (last && node.choices?.length) {
-      for (const choice of node.choices) {
+      for (const [i, choice] of node.choices.entries()) {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'dialogue-choice';
+        b.style.setProperty('--i', String(i));
         b.textContent = choice.label;
         b.addEventListener('click', () => this.finish(choice, false));
         this.choices.appendChild(b);
@@ -148,8 +155,8 @@ export class DialogueBox {
     if (!this.node) return;
     window.clearInterval(this.timer);
     this.node = null;
-    this.box.hidden = true;
-    this.choices.replaceChildren();
+    // Leave the last line and choices on screen while the box powers off.
+    void hide(this.box);
     const resolve = this.resolve;
     this.resolve = null;
     resolve?.({ choice, skipped });

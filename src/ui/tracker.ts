@@ -1,3 +1,5 @@
+import { hide, isLeaving, show } from './motion';
+
 export interface TrackerItem {
   id: string;
   label: string;
@@ -48,11 +50,12 @@ export class Tracker {
   }
 
   get isOpen(): boolean {
-    return !this.panel.hidden;
+    return !this.panel.hidden && !isLeaving(this.panel);
   }
 
   setOpen(open: boolean): void {
-    this.panel.hidden = !open;
+    if (open) show(this.panel);
+    else void hide(this.panel);
     this.button.setAttribute('aria-expanded', String(open));
   }
 

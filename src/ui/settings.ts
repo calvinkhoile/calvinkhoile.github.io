@@ -1,4 +1,6 @@
 import type { QualityTier } from '../engine/quality';
+import { trapTab } from './focus';
+import { hide, isLeaving, show } from './motion';
 
 export interface SettingsState {
   sfx: boolean;
@@ -62,10 +64,11 @@ export class Settings {
       if (range.id === 'settings-volume') this.on.volume(Number(range.value));
     });
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Escape' && !this.el.hidden) {
+      if (this.el.hidden) return;
+      if (e.code === 'Escape') {
         e.preventDefault();
         this.close();
-      }
+      } else trapTab(this.el, e);
     });
   }
 
@@ -99,15 +102,15 @@ export class Settings {
 
   open(): void {
     this.returnFocus = document.activeElement as HTMLElement | null;
-    this.el.hidden = false;
+    show(this.el);
     this.render();
     this.on.toggle(true);
     (this.el.querySelector('.badge-panel-close') as HTMLElement).focus({ preventScroll: true });
   }
 
   close(): void {
-    if (this.el.hidden) return;
-    this.el.hidden = true;
+    if (this.el.hidden || isLeaving(this.el)) return;
+    void hide(this.el);
     this.on.toggle(false);
     this.returnFocus?.focus?.({ preventScroll: true });
   }

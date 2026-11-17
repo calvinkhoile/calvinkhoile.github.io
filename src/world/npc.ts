@@ -69,6 +69,7 @@ export class Npc {
       const near = lookAt && Math.hypot(lookAt.x - this.x, lookAt.z - this.z) < 5;
       target = near ? Math.atan2(lookAt!.x - this.x, lookAt!.z - this.z) : Math.atan2(this.spawn.faceX - this.x, this.spawn.faceZ - this.z);
     }
+    if (this.lockFacing !== null) target = this.lockFacing;
     let diff = target - this.facing;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     this.facing += diff * Math.min(1, TURN_RATE * dt);
@@ -77,8 +78,13 @@ export class Npc {
     this.sync();
   }
 
+  /** Height off the floor, for scripted jumps (the block in the finale). */
+  lift = 0;
+  /** When set, he turns to this heading instead of tracking the visitor (scripted plays). */
+  lockFacing: number | null = null;
+
   private sync(): void {
-    this.character.object.position.set(this.x, 0, this.z);
+    this.character.object.position.set(this.x, this.lift, this.z);
     this.character.object.rotation.y = this.facing;
   }
 }
