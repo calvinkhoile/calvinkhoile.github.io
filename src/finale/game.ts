@@ -1,4 +1,5 @@
 import { profile } from '../content/profile';
+import { hide, show } from '../ui/motion';
 import { audio } from '../engine/audio';
 import type { CourtScene } from './court-scene';
 import type { Draw } from './questions';
@@ -68,7 +69,8 @@ export class Finale {
 
   /** Play one full game. Resolves with the result and whether the visitor wants to run it back. */
   async play(draw: Draw): Promise<{ result: GameResult; again: boolean }> {
-    this.el.hidden = false;
+    show(this.el, { replay: true });
+    this.last = { visitor: 0, calvin: 0 };
     let visitor = 0;
     let calvin = 0;
     let correct = 0;
@@ -98,13 +100,17 @@ export class Finale {
     const result: GameResult = { visitor, calvin, correct, won: visitor > calvin, ids: draw.possessions.map((q) => q.id) };
     this.current = null;
     this.score(visitor, calvin, 'FINAL');
+    // One last play on the court before the result: a layup on Calvin, or a block.
+    this.card.classList.add('is-watching');
+    await this.court.finalPlay(result.won);
+    this.card.classList.remove('is-watching');
     if (result.won) {
       this.card.hidden = true;
       await this.hooks.onWin();
       this.card.hidden = false;
     }
     const again = await this.result(result);
-    this.el.hidden = true;
+    await hide(this.el);
     this.card.replaceChildren();
     return { result, again };
   }
@@ -112,8 +118,12 @@ export class Finale {
   /** Resolves when the visitor dismisses the verdict for the current possession. */
   private verdict: Promise<void> = Promise.resolve();
 
+  private last = { visitor: 0, calvin: 0 };
   private score(visitor: number, calvin: number, label: string): void {
-    this.board.innerHTML = `<span class="sb-team">YOU <b>${visitor}</b></span><span class="sb-poss">${label}</span><span class="sb-team">CALVIN <b>${calvin}</b></span>`;
+    // The number that just changed pops.
+    const bump = (n: number, was: number) => (n > was ? ' class="is-bump"' : '');
+    this.board.innerHTML = `<span class="sb-team">YOU <b${bump(visitor, this.last.visitor)}>${visitor}</b></span><span class="sb-poss">${label}</span><span class="sb-team">CALVIN <b${bump(calvin, this.last.calvin)}>${calvin}</b></span>`;
+    this.last = { visitor, calvin };
     this.board.setAttribute('aria-label', `You ${visitor}, Calvin ${calvin}. ${label}.`);
   }
 
@@ -160,8 +170,9 @@ export class Finale {
         <p class="result-score">${r.won ? `${r.visitor}-${r.calvin}. ` : ''}You answered ${r.correct}/5.</p>
         <p class="q-calvin"><b>Calvin</b> ${esc(r.won ? COPY.winLine : COPY.loseLine)}</p>
         <div class="result-contact">
+          <a class="btn btn-primary" href="/resume.pdf" target="_blank" rel="noopener">Résumé</a>
           <a class="btn" href="${profile.links.linkedin}" target="_blank" rel="noopener">LinkedIn</a>
-          <button type="button" class="btn result-email">Email</button>
+          <button type="button" class="btn result-email">Copy email</button>
           <a class="btn" href="${profile.links.x}" target="_blank" rel="noopener">Twitter</a>
         </div>
         <div class="result-actions">
@@ -174,8 +185,19 @@ export class Finale {
     this.card.querySelector('.result-share')!.addEventListener('click', () => this.hooks.onShare(share));
     this.card.querySelector('.result-email')!.addEventListener('click', () => this.hooks.onCopyEmail());
     return new Promise((resolve) => {
-      this.card.querySelector('.result-again')!.addEventListener('click', () => resolve(true), { once: true });
-      this.card.querySelector('.result-exit')!.addEventListener('click', () => resolve(false), { once: true });
+      // Esc leaves, like every other overlay.
+      const onKey = (e: KeyboardEvent) => {
+        if (e.code !== 'Escape') return;
+        e.preventDefault();
+        done(false);
+      };
+      const done = (again: boolean) => {
+        window.removeEventListener('keydown', onKey);
+        resolve(again);
+      };
+      window.addEventListener('keydown', onKey);
+      this.card.querySelector('.result-again')!.addEventListener('click', () => done(true), { once: true });
+      this.card.querySelector('.result-exit')!.addEventListener('click', () => done(false), { once: true });
     });
   }
 }

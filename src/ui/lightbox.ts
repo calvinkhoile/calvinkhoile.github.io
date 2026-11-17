@@ -1,8 +1,11 @@
+import { hide, show } from './motion';
+
 /** Full-screen photo viewer. Any image inside a card opens here on click or tap. */
 export class Lightbox {
   private readonly el: HTMLElement;
   private readonly img: HTMLImageElement;
   private returnFocus: HTMLElement | null = null;
+  private closing = false;
 
   constructor(root: HTMLElement) {
     this.el = document.createElement('div');
@@ -19,10 +22,16 @@ export class Lightbox {
     window.addEventListener(
       'keydown',
       (e) => {
-        if (this.isOpen && e.code === 'Escape') {
+        if (!this.isOpen) return;
+        if (e.code === 'Escape') {
           e.stopPropagation();
           e.preventDefault();
           this.close();
+        } else if (e.code === 'Tab' || e.code === 'ArrowRight' || e.code === 'ArrowLeft') {
+          // The close button is the only control: keep focus here and keep keys off the card underneath.
+          e.stopPropagation();
+          e.preventDefault();
+          (this.el.querySelector('.lightbox-close') as HTMLElement).focus();
         }
       },
       true,
@@ -30,7 +39,7 @@ export class Lightbox {
   }
 
   get isOpen(): boolean {
-    return !this.el.hidden;
+    return !this.el.hidden && !this.closing;
   }
 
   open(src: string, alt = '', caption = ''): void {
@@ -42,16 +51,20 @@ export class Lightbox {
     cap.hidden = !caption;
     // Captioned photos (station props) are shown a little smaller, like a framed print.
     this.el.classList.toggle('lightbox--captioned', !!caption);
-    this.el.hidden = false;
+    this.closing = false;
+    show(this.el, { replay: true });
     (this.el.querySelector('.lightbox-close') as HTMLElement).focus({ preventScroll: true });
   }
 
   close(): void {
     if (!this.isOpen) return;
-    this.el.hidden = true;
-    this.img.removeAttribute('src');
+    this.closing = true;
     this.returnFocus?.focus?.({ preventScroll: true });
     this.onClose?.();
+    void hide(this.el).then(() => {
+      this.closing = false;
+      this.img.removeAttribute('src');
+    });
   }
 
   /** Called after the photo closes (used when a photo is opened on its own, outside a card). */

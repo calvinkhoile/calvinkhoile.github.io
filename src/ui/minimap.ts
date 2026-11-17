@@ -1,4 +1,5 @@
 import type { MapDef } from '../world/maps/types';
+import { hide, show } from './motion';
 
 const ZONE: Record<string, string> = { path: '#c4683f', plaza: '#d9d4cc', concrete: '#4b5058', court: '#3b6ea5', track: '#b5483a', water: '#4fb3d9' };
 const PLACES: { model: string; label: string; color: string }[] = [
@@ -65,7 +66,7 @@ export class Minimap {
     const court = map.zones.find((z) => z.kind === 'court');
     const weights = map.zones.find((z) => z.kind === 'concrete');
     const plaza = map.zones.find((z) => z.kind === 'plaza');
-    if (court) label('Court', court.x + court.w / 2, court.z + court.d / 2);
+    if (court) label("Calvin's Court", court.x + court.w / 2, court.z + court.d / 2);
     if (weights) label('Weightroom', weights.x + weights.w / 2, weights.z + weights.d / 2);
     if (plaza) label('Plaza', plaza.x + plaza.w / 2, plaza.z + plaza.d / 2);
   }
@@ -76,7 +77,8 @@ export class Minimap {
 
   toggle(force?: boolean): boolean {
     this.open = force ?? !this.open;
-    this.el.hidden = !this.open;
+    if (this.open) show(this.el);
+    else void hide(this.el);
     return this.open;
   }
 

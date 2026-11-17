@@ -47,6 +47,8 @@ import { Player, PLAYER_RADIUS, WALK_SPEED } from './world/player';
 import { formatRoute, parseRoute, type Route } from './world/routes';
 import { clearSave, loadSave, writeSave } from './world/save';
 import { SCENE_NAMES, SCENES } from './world/scenes';
+import { hide, show } from './ui/motion';
+import { callout, shake } from './ui/callout';
 
 declare global {
   interface Window {
@@ -155,9 +157,9 @@ async function boot(): Promise<void> {
   let toastTimer = 0;
   const toast = (text: string) => {
     toastEl.textContent = text;
-    toastEl.hidden = false;
+    show(toastEl, { replay: true });
     window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => (toastEl.hidden = true), 5000);
+    toastTimer = window.setTimeout(() => void hide(toastEl), 5000);
   };
   const badgeUi = new BadgeUi(ui, row2, {
     reducedMotion,
@@ -166,7 +168,11 @@ async function boot(): Promise<void> {
       location.hash = '';
       location.reload();
     },
-    onToggle: (open) => (open ? begin() : end()),
+    onToggle: (open) => {
+      // One panel at a time: the badge case closes the map.
+      if (open) closeMap();
+      return open ? begin() : end();
+    },
     // Jump buttons in the badge case: go straight to the place that awards each badge.
     onJump: (route) => {
       const target = parseRoute(`#/${route}`);
@@ -279,6 +285,9 @@ async function boot(): Promise<void> {
     mapBtn.setAttribute('aria-pressed', String(minimap.toggle()));
   };
   mapBtn.addEventListener('click', toggleMap);
+  function closeMap(): void {
+    if (minimap.isOpen) mapBtn.setAttribute('aria-pressed', String(minimap.toggle(false)));
+  }
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyM' && state === 'play' && busyCount === 0 && !e.repeat) toggleMap();
   });
@@ -310,7 +319,10 @@ async function boot(): Promise<void> {
         location.hash = '';
         location.reload();
       },
-      toggle: (open) => (open ? begin() : end()),
+      toggle: (open) => {
+        if (open) closeMap();
+        return open ? begin() : end();
+      },
     },
   );
   iconButton('hud-settings', 'Settings', gearIcon).addEventListener('click', () => settings.open());
@@ -335,7 +347,7 @@ async function boot(): Promise<void> {
     const interior = !!next.def.interior;
     (scene.background as THREE.Color).setHex(interior ? INTERIOR_BACKDROP : SKY);
     scene.fog = !interior && quality.fog ? fog : null;
-    follow.setZoomOut(userZoom * (interior ? INTERIOR_ZOOM : 1));
+    follow.setZoomOut(userZoom * (interior ? INTERIOR_ZOOM : 1), true);
     follow.setBounds(next.def.cameraBounds);
     player.teleport(x, z);
     player.facing = facing;
@@ -538,6 +550,12 @@ async function boot(): Promise<void> {
     if (action === 'finale') return runFinale();
     if (action.startsWith('card:')) return void (await openCard(careerCard(action.slice(5), { chip: chipFor(current.id) })));
     if (action === 'tour') return say('plaza.tourStart');
+    if (action === 'latest') {
+      // Same as the deep link: into the BetMGM gym with the headline project open.
+      const route = parseRoute('#/gym/betmgm/rewards-store');
+      if (route) await applyRoute(route);
+      return;
+    }
     const calvin = exteriorScene.npcs[0];
     const grid = exteriorScene.grid;
     if (action === 'tour-walk') {
@@ -609,7 +627,7 @@ async function boot(): Promise<void> {
     begin();
     const from = current.id;
     fade.classList.add('is-on');
-    const [next] = await Promise.all([loadScene(to), wait(reducedMotion ? 0 : 200)]);
+    const [next] = await Promise.all([loadScene(to), wait(reducedMotion ? 0 : 340)]);
     if (next.def.interior) {
       showScene(next, next.def.spawn.x, next.def.spawn.z, Math.PI);
     } else {
@@ -620,7 +638,7 @@ async function boot(): Promise<void> {
       const z = back ? back.z + 0.5 + out[1] * 1.4 : next.def.spawn.z;
       showScene(next, x, z, Math.atan2(out[0], out[1]));
     }
-    await wait(reducedMotion ? 0 : 120);
+    await wait(reducedMotion ? 0 : 140);
     fade.classList.remove('is-on');
     end();
   }
@@ -658,6 +676,10 @@ async function boot(): Promise<void> {
 
   // ----- the 1-on-1 at Calvin's Court -----
   const court = new CourtScene(exteriorScene.root, player, exteriorScene.npcs.find((n) => n.spawn.role === 'court')!, reducedMotion);
+  court.cue = (text, tone, strength) => {
+    callout(text, tone);
+    if (strength) shake(strength);
+  };
   const finale = new Finale(ui, court, {
     onWin: () => award('legend'),
     onCopyEmail: () => emailBtn.click(),
@@ -665,7 +687,8 @@ async function boot(): Promise<void> {
       const url = `${location.origin}/`;
       // Phones get the native share sheet. Elsewhere the line is copied.
       if (navigator.share && document.body.classList.contains('is-touch')) void navigator.share({ text, url }).catch(() => {});
-      else if (navigator.clipboard) void navigator.clipboard.writeText(`${text} ${url}`).then(() => toast('Copied. Paste it anywhere.'));
+      // The line already names the site, so the copy doesn't tack the URL on a second time.
+      else if (navigator.clipboard) void navigator.clipboard.writeText(text).then(() => toast('Copied. Paste it anywhere.'));
     },
   });
   const LAST_GAME_KEY = 'mypark:finale-last';
@@ -721,52 +744,127 @@ async function boot(): Promise<void> {
     player.object.rotation.y = player.facing;
     lift = new LiftMode(body, player.object);
     liftCount.textContent = '0 reps';
-    liftRepLabel.textContent = 'Press';
-    liftHud.hidden = false;
+    liftRepLabel.textContent = 'Curl';
+    liftPress.hidden = false;
+    show(liftHud);
     document.body.classList.add('is-lifting');
   }
   // ----- shootaround: pick up a loose ball on the court and put up shots -----
-  let shooting: { made: number; taken: number; busy: boolean } | null = null;
+  // Hold Shoot (or G) and the shooter rises while a meter fills. Let go at the top, in the green, and it's money.
+  let shooting: { made: number; taken: number; busy: boolean; streak: number } | null = null;
+  const meter = document.getElementById('shot-meter') as HTMLElement;
+  const meterFill = meter.querySelector('.shot-meter-fill') as HTMLElement;
+  const METER_FILL_S = 0.62; // press to the top of the meter
+  const GREEN = [0.86, 1.06]; // the green window, as a fraction of the fill
+  let meterStart = 0;
+  let meterRelease: ((made: boolean) => void) | null = null;
+  let meterTimer = 0;
+  let meterGrade = '';
+
   function startShootaround(target: Target): void {
     if (shooting || lift || court.active) return;
     begin();
-    shooting = { made: 0, taken: 0, busy: false };
+    shooting = { made: 0, taken: 0, busy: false, streak: 0 };
     court.beginShootaround(target.x, target.z);
     follow.setZoomOut(userZoom * GAME_ZOOM);
     liftCount.textContent = '0 for 0';
     liftRepLabel.textContent = 'Shoot';
-    liftHud.hidden = false;
+    liftPress.hidden = true;
+    show(liftHud);
     document.body.classList.add('is-lifting');
+    toast(document.body.classList.contains('is-touch') ? 'Hold Shoot, let go at the top of the meter.' : 'Hold G, let go at the top of the meter.');
   }
-  async function shootBall(): Promise<void> {
+
+  function meterValue(): number {
+    return (performance.now() - meterStart) / 1000 / METER_FILL_S;
+  }
+
+  /** Press: rise up and start the meter. */
+  function pressShot(): void {
     const s = shooting;
     if (!s || s.busy) return;
     s.busy = true;
-    const made = await court.shoot();
-    audio.play(made ? 'swish' : 'rim');
+    meterStart = performance.now();
+    meter.classList.remove('is-green', 'is-late');
+    meterFill.style.transform = 'scaleY(0)';
+    meter.hidden = false;
+    const release = new Promise<boolean>((resolve) => (meterRelease = resolve));
+    // Hold too long and it goes up late anyway.
+    meterTimer = window.setTimeout(releaseShot, METER_FILL_S * 1000 * 1.45);
+    void runShot(s, release);
+  }
+
+  /** Let go: grade the timing and decide the shot. */
+  function releaseShot(): void {
+    const resolve = meterRelease;
+    if (!resolve) return;
+    meterRelease = null;
+    window.clearTimeout(meterTimer);
+    const v = meterValue();
+    const green = v >= GREEN[0] && v <= GREEN[1];
+    const close = v >= 0.66 && v <= 1.2;
+    meterGrade = green ? 'green' : v < GREEN[0] ? (close ? 'Slightly early' : 'Way early') : close ? 'Slightly late' : 'Way late';
+    meterFill.style.transform = `scaleY(${Math.min(1, v)})`;
+    meter.classList.toggle('is-green', green);
+    meter.classList.toggle('is-late', !green && v > GREEN[1]);
+    window.setTimeout(() => (meter.hidden = true), 650);
+    resolve(green || Math.random() < (close ? 0.5 : 0.12));
+  }
+
+  async function runShot(s: NonNullable<typeof shooting>, release: Promise<boolean>): Promise<void> {
+    const made = await court.shoot(release);
     if (shooting !== s) return; // put the ball down mid-shot
+    audio.play(made ? 'swish' : 'rim');
     s.busy = false;
     s.taken++;
+    s.streak = made ? s.streak + 1 : 0;
     if (made) s.made++;
     liftCount.textContent = `${s.made} for ${s.taken}`;
     navigator.vibrate?.(made ? [15, 30, 15] : 10);
+    const green = meterGrade === 'green';
+    if (made && s.streak >= 3) {
+      callout(s.streak >= 5 ? 'ON FIRE' : 'HEATING UP', 'hype', `${s.streak} straight`);
+      court.setOnFire(s.streak >= 5);
+    } else if (made) callout(green ? 'GREEN' : 'BUCKET', 'good', green ? 'Perfect release' : meterGrade);
+    else {
+      callout('BRICK', 'bad', meterGrade);
+      court.setOnFire(false);
+    }
   }
+
+  /** Called every frame: the meter rides beside the shooter and fills while held. */
+  function updateMeter(): void {
+    if (meter.hidden) return;
+    const at = toScreen(player.x, 1.6, player.z);
+    meter.style.transform = `translate(${Math.round(at.x + 34)}px, ${Math.round(at.y - 70)}px)`;
+    if (!meterRelease) return;
+    const v = meterValue();
+    meterFill.style.transform = `scaleY(${Math.min(1, v)})`;
+    meter.classList.toggle('is-green', v >= GREEN[0] && v <= GREEN[1]);
+    meter.classList.toggle('is-late', v > GREEN[1]);
+  }
+
   function stopShootaround(): void {
     const s = shooting;
     if (!s) return;
     shooting = null;
+    meterRelease = null;
+    window.clearTimeout(meterTimer);
+    meter.hidden = true;
+    court.setOnFire(false);
     court.endShootaround();
     follow.setZoomOut(userZoom);
-    liftHud.hidden = true;
+    void hide(liftHud);
     document.body.classList.remove('is-lifting');
     end();
     if (s.taken > 0) toast(`${s.made} for ${s.taken} from the floor.`);
   }
 
   const liftRepLabel = document.getElementById('lift-rep-label') as HTMLElement;
-  function liftRep(): void {
-    if (shooting) return void shootBall();
-    if (!lift?.rep()) return;
+  const liftPress = document.getElementById('lift-press') as HTMLButtonElement;
+  function liftRep(exercise: 'curl' | 'press' = 'curl'): void {
+    if (shooting) return;
+    if (!lift?.rep(exercise)) return;
     audio.play('bounce');
     liftCount.textContent = `${lift.reps} ${lift.reps === 1 ? 'rep' : 'reps'}`;
     navigator.vibrate?.(15);
@@ -776,17 +874,35 @@ async function boot(): Promise<void> {
     const reps = lift.reps;
     lift.stop();
     lift = null;
-    liftHud.hidden = true;
+    void hide(liftHud);
     document.body.classList.remove('is-lifting');
     end();
     if (reps > 0) toast(`${reps} ${reps === 1 ? 'rep' : 'reps'}. Dumbbells back on the rack.`);
   }
-  document.getElementById('lift-rep')!.addEventListener('click', liftRep);
+  const liftRepBtn = document.getElementById('lift-rep') as HTMLButtonElement;
+  liftRepBtn.addEventListener('click', () => liftRep('curl'));
+  // Shooting is press-and-hold: down starts the meter, up lets it go.
+  liftRepBtn.addEventListener('pointerdown', (e) => {
+    if (!shooting) return;
+    e.preventDefault();
+    liftRepBtn.setPointerCapture?.(e.pointerId);
+    pressShot();
+  });
+  for (const type of ['pointerup', 'pointercancel'] as const) liftRepBtn.addEventListener(type, () => shooting && releaseShot());
+  liftRepBtn.addEventListener('contextmenu', (e) => shooting && e.preventDefault());
+  liftPress.addEventListener('click', () => liftRep('press'));
   const stopActivity = () => (shooting ? stopShootaround() : stopLift());
   document.getElementById('lift-done')!.addEventListener('click', stopActivity);
+  window.addEventListener('keyup', (e) => {
+    if (shooting && e.code === 'KeyG') releaseShot();
+  });
   window.addEventListener('keydown', (e) => {
     if ((!lift && !shooting) || e.repeat) return;
-    if (e.code === 'KeyG') liftRep();
+    if (e.code === 'KeyG') {
+      if (shooting) pressShot();
+      else liftRep('curl');
+    }
+    else if (e.code === 'KeyH' && lift) liftRep('press');
     else if (['Space', 'Escape', 'KeyE', 'Enter'].includes(e.code)) {
       e.preventDefault();
       stopActivity();
@@ -853,6 +969,7 @@ async function boot(): Promise<void> {
 
   const hint = document.getElementById('hint') as HTMLElement;
   const HINT_AFTER_IDLE = 5; // seconds standing still before the how-to-move hint comes back
+  let movedFor = 0; // seconds spent moving; the hint retires after a few
 
   // ----- pointer: click/tap to move or interact, hover cursor -----
   const raycaster = new THREE.Raycaster();
@@ -902,11 +1019,11 @@ async function boot(): Promise<void> {
     else if (quality.tier === 'medium') applyTier('low');
     else if (fps < 20 && !slowWarned && !fallbackOff) {
       // Already on the lowest tier and still crawling: offer the fast version instead of a slideshow.
+      // Never cover what they're reading: wait for a quiet moment, then a short notice instead of a takeover.
+      const cls = document.body.classList;
+      if (cls.contains('has-card') || cls.contains('is-talking') || court.active || shooting || lift) return;
       slowWarned = true;
-      const fallback = document.getElementById('fallback')!;
-      fallback.hidden = false;
-      fallback.classList.add('is-dismissable');
-      document.getElementById('fallback-stay')!.addEventListener('click', () => (fallback.hidden = true), { once: true });
+      toast(toasts.slow);
     }
   });
   let slowWarned = false;
@@ -1049,8 +1166,11 @@ async function boot(): Promise<void> {
     player.animate(dt);
     for (const npc of current.npcs) npc.update(dt, state === 'play' ? { x: player.x, z: player.z } : null);
     // How-to-move hint: hidden while moving, back after a few seconds of standing still.
+    // Once they've clearly got the hang of moving, it's retired for good. It also stays out of a notice's way.
     stillFor = player.moving || !playing ? 0 : stillFor + dt;
-    hint.classList.toggle('is-hidden', player.moving || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden')));
+    if (player.moving) movedFor += dt;
+    const hintOff = movedFor > 4 || player.moving || !toastEl.hidden || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden'));
+    hint.classList.toggle('is-hidden', hintOff);
     if (marker.visible) {
       if (player.path.length === 0) marker.visible = false;
       else marker.scale.setScalar(1 + Math.sin(time * 8) * 0.12);
@@ -1072,7 +1192,9 @@ async function boot(): Promise<void> {
     }
     else if (minimap.isOpen) mapBtn.setAttribute('aria-pressed', String(minimap.toggle(false)));
 
-    follow.update(dt, player.x, player.z, player.vx, player.vz, WALK_SPEED);
+    updateMeter();
+    const focus = shooting ? court.shotFocus() : player;
+    follow.update(dt, focus.x, focus.z, shooting ? 0 : player.vx, shooting ? 0 : player.vz, WALK_SPEED);
 
     if (playing) {
       // Doors: walking onto the door tile goes through.

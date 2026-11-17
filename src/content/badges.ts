@@ -17,10 +17,10 @@ export interface Badge {
 }
 
 export const badges: Badge[] = [
-  { id: 'ucla', name: 'Bruin Badge', how: 'Visit every station in the UCLA gym, then talk to Calvin there.', color: '#2774ae', accent: '#ffd100', glyph: 'B', scene: 'gym-ucla' },
-  { id: 'deloitte', name: 'Consultant Badge', how: 'Visit every station in the Deloitte gym, then talk to Calvin there.', color: '#111111', accent: '#86bc25', glyph: '●', scene: 'gym-deloitte' },
-  { id: 'meta', name: 'Ship-It Badge', how: 'Visit every station in the Meta gym, then talk to Calvin there.', color: '#0866ff', accent: '#ffffff', glyph: '∞', scene: 'gym-meta' },
-  { id: 'betmgm', name: 'High Roller Badge', how: 'Visit every station in the BetMGM gym, then talk to Calvin there.', color: '#15130f', accent: '#c5a15a', glyph: '♠', scene: 'gym-betmgm' },
+  { id: 'ucla', name: 'Bruin Badge', how: 'See every stop in the UCLA gym.', color: '#2774ae', accent: '#ffd100', glyph: 'B', scene: 'gym-ucla' },
+  { id: 'deloitte', name: 'Consultant Badge', how: 'See every stop in the Deloitte gym.', color: '#111111', accent: '#86bc25', glyph: '●', scene: 'gym-deloitte' },
+  { id: 'meta', name: 'Ship-It Badge', how: 'See every stop in the Meta gym.', color: '#0866ff', accent: '#ffffff', glyph: '∞', scene: 'gym-meta' },
+  { id: 'betmgm', name: 'High Roller Badge', how: 'See every stop in the BetMGM gym.', color: '#15130f', accent: '#c5a15a', glyph: '♠', scene: 'gym-betmgm' },
   { id: 'explorer', name: 'Explorer Badge', how: 'Try every stop in The Weightroom.', color: '#166534', accent: '#bbf7d0', glyph: '✦' },
   { id: 'legend', name: 'Park Legend', how: "Beat Calvin 1-on-1 at Calvin's Court.", color: '#b45309', accent: '#fde68a', glyph: '★' },
 ];

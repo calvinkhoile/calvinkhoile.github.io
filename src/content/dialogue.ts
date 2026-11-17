@@ -26,6 +26,8 @@ export interface DialogueNode {
 const CALVIN = 'Calvin';
 
 const plazaChoices: DialogueChoice[] = [
+  // TODO(calvin): review. A shortcut for recruiters: straight to the BetMGM gym with the Rewards Store open.
+  { label: 'Show me your latest work', action: 'latest' },
   { label: 'Show me around', action: 'tour' },
   { label: "I'll explore", next: 'plaza.explore' },
   { label: 'Who are you?', action: 'about' },
@@ -33,9 +35,10 @@ const plazaChoices: DialogueChoice[] = [
 
 /** First talk with a gym leader: take the quick tour inside the pop-up, or explore on foot with the overview in hand. */
 const leaderChoices = (_gym: string): DialogueChoice[] => [
-  // Most visitors won't walk every room. "Finish" marks the gym done and hands over the badge on the spot.
-  { label: 'Finish this gym', action: 'finish-gym' },
+  // The walkthrough comes first (and gets the default focus), since it's the one that shows the work.
   { label: 'Walk me through it', action: 'walkthrough' },
+  // Most visitors won't walk every room. This marks the gym done and hands over the badge on the spot.
+  { label: 'Skip to the badge', action: 'finish-gym' },
   // No pop-up: the visitor wants to walk the room.
   { label: "I'll look around" },
 ];
@@ -154,6 +157,8 @@ export const dialogue: Record<string, DialogueNode> = {
 export const toasts = {
   welcomeBack: 'Welcome back. Your progress is saved.',
   twoBadges: "Calvin: Two badges already? You're moving. Court's open whenever you're ready.",
-  fourBadges: "Calvin: Okay you've done your homework. Let's see if it paid off. Court. Now.",
+  fourBadges: "Calvin: Okay, you've done your homework. Let's see if it paid off. Court. Now.",
   reset: 'Progress cleared.',
+  // TODO(calvin): review.
+  slow: "Running slow on this device? The résumé button up top is the fast version.",
 };

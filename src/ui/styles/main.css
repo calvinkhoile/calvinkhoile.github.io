@@ -254,9 +254,14 @@ body.has-card .hud-links {
   filter: brightness(1.15);
 }
 
+/* Loading: a sunset over the park's skyline (UCLA, Deloitte, Meta, BetMGM, the court), a bouncing ball,
+   and a chunky progress bar. All inline CSS and SVG so it paints instantly. Palette from the world (plan 7.1). */
 .loading {
-  background: var(--bg);
-  transition: opacity 0.35s ease;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #3d6fa8 0%, #6fa3d6 30%, #f2b38c 68%, #ee8a5a 100%);
+  color: var(--ink);
+  transition: opacity 0.45s ease;
 }
 
 .loading.is-done {
@@ -264,41 +269,188 @@ body.has-card .hud-links {
   pointer-events: none;
 }
 
-.loading-icon {
-  width: 72px;
-  height: 72px;
+.loading-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  width: min(420px, 90vw);
+  aspect-ratio: 1;
+  translate: -50% 50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe3a3 0%, #ffc988 38%, rgba(255, 190, 130, 0) 70%);
+}
+
+.loading-skyline {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  /* Never narrower than 760px, so phones see the middle of the street instead of one building. */
+  width: max(100%, 760px);
+  height: auto;
+  aspect-ratio: 1200 / 220;
+  translate: -50% 0;
+}
+
+.loading-skyline .sky-far {
+  fill: #b5617a;
+  opacity: 0.55;
+}
+
+.loading-skyline .sky-near {
+  fill: #3a2340;
+}
+
+.loading-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(380px, 100%);
+  margin-bottom: min(120px, 14vh);
+  text-align: center;
+}
+
+.loading-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.loading-knight {
+  width: 20px;
+  height: 20px;
   filter: invert(1);
 }
 
+.loading-title {
+  margin: -4px 0 0;
+  font: 400 clamp(64px, 17vw, 112px) / 0.9 var(--font-display);
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 5px 0 rgba(58, 35, 64, 0.55),
+    0 14px 30px rgba(58, 35, 64, 0.35);
+}
+
+/* A ball dribbling in place, squashing a little on each bounce. */
+.loading-ball {
+  position: relative;
+  width: 56px;
+  height: 78px;
+}
+
+.loading-ball-body {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    linear-gradient(90deg, transparent 47%, #3b1d0e 47%, #3b1d0e 53%, transparent 53%),
+    linear-gradient(0deg, transparent 47%, #3b1d0e 47%, #3b1d0e 53%, transparent 53%),
+    radial-gradient(circle at 35% 30%, #ff9d55, #e8752a 55%, #b9531a);
+  box-shadow: inset -4px -5px 0 rgba(0, 0, 0, 0.18);
+  animation: dribble 0.62s cubic-bezier(0.5, 0, 0.5, 1) infinite alternate;
+}
+
+.loading-ball-shadow {
+  position: absolute;
+  left: 10px;
+  bottom: 0;
+  width: 36px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(58, 35, 64, 0.45);
+  animation: dribble-shadow 0.62s cubic-bezier(0.5, 0, 0.5, 1) infinite alternate;
+}
+
+@keyframes dribble {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  88% {
+    transform: translateY(34px) scale(1, 1) rotate(140deg);
+  }
+  100% {
+    transform: translateY(36px) scale(1.12, 0.86) rotate(160deg);
+  }
+}
+
+@keyframes dribble-shadow {
+  from {
+    transform: scale(0.55);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
 .loading-track {
-  width: min(260px, 70vw);
-  height: 6px;
-  border-radius: 3px;
-  background: var(--hairline);
+  width: 100%;
+  height: 16px;
+  padding: 3px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: rgba(58, 35, 64, 0.45);
   overflow: hidden;
 }
 
 .loading-bar {
   height: 100%;
-  background: var(--accent);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd166, #ff9d55);
   transform: scaleX(0.04);
   transform-origin: left;
-  transition: transform 0.25s ease;
+  transition: transform 0.3s ease;
+}
+
+.loading-status {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin: -4px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+#loading-pct {
+  font-variant-numeric: tabular-nums;
 }
 
 .loading-tip {
-  max-width: 320px;
+  max-width: 340px;
   min-height: 2.8em;
-  margin: 4px 0 0;
-  font-size: 14px;
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.4;
-  opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.3s ease;
+}
+
+.loading-tip.is-swapping {
+  opacity: 0;
 }
 
 .loading-link {
-  color: var(--ink);
+  min-width: 0;
+  margin-top: 4px;
+  padding: 12px 20px;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(58, 35, 64, 0.55);
   font-size: 14px;
-  opacity: 0.75;
 }
 
 .title {
@@ -590,7 +742,10 @@ body.has-card .hud-links {
   .hint,
   .joystick,
   .loading,
-  .loading-bar {
+  .loading-bar,
+  .loading-tip,
+  .loading-ball-body,
+  .loading-ball-shadow {
     transition: none;
     animation: none;
   }
@@ -779,18 +934,35 @@ body.is-talking .hud-row2 {
 }
 
 /* ---------- scene fade ---------- */
+/* Doors close like an iris onto the player, then open on the new room.
+   Browsers without @property just get the plain fade. */
+@property --iris {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
 .fade {
+  --iris: 1;
   position: absolute;
   inset: 0;
   background: #000;
   opacity: 0;
   pointer-events: none !important;
-  transition: opacity 0.2s ease;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--iris) * 80vmax), #000 calc(var(--iris) * 80vmax + 1px));
+  mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--iris) * 80vmax), #000 calc(var(--iris) * 80vmax + 1px));
+  transition:
+    --iris 0.38s cubic-bezier(0.3, 0, 0.2, 1),
+    opacity 0.12s ease 0.3s;
 }
 
 .fade.is-on {
+  --iris: 0;
   opacity: 1;
   pointer-events: auto !important;
+  transition:
+    --iris 0.34s cubic-bezier(0.6, 0, 0.75, 0.6),
+    opacity 0.1s ease;
 }
 
 /* ---------- dialogue ---------- */
@@ -799,7 +971,7 @@ body.is-talking .hud-row2 {
   left: 50%;
   bottom: calc(18px + var(--safe-bottom));
   width: min(720px, calc(100% - 24px));
-  transform: translateX(-50%);
+  translate: -50% 0;
   padding: 22px 22px 20px;
   border: 2px solid var(--ink);
   border-radius: 14px;
@@ -809,6 +981,112 @@ body.is-talking .hud-row2 {
 
 .dialogue[hidden] {
   display: none;
+}
+
+/* Old-TV power on: a dot stretches into a bright scanline, then the line opens into the box.
+   Power off runs it backwards: the box collapses to a line, the line shrinks to a dot. */
+.dialogue.is-entering {
+  animation: tv-on 0.42s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+.dialogue.is-leaving {
+  animation: tv-off 0.3s cubic-bezier(0.55, 0, 0.75, 0.4) both;
+  pointer-events: none;
+}
+
+.dialogue.is-entering > * {
+  animation: tv-content-in 0.42s ease both;
+}
+
+.dialogue.is-leaving > * {
+  animation: tv-content-out 0.3s ease both;
+}
+
+@keyframes tv-on {
+  0% {
+    transform: scale(0.02, 0.012);
+    border-color: #fff;
+    background-color: #fff;
+    box-shadow: 0 0 0 rgba(160, 200, 255, 0);
+  }
+  38% {
+    transform: scale(1, 0.012);
+    border-color: #fff;
+    background-color: #fff;
+    box-shadow: 0 0 28px 6px rgba(160, 200, 255, 0.75);
+  }
+  62% {
+    background-color: rgba(60, 90, 140, 0.95);
+  }
+  100% {
+    transform: scale(1, 1);
+    box-shadow: 0 0 0 rgba(160, 200, 255, 0);
+  }
+}
+
+@keyframes tv-off {
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    background-color: rgba(60, 90, 140, 0.95);
+  }
+  58% {
+    transform: scale(1, 0.012);
+    border-color: #fff;
+    background-color: #fff;
+    box-shadow: 0 0 28px 6px rgba(160, 200, 255, 0.75);
+  }
+  88% {
+    transform: scale(0.02, 0.012);
+    opacity: 1;
+    border-color: #fff;
+    background-color: #fff;
+  }
+  100% {
+    transform: scale(0, 0);
+    opacity: 0;
+    border-color: #fff;
+    background-color: #fff;
+  }
+}
+
+@keyframes tv-content-in {
+  0%,
+  55% {
+    opacity: 0;
+  }
+}
+
+@keyframes tv-content-out {
+  35%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* A new speaker's name tab pops in. */
+.dialogue-speaker.is-new {
+  animation: tab-pop 0.28s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+@keyframes tab-pop {
+  from {
+    transform: translateY(6px) scale(0.85);
+    opacity: 0;
+  }
+}
+
+.dialogue-choice {
+  animation: choice-in 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@keyframes choice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
 }
 
 .dialogue-speaker {
@@ -907,13 +1185,13 @@ body.is-talking .hud-row2 {
   background: #0b0d12;
   -webkit-user-select: text;
   user-select: text;
-  animation: card-in 0.22s ease;
+  animation: card-in 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
 }
 
 @keyframes card-in {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(22px) scale(0.95);
   }
 }
 
@@ -1532,7 +1810,7 @@ body.is-talking .hud-row2 {
 }
 
 /* phone: the card becomes a full-screen sheet */
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-height: 500px) {
   .card-overlay {
     padding: 0;
     place-items: stretch;
@@ -1642,7 +1920,7 @@ body.is-talking .hud-row2 {
   background: rgba(0, 0, 0, 0.8);
   font-size: 14px;
   font-weight: 600;
-  transform: translateX(-50%);
+  translate: -50% 0;
   pointer-events: none !important;
 }
 
@@ -1866,7 +2144,7 @@ body.is-talking .hud-row2 {
 }
 
 /* phone: a real bottom sheet. Rounded top, a strip of the world above it, slides with the finger. */
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-height: 500px) {
   .card-overlay {
     padding-top: calc(18px + var(--safe-top));
   }
@@ -2301,7 +2579,7 @@ body.is-talking .hud-row2 {
   border: 1px solid var(--hairline);
   border-radius: 999px;
   background: rgba(8, 12, 20, 0.92);
-  transform: translateX(-50%);
+  translate: -50% 0;
   white-space: nowrap;
 }
 
@@ -3004,7 +3282,7 @@ body.in-finale .prompt {
 }
 
 /* Phones: photo sets are swiped, so the arrows go away and the next photo peeks in. */
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-height: 500px) {
   .gallery-arrow {
     display: none;
   }
@@ -3204,4 +3482,646 @@ body.in-finale .minimap {
   .switch span {
     transition: none;
   }
+}
+
+/* ---------- enter / leave motion (driven by src/ui/motion.ts) ---------- */
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    opacity: 0;
+    transform: translateY(14px) scale(0.95);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: -50% 12px;
+  }
+}
+
+@keyframes sink-out {
+  to {
+    opacity: 0;
+    translate: -50% 12px;
+  }
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+}
+
+@keyframes lift-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+}
+
+/* Badge case and settings */
+.badge-panel.is-leaving {
+  animation: fade-out 0.22s ease both;
+  pointer-events: none;
+}
+
+.badge-panel.is-leaving .badge-sheet {
+  animation: sheet-out 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.badge-sheet {
+  animation: card-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+/* Badge ceremony */
+.ceremony.is-leaving {
+  animation: fade-out 0.3s ease both;
+  pointer-events: none;
+}
+
+.ceremony.is-leaving .ceremony-body {
+  animation: ceremony-out 0.3s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes ceremony-out {
+  to {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+/* Photo viewer: the photo grows out of the dark and shrinks back into it. */
+.lightbox.is-entering {
+  animation: overlay-in 0.22s ease both;
+}
+
+.lightbox.is-entering .lightbox-figure {
+  animation: photo-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.lightbox.is-leaving {
+  animation: fade-out 0.24s ease both;
+  pointer-events: none;
+}
+
+.lightbox.is-leaving .lightbox-figure {
+  animation: photo-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes photo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes photo-out {
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+/* Toast and the lift / shootaround bar */
+.toast.is-entering {
+  animation: toast-in 0.34s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.toast.is-leaving {
+  animation: toast-out 0.24s ease both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: -50% -14px;
+    scale: 0.92;
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    translate: -50% -10px;
+  }
+}
+
+.lift-hud.is-entering {
+  animation: rise-in 0.3s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.lift-hud.is-leaving {
+  animation: sink-out 0.2s ease both;
+  pointer-events: none;
+}
+
+/* Proximity prompt: a quick pop. Only opacity and the translate property, since its transform
+   is set every frame to follow the object. */
+.prompt.is-entering {
+  animation: prompt-in 0.2s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.prompt.is-leaving {
+  animation: prompt-out 0.14s ease both;
+  pointer-events: none;
+}
+
+@keyframes prompt-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes prompt-out {
+  to {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+/* Station list under the counter */
+.tracker-panel {
+  transform-origin: top right;
+}
+
+.tracker-panel.is-entering {
+  animation: drop-in 0.22s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.tracker-panel.is-leaving {
+  animation: lift-out 0.16s ease both;
+  pointer-events: none;
+}
+
+/* Minimap */
+.minimap {
+  transform-origin: top left;
+}
+
+.minimap.is-entering {
+  animation: drop-in 0.24s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.minimap.is-leaving {
+  animation: lift-out 0.18s ease both;
+}
+
+/* Title and character select: the title lifts away, the select fades in under it. */
+.title.is-leaving {
+  animation: fade-out 0.32s ease both;
+  pointer-events: none;
+}
+
+.title.is-leaving .title-name {
+  animation: title-out 0.32s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes title-out {
+  to {
+    transform: translateY(-16px) scale(1.04);
+  }
+}
+
+.select.is-entering {
+  animation: overlay-in 0.36s ease both;
+}
+
+.select.is-leaving {
+  animation: fade-out 0.3s ease both;
+  pointer-events: none;
+}
+
+/* Finale overlay */
+.finale.is-entering .scoreboard {
+  animation: drop-in 0.36s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.finale.is-leaving {
+  animation: fade-out 0.26s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogue-speaker.is-new,
+  .dialogue-choice,
+  .badge-sheet {
+    animation: none;
+  }
+  .fade {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* ---------- phone bottom sheet: sized to its content, gestures from anywhere ---------- */
+.card {
+  overflow-x: hidden;
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+  .card-overlay {
+    grid-template-rows: minmax(0, 1fr);
+    align-items: end;
+    justify-items: stretch;
+  }
+
+  /* Short cards stop where their content does; long ones still fill up to the top strip. */
+  .card {
+    height: auto;
+    max-height: 100%;
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .card-header {
+    touch-action: none;
+  }
+}
+
+/* One photo or one item: nothing to swipe through, so it stays put. */
+.gallery-viewport:has(.gallery-slide:only-child),
+.card-row:has(> :only-child) {
+  overflow-x: hidden;
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+  .card-row:has(> :only-child) {
+    margin: 0;
+    padding: 0 0 6px;
+  }
+}
+
+/* Swiping between stations slides the new one in from the side it came from. */
+.card.is-swap[data-dir='next'] .card-body {
+  animation: swap-from-right 0.28s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.card.is-swap[data-dir='prev'] .card-body {
+  animation: swap-from-left 0.28s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+@keyframes swap-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+
+@keyframes swap-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+}
+
+/* Game buttons get tapped fast: no double-tap zoom, no text selection. */
+.lift-hud,
+.lift-hud *,
+.a-button,
+.hud button,
+.finale button,
+.dialogue,
+.dialogue * {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.is-swap[data-dir] .card-body {
+    animation: none;
+  }
+}
+
+/* The strip is the offset parent for its chips, so the current one can be scrolled into the middle. */
+.card-stations {
+  position: relative;
+}
+
+/* ---------- arcade callouts, shake, shot meter ---------- */
+.callouts {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 26%;
+  display: grid;
+  place-items: center;
+  pointer-events: none !important;
+  z-index: 18;
+}
+
+.callout {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  animation: callout 1.3s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.callout-main {
+  font: 400 clamp(42px, 11vw, 84px) / 1 var(--font-display);
+  letter-spacing: 0.03em;
+  color: #fff;
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+  transform: rotate(-4deg);
+}
+
+.callout-sub {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.callout--good .callout-main {
+  color: #4ade80;
+}
+
+.callout--bad .callout-main {
+  color: #f87171;
+}
+
+.callout--hype .callout-main {
+  color: #fbbf24;
+}
+
+@keyframes callout {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  24% {
+    transform: scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05) translateY(-14px);
+  }
+}
+
+.shake-soft {
+  animation: shake 0.28s linear;
+}
+
+.shake-hard {
+  animation: shake 0.38s linear;
+  --amp: 9px;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  20% {
+    translate: calc(var(--amp, 5px) * -1) calc(var(--amp, 5px) * 0.5);
+  }
+  40% {
+    translate: var(--amp, 5px) calc(var(--amp, 5px) * -0.6);
+  }
+  60% {
+    translate: calc(var(--amp, 5px) * -0.6) calc(var(--amp, 5px) * -0.3);
+  }
+  80% {
+    translate: calc(var(--amp, 5px) * 0.4) calc(var(--amp, 5px) * 0.4);
+  }
+}
+
+/* 2K-style meter beside the shooter: fills while Shoot is held, let go in the green. */
+.shot-meter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 92px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  pointer-events: none !important;
+  will-change: transform;
+}
+
+.shot-meter[hidden] {
+  display: none;
+}
+
+.shot-meter-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 15%;
+  background: rgba(74, 222, 128, 0.45);
+  border-bottom: 2px solid #4ade80;
+}
+
+.shot-meter-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  background: #fff;
+  transform-origin: bottom;
+  transform: scaleY(0);
+}
+
+.shot-meter.is-green .shot-meter-fill {
+  background: #4ade80;
+}
+
+.shot-meter.is-late .shot-meter-fill {
+  background: #f87171;
+}
+
+.scoreboard b.is-bump {
+  display: inline-block;
+  animation: bump 0.5s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes bump {
+  from {
+    transform: scale(1.9);
+    color: #4ade80;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .callout,
+  .scoreboard b.is-bump {
+    animation: none;
+  }
+}
+
+/* Phones: rows of before/after sliders stack. Side by side, the second one ran off the screen,
+   and a sideways swipe fought with dragging the slider. */
+@media (max-width: 700px), (max-height: 500px) {
+  .card-row:has(.ba) {
+    flex-direction: column;
+    gap: 22px;
+    margin: 0;
+    padding: 0 0 6px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .card-row:has(.ba) .card-row-item {
+    flex: none;
+    width: min(100%, 320px);
+    margin: 0 auto;
+  }
+
+  .ba-tag {
+    top: 8px;
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .ba-tag-before {
+    left: 8px;
+  }
+
+  .ba-tag-after {
+    right: 8px;
+  }
+}
+
+/* Scrolled into a card: the header folds to a single line (title and close). */
+.card-logo,
+.card-tag,
+.card-subtitle,
+.card-title {
+  transition:
+    opacity 0.18s ease,
+    font-size 0.18s ease,
+    width 0.18s ease,
+    height 0.18s ease;
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+  .card.is-scrolled .card-header {
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+
+  .card.is-scrolled .card-logo,
+  .card.is-scrolled .card-tag,
+  .card.is-scrolled .card-subtitle,
+  .card.is-scrolled .card-chip {
+    display: none;
+  }
+
+  .card.is-scrolled .card-title {
+    overflow: hidden;
+    font-size: 18px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ---------- touch: no keyboard focus rings, 44px targets ---------- */
+/* Opening a panel moves focus to its first button for keyboard users. On a phone that ring
+   reads as "already picked" (the first finale answer most of all), so touch drops it. */
+.is-touch :focus-visible {
+  outline: none !important;
+}
+
+.is-touch .dialogue-choice:hover,
+.is-touch .dialogue-choice:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.is-touch .dialogue-choice:active {
+  background: var(--accent);
+}
+
+/* Small buttons keep their look but get a 44px invisible hit area. */
+/* (The prompt and the lightbox close are already absolutely positioned.) */
+.is-touch .hud-icon,
+.is-touch .hud-btn,
+.is-touch .card-close,
+.is-touch .badge-panel-close,
+.is-touch .badge-go,
+.is-touch .badge-reset,
+.is-touch .gallery-dot {
+  position: relative;
+}
+
+.is-touch .hud-icon::after,
+.is-touch .hud-btn::after,
+.is-touch .card-close::after,
+.is-touch .badge-panel-close::after,
+.is-touch .badge-go::after,
+.is-touch .badge-reset::after,
+.is-touch .lightbox-close::after,
+.is-touch .gallery-dot::after,
+.is-touch .prompt::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+.is-touch .dialogue-choice {
+  min-height: 44px;
+}
+
+/* The box is tapped to advance on phones, so the A button would only show through it. */
+body.is-talking .a-button {
+  display: none;
+}
+
+.badge-count {
+  align-self: center;
+  margin: 0 4px 0 6px;
+  font: 400 15px/1 var(--font-display);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+/* Badge rows: medal on the left; name, how-to and the jump button stacked beside it, the same in every row. */
+.badge-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 8px;
+  align-items: start;
+}
+
+.badge-row > div {
+  min-width: 0;
+}
+
+.badge-row .badge-go {
+  grid-column: 2;
+  justify-self: start;
+  white-space: nowrap;
+}
+
+/* A soft fade above the sticky footer, so content running under it reads as "keep scrolling". */
+.card-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, rgba(11, 13, 18, 0), rgba(11, 13, 18, 0.9));
+  pointer-events: none;
 }

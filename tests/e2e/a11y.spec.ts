@@ -78,7 +78,7 @@ test('the 1-on-1: each question type and the result screen', async ({ page }) =>
   await page.waitForTimeout(320);
   await page.locator('.prompt').click();
   for (let i = 0; i < 6 && (await page.locator('.dialogue-choice').count()) === 0; i++) {
-    await page.locator('.dialogue').click();
+    await page.locator('.dialogue:not(.is-leaving)').click();
     await page.waitForTimeout(250);
   }
   await page.getByRole('button', { name: 'Run it' }).click();

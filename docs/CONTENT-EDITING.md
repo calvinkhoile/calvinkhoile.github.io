@@ -51,7 +51,14 @@ Every item here was written for you and needs your review. Each is marked `TODO(
 |---|---|---|
 | Badge names and how-to-earn lines | `src/content/badges.ts` | Bruin, Consultant, Ship-It, High Roller, Explorer, Park Legend (names from the plan) |
 | Trainer names | `src/world/looks.ts` | Rookie, Playmaker, Sixth Man, Sharpshooter |
-| Loading tips | `src/ui/screens.ts` | Three tips about the résumé button, tap-to-walk, and sprinting |
+| Loading tips | `src/ui/screens.ts` | Three tips: tap-to-walk, sprinting, and the shot meter (the résumé tip was dropped, since the loading screen now has a résumé button) |
+| Loading screen | `index.html` | "Calvin Le's / MyPark", "Warming up the park", "In a hurry? Open the résumé" |
+| Court callouts | `src/main.ts`, `src/finale/court-scene.ts` | GREEN, BUCKET, BRICK, HEATING UP, ON FIRE, SPLASH, SLAM, REJECTED, COOKED, GAME, plus "Perfect release", "Slightly early", "Way late" |
+| Shootaround how-to | `src/main.ts` | "Hold Shoot, let go at the top of the meter." (touch) / "Hold G, let go at the top of the meter." |
+| Slow-device notice | `src/content/dialogue.ts` (`toasts.slow`) | "Running slow on this device? The résumé button up top is the fast version." |
+| Intro shortcut | `src/content/dialogue.ts` (`plazaChoices`) | "Show me your latest work" (jumps to the BetMGM gym, Rewards Store open) |
+| Badge how-to lines | `src/content/badges.ts` | "See every stop in the <gym> gym." (the old lines said to talk to Calvin, which isn't needed) |
+| Result screen buttons | `src/finale/game.ts` | Added "Résumé"; "Email" is now "Copy email" |
 | Station labels | `src/content/stations.ts` | Prompt names such as "Partnership Desk", "AI Lab", "Voice of the Customer" |
 | Photo captions | `src/content/stations.ts` | "BetMGM Product Summit." and "Meta HQ." are placeholders. Write the captions you want |
 | Card hints | `src/ui/card.ts` | "Drag the slider to compare before and after", "Tap A or B to zoom in" |

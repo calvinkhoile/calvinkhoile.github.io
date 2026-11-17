@@ -286,9 +286,12 @@ export function logoSign(url: string, bg: number, aspect: number): THREE.MeshBas
   const img = new Image();
   img.onload = () => {
     const pad = 0.14;
-    const scale = Math.min((w * (1 - pad * 2)) / img.width, (h * (1 - pad * 2)) / img.height);
-    const dw = img.width * scale;
-    const dh = img.height * scale;
+    // An SVG without width/height has no intrinsic size in Safari and Firefox: treat it as square.
+    const iw = img.naturalWidth || h;
+    const ih = img.naturalHeight || h;
+    const scale = Math.min((w * (1 - pad * 2)) / iw, (h * (1 - pad * 2)) / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
     ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
     tex.needsUpdate = true;
   };
@@ -1456,7 +1459,7 @@ export function createSun(renderer: THREE.WebGLRenderer, mapSize: number): Sun {
   const setShadows = (size: number) => {
     const on = size > 0;
     renderer.shadowMap.enabled = on;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     sun.castShadow = on;
     if (on && sun.shadow.mapSize.x !== size) {
       sun.shadow.mapSize.set(size, size);

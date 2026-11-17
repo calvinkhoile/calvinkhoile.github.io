@@ -196,23 +196,37 @@ export class CardOverlay {
       if (e.target === this.overlay) this.close();
     });
     window.addEventListener('keydown', (e) => {
-      if (!this.model) return;
+      // A photo open on top owns the keyboard.
+      if (!this.model || this.lightbox.isOpen) return;
       if (e.code === 'Escape') {
         e.preventDefault();
         this.close();
       } else if (e.code === 'Tab') {
         this.trapFocus(e);
+      } else if ((e.code === 'ArrowRight' || e.code === 'ArrowLeft') && this.arrowInside(e)) {
+        // Arrows inside the tab row move between tabs; inside a gallery they page the photos.
       } else if (e.code === 'ArrowRight' && !e.repeat) {
-        // Right arrow moves on, unless it's being used on a slider or inside the tab row.
+        // Right arrow moves on, unless it's being used on a slider, a gallery, or inside the tab row.
         const el = document.activeElement as HTMLElement | null;
         const footer = this.card.querySelector<HTMLButtonElement>('.card-footer-btn');
-        if (footer && !el?.closest('input, [role="tablist"]')) {
+        if (footer && !el?.closest('input, [role="tablist"], .gallery-viewport')) {
           e.preventDefault();
           footer.click();
         }
       }
     });
     this.card.addEventListener('click', (e) => this.onClick(e));
+    // Once the visitor scrolls into a card, the header folds down to one line to give the content room.
+    // Fold past 60px, unfold only back at the top, so the header's own change in height can't make it flicker.
+    this.card.addEventListener(
+      'scroll',
+      () => {
+        const folded = this.card.classList.contains('is-scrolled');
+        if (!folded && this.card.scrollTop > 60) this.card.classList.add('is-scrolled');
+        else if (folded && this.card.scrollTop < 6) this.card.classList.remove('is-scrolled');
+      },
+      { passive: true },
+    );
     // Scroll doesn't bubble, so listen in the capture phase to keep gallery dots in step with swipes.
     this.card.addEventListener(
       'scroll',
@@ -250,12 +264,19 @@ export class CardOverlay {
     const swapping = !!this.model && !this.closing;
     if (this.model) this.finish(!swapping);
     this.card.classList.toggle('is-swap', swapping);
+    this.card.dataset.dir = swapping ? this.swapDir : '';
+    this.swapDir = '';
     this.model = model;
     this.handlers = handlers;
     if (!swapping) this.returnFocus = document.activeElement as HTMLElement | null;
     this.render(model);
     this.overlay.hidden = false;
     this.card.scrollTop = 0;
+    this.card.classList.remove('is-scrolled');
+    // Keep the current stop in view in the station strip.
+    const strip = this.card.querySelector<HTMLElement>('.card-stations');
+    const here = strip?.querySelector<HTMLElement>('.is-current');
+    if (strip && here) strip.scrollLeft = here.offsetLeft - (strip.clientWidth - here.offsetWidth) / 2;
     document.body.classList.add('has-card');
     // With a "Next" or "Finish" button, that's where focus starts, so Enter moves on.
     ((this.card.querySelector('.card-footer-btn') ?? this.card.querySelector('.card-close')) as HTMLElement).focus({ preventScroll: true });
@@ -269,17 +290,18 @@ export class CardOverlay {
     this.closing = true;
     const sheet = this.isSheet();
     // Phones: the sheet slides back down. Desktop: the panel eases away.
-    this.card.style.transition = sheet ? 'transform 0.22s cubic-bezier(0.4, 0, 1, 1)' : 'transform 0.16s ease, opacity 0.16s ease';
-    this.card.style.transform = sheet ? 'translateY(105%)' : 'translateY(14px) scale(0.985)';
+    this.card.style.animation = 'none'; // a close mid-entrance starts from where the card is
+    this.card.style.transition = sheet ? 'transform 0.26s cubic-bezier(0.4, 0, 1, 1)' : 'transform 0.22s cubic-bezier(0.4, 0, 1, 1), opacity 0.2s ease';
+    this.card.style.transform = sheet ? 'translateY(105%)' : 'translateY(18px) scale(0.95)';
     if (!sheet) this.card.style.opacity = '0';
     this.overlay.classList.add('is-closing');
-    this.closeTimer = window.setTimeout(() => this.finish(), sheet ? 220 : 160);
+    this.closeTimer = window.setTimeout(() => this.finish(), sheet ? 260 : 220);
   }
 
   private closing = false;
   private closeTimer = 0;
   private isSheet(): boolean {
-    return matchMedia('(max-width: 700px)').matches;
+    return matchMedia('(max-width: 700px), (max-height: 500px)').matches;
   }
 
   private finish(hide = true): void {
@@ -288,6 +310,7 @@ export class CardOverlay {
     window.clearTimeout(this.closeTimer);
     this.closing = false;
     this.card.style.transition = '';
+    this.card.style.animation = '';
     this.card.style.transform = '';
     this.card.style.opacity = '';
     this.overlay.classList.remove('is-closing');
@@ -336,7 +359,7 @@ export class CardOverlay {
           <h2 class="card-title" id="card-title">${esc(m.title)}</h2>
           ${m.subtitle ? `<p class="card-subtitle">${esc(m.subtitle)}</p>` : ''}
         </div>
-        ${m.chip ? `<span class="card-chip">${esc(m.chip)}</span>` : ''}
+        ${m.chip && !m.stations?.length ? `<span class="card-chip">${esc(m.chip)}</span>` : ''}
         <button class="card-close" type="button" aria-label="Close">✕</button>
       </header>
       ${
@@ -389,6 +412,28 @@ export class CardOverlay {
     });
     group.querySelectorAll<HTMLElement>('[data-detail]').forEach((d) => d.classList.toggle('is-on', Number(d.dataset.detail) === i));
     group.querySelectorAll<HTMLElement>('[data-caption]').forEach((c) => (c.hidden = Number(c.dataset.caption) !== i));
+  }
+
+  /** Left/right on a focused tab or gallery. Returns true when it handled the key. */
+  private arrowInside(e: KeyboardEvent): boolean {
+    const el = document.activeElement as HTMLElement | null;
+    const step = e.code === 'ArrowRight' ? 1 : -1;
+    const tabs = el?.closest('[role="tablist"]');
+    if (tabs) {
+      e.preventDefault();
+      const all = Array.from(tabs.querySelectorAll<HTMLElement>('[data-tab]'));
+      const next = all[(all.indexOf(el as HTMLElement) + step + all.length) % all.length];
+      this.showTab(Number(next.dataset.tab));
+      next.focus();
+      return true;
+    }
+    const gallery = el?.closest<HTMLElement>('[data-gallery]');
+    if (gallery && el?.classList.contains('gallery-viewport')) {
+      e.preventDefault();
+      this.galleryGo(gallery, this.galleryIndex(gallery) + step);
+      return true;
+    }
+    return false;
   }
 
   private showTab(i: number): void {
@@ -469,56 +514,112 @@ export class CardOverlay {
     g.querySelectorAll('.gallery-dot').forEach((d, k) => d.classList.toggle('is-on', k === i));
   }
 
-  /** Swipe left/right on a gallery to page it. Drag the header down to pull the sheet away, like a native bottom sheet. */
+  /**
+   * Touch gestures, like a native bottom sheet:
+   * - Drag down anywhere on the sheet (once it's scrolled to the top) to pull it away.
+   * - Swipe sideways anywhere that doesn't scroll sideways itself to go to the next or previous station.
+   */
   private bindSwipes(): void {
-    let start: { x: number; y: number; t: number; gallery: HTMLElement | null; header: boolean } | null = null;
-    let dragging = false;
+    type Mode = 'pending' | 'sheet' | 'side' | 'none';
+    let s: { x: number; y: number; t: number; mode: Mode; header: boolean; hScroll: boolean; from: number } | null = null;
+    const body = () => this.card.querySelector<HTMLElement>('.card-body');
+    const scrollsX = (t: HTMLElement) => {
+      const el = t.closest<HTMLElement>('.gallery-viewport, .card-row, .card-stations, .card-tabs, [role="tablist"]');
+      if (el && el.scrollWidth > el.clientWidth + 2) return true;
+      return !!t.closest('.ba, input, .zoom, .spots, [data-noswipe]');
+    };
     this.card.addEventListener(
       'touchstart',
       (e) => {
+        if (e.touches.length !== 1 || this.closing || !this.model) {
+          s = null;
+          return;
+        }
         const t = e.target as HTMLElement;
-        const header = this.isSheet() && !!t.closest('[data-swipe]') && !t.closest('button');
-        start = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: performance.now(), gallery: t.closest<HTMLElement>('[data-gallery]'), header };
-        dragging = false;
+        const header = !!t.closest('[data-swipe]') && !t.closest('button');
+        s = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: performance.now(), mode: 'pending', header, hScroll: scrollsX(t), from: 0 };
       },
       { passive: true },
     );
     this.card.addEventListener(
       'touchmove',
       (e) => {
-        if (!start?.header || this.closing) return;
-        const dy = e.touches[0].clientY - start.y;
-        if (!dragging && dy > 6) dragging = true;
-        if (dragging) {
-          // The sheet follows the finger.
+        if (!s || this.closing) return;
+        const dx = e.touches[0].clientX - s.x;
+        const dy = e.touches[0].clientY - s.y;
+        const atTop = this.card.scrollTop <= 0;
+        if (s.mode === 'pending') {
+          const vertical = Math.abs(dy) >= Math.abs(dx);
+          // Pulling down from the top: claim the gesture right away so the page doesn't rubber-band first.
+          if (this.isSheet() && vertical && dy > 0 && (s.header || atTop)) e.preventDefault();
+          if (Math.hypot(dx, dy) < 8) return;
+          if (vertical) s.mode = this.isSheet() && dy > 0 && (s.header || atTop) ? 'sheet' : 'none';
+          else s.mode = !s.hScroll && this.stationStep(1, true) + this.stationStep(-1, true) > 0 ? 'side' : 'none';
+          s.from = s.mode === 'sheet' ? dy : dx;
+        }
+        if (s.mode === 'sheet') {
+          e.preventDefault();
           this.card.style.transition = 'none';
-          this.card.style.transform = `translateY(${Math.max(0, dy)}px)`;
+          this.card.style.animation = 'none';
+          this.card.style.transform = `translateY(${Math.max(0, dy - s.from)}px)`;
+        } else if (s.mode === 'side') {
+          e.preventDefault();
+          const b = body();
+          if (!b) return;
+          // Follows the finger, with resistance when there's no station that way.
+          const can = this.stationStep(dx < 0 ? 1 : -1, true) > 0;
+          b.style.transition = 'none';
+          b.style.transform = `translateX(${(dx - s.from) * (can ? 0.5 : 0.15)}px)`;
+          b.style.opacity = String(1 - Math.min(0.5, Math.abs(dx) / 600));
         }
       },
-      { passive: true },
+      { passive: false },
     );
     const release = (e: TouchEvent) => {
-      if (!start) return;
-      const dx = e.changedTouches[0].clientX - start.x;
-      const dy = e.changedTouches[0].clientY - start.y;
-      const s = start;
-      start = null;
-      void dx;
-      if (s.header && dragging) {
-        dragging = false;
-        const velocity = dy / Math.max(1, performance.now() - s.t); // px per ms
-        if (dy > 120 || (dy > 30 && velocity > 0.5)) {
+      const g = s;
+      s = null;
+      if (!g) return;
+      const dx = e.changedTouches[0].clientX - g.x;
+      const dy = e.changedTouches[0].clientY - g.y;
+      const ms = Math.max(1, performance.now() - g.t);
+      if (g.mode === 'sheet') {
+        const travel = dy - g.from;
+        if (travel > 110 || (travel > 30 && travel / ms > 0.5)) {
           this.close();
         } else {
           // Not far enough: spring back.
-          this.card.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+          this.card.style.transition = 'transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)';
           this.card.style.transform = '';
+        }
+      } else if (g.mode === 'side') {
+        const b = body();
+        const dir = dx < 0 ? 1 : -1;
+        if ((Math.abs(dx) > 70 || (Math.abs(dx) > 30 && Math.abs(dx) / ms > 0.45)) && this.stationStep(dir)) return;
+        if (b) {
+          b.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease';
+          b.style.transform = '';
+          b.style.opacity = '';
         }
       }
     };
     this.card.addEventListener('touchend', release, { passive: true });
     this.card.addEventListener('touchcancel', release, { passive: true });
   }
+
+  /** Move to the next (1) or previous (-1) station in the strip. With `dry`, just report whether there is one. */
+  private stationStep(dir: 1 | -1, dry = false): number {
+    const strip = Array.from(this.card.querySelectorAll<HTMLElement>('.card-station'));
+    const at = strip.findIndex((b) => b.classList.contains('is-current'));
+    const to = strip[at + dir];
+    if (at < 0 || !to) return 0;
+    if (!dry) {
+      this.swapDir = dir === 1 ? 'next' : 'prev';
+      this.handlers.onSwap?.(`station:${to.dataset.station}`);
+    }
+    return 1;
+  }
+
+  private swapDir: 'next' | 'prev' | '' = '';
 
   private trapFocus(e: KeyboardEvent): void {
     const focusable = Array.from(this.card.querySelectorAll<HTMLElement>('button, [href], input, [tabindex]:not([tabindex="-1"])')).filter(

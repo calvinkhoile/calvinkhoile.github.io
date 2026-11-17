@@ -51,10 +51,10 @@ test('fresh visit: title, character select, then into the park with the look sav
 
   await page.waitForFunction(() => window.__mypark?.ready === true);
   // First visit: Calvin walks over and starts the intro on his own. Esc skips it.
-  await expect(page.locator('.dialogue')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.dialogue-speaker')).toHaveText('Calvin');
   await page.keyboard.press('Escape');
-  await expect(page.locator('.dialogue')).toBeHidden();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeHidden();
   await expect.poll(() => page.evaluate(() => window.__mypark!.busy)).toBe(false);
   expect(await page.evaluate(() => window.__mypark!.look)).toBe('b');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mypark:v1')!).look)).toBe('b');
@@ -200,14 +200,14 @@ test.describe('touch', () => {
   });
 });
 
-test('the how-to-move hint hides while moving and comes back after standing still', async ({ page }) => {
+test('the how-to-move hint shows until the visitor moves, and stays out of a notice', async ({ page }) => {
   await boot(page);
   const hint = page.locator('#hint');
-  await expect(hint).not.toHaveClass(/is-hidden/);
+  // It waits for the "Welcome back" notice to go first, so the two never overlap.
+  await expect(hint).not.toHaveClass(/is-hidden/, { timeout: 40_000 });
   const target = await page.evaluate(() => window.__mypark!.project(36.5, 49.5));
   await page.mouse.click(target.x, target.y);
   await expect(hint).toHaveClass(/is-hidden/);
-  await expect(hint).not.toHaveClass(/is-hidden/, { timeout: 30_000 });
 });
 
 test('classic site still works at /classic/', async ({ page }) => {

@@ -67,17 +67,17 @@ test('signpost: prompt appears in range and its dialogue plays through', async (
   const errors = await boot(page);
   await standAt(page, 'plaza/signpost', 'Signpost');
   await interact(page, isMobile);
-  await expect(page.locator('.dialogue')).toBeVisible();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeVisible();
   await expect(page.locator('.dialogue-speaker')).toHaveText('Signpost');
   // The line types itself out, then shows how to continue.
   await expect(page.locator('.dialogue-text')).toContainText('North along the path: Deloitte, Meta, BetMGM.');
   await expect(page.locator('.dialogue-hint')).toHaveText(isMobile ? 'Tap to continue' : 'Enter or → to continue');
   // Enter or the right arrow continues on desktop. A tap does on touch.
-  if (isMobile) await page.locator('.dialogue').click();
+  if (isMobile) await page.locator('.dialogue:not(.is-leaving)').click();
   else await page.keyboard.press('ArrowRight');
   await expect(page.locator('.dialogue-text')).toContainText("Calvin's Court.");
-  await page.locator('.dialogue').click();
-  await expect(page.locator('.dialogue')).toBeHidden();
+  await page.locator('.dialogue:not(.is-leaving)').click();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeHidden();
   await idle(page);
   expect(errors).toEqual([]);
 });
@@ -87,7 +87,8 @@ test('plaza Calvin: choices, the About card, and the tour to UCLA', async ({ pag
   await boot(page);
   await standAt(page, 'calvin-plaza', 'Talk to Calvin');
   await interact(page, isMobile);
-  await expect(page.locator('.dialogue-choice')).toHaveCount(3, { timeout: 15_000 });
+  // Latest work, the tour, explore, and who are you.
+  await expect(page.locator('.dialogue-choice')).toHaveCount(4, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Who are you?' }).click();
   await expect(page.locator('.card')).toBeVisible();
   await expect(page.locator('.card-title')).toHaveText('Calvin Le');
@@ -102,8 +103,8 @@ test('plaza Calvin: choices, the About card, and the tour to UCLA', async ({ pag
   await interact(page, isMobile);
   await page.getByRole('button', { name: 'Show me around' }).click();
   await expect(page.locator('.dialogue-text')).toContainText('Follow me', { timeout: 10_000 });
-  await page.locator('.dialogue').click();
-  await page.locator('.dialogue').click();
+  await page.locator('.dialogue:not(.is-leaving)').click();
+  await page.locator('.dialogue:not(.is-leaving)').click();
   await expect(page.locator('.dialogue-text')).toContainText('UCLA', { timeout: 60_000 });
   const p = await page.evaluate(() => window.__mypark!.player);
   expect(p.x).toBeLessThan(22);
@@ -131,7 +132,8 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
     await expect(card).toBeVisible();
     await expect(card).toHaveAttribute('data-card', order[i]);
     await expect(page.locator('.card-title')).toHaveText(titles[i]);
-    await expect(page.locator('.card-chip')).toHaveText(`${i + 1}/4 stations`);
+    // Progress lives in the station strip (the old chip is gone when the strip is there): one more check each stop.
+    await expect(page.locator('.card-station.is-done')).toHaveCount(i + 1);
     await expectCardImagesLoad(page);
 
     if (i === 0) {
@@ -205,8 +207,8 @@ test('BetMGM gym: enter, visit all four stations, talk to the leader, exit, and 
   // The gym leader, badge already earned: a line, then the overview card with jump links to the stations.
   await standAt(page, 'calvin-betmgm', 'Talk to Calvin');
   await interact(page, isMobile);
-  await expect(page.locator('.dialogue')).toBeVisible();
-  for (let i = 0; i < 4 && (await page.locator('.dialogue').isVisible()); i++) await page.locator('.dialogue').click();
+  await expect(page.locator('.dialogue:not(.is-leaving)')).toBeVisible();
+  for (let i = 0; i < 4 && (await page.locator('.dialogue:not(.is-leaving)').isVisible()); i++) await page.locator('.dialogue:not(.is-leaving)').click();
   await expect(page.locator('.card')).toBeVisible();
   await expect(page.locator('.card')).toHaveAttribute('data-card', 'betmgm-overview');
   await expect(page.locator('.card-link')).toHaveCount(4);

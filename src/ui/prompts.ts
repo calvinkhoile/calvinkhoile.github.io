@@ -1,3 +1,5 @@
+import { hide, show } from './motion';
+
 /** "E · Rewards Store" proximity prompt. It floats over the object and doubles as a screen-reader announcement. */
 export class Prompt {
   private readonly el: HTMLElement;
@@ -27,7 +29,7 @@ export class Prompt {
     if (label === null) {
       if (this.current !== null) {
         this.current = null;
-        this.el.hidden = true;
+        void hide(this.el);
         this.live.textContent = '';
       }
       return;
@@ -38,7 +40,7 @@ export class Prompt {
       this.key.textContent = touch ? '●' : 'E';
       this.label.textContent = label;
       this.live.textContent = `${label}. ${touch ? 'Tap A' : 'Press E'} to open.`;
-      this.el.hidden = false;
+      show(this.el);
     }
     this.el.style.transform = `translate(-50%, -100%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
