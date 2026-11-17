@@ -39,7 +39,8 @@ export class BadgeUi {
     caseHost.appendChild(this.caseBtn);
     root.append(this.panel, this.ceremonyEl);
 
-    this.caseBtn.addEventListener('click', () => (this.panel.hidden ? this.openPanel() : this.closePanel()));
+    // A panel still fading out counts as closed, so a quick second click reopens it instead of doing nothing.
+    this.caseBtn.addEventListener('click', () => (this.panelOpen ? this.closePanel() : this.openPanel()));
     this.panel.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
       if (t === this.panel || t.closest('.badge-panel-close')) return this.closePanel();
@@ -69,7 +70,7 @@ export class BadgeUi {
   }
 
   get panelOpen(): boolean {
-    return !this.panel.hidden;
+    return !this.panel.hidden && !isLeaving(this.panel);
   }
 
   refresh(owned: ReadonlySet<string>): void {

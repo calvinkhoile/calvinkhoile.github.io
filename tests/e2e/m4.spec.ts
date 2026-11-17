@@ -141,7 +141,7 @@ test('the Weightroom: five stops, then the Explorer badge', async ({ page, isMob
 test('badge case: lists all six badges, and reset clears progress', async ({ page }) => {
   await boot(page, '/', { look: 'c', badges: ['ucla'], visitedStations: ['ucla/clubs'] });
   await page.locator('#badge-case').click();
-  const panel = page.locator('.badge-panel:not(.settings-panel)');
+  const panel = page.locator('.badge-panel:not(.settings-panel):not(.highlights-panel)');
   await expect(panel).toBeVisible();
   await expect(panel.locator('.badge-row')).toHaveCount(badges.length);
   await expect(panel.locator('.badge-row.is-earned')).toHaveCount(1);

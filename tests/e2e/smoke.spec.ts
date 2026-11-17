@@ -79,7 +79,8 @@ test('debug overlay shows the grid and an FPS counter', async ({ page }, info) =
 
 test('click or tap on open ground walks the player there', async ({ page }, info) => {
   await boot(page);
-  const target = { x: 36.5, z: 49.5 };
+  // Clear ground beside spawn (the highlights poster stands a few tiles north).
+  const target = { x: 36.5, z: 53.5 };
   const screen = await page.evaluate((t) => window.__mypark!.project(t.x, t.z), target);
   if (info.project.name === 'mobile') await page.touchscreen.tap(screen.x, screen.y);
   else await page.mouse.click(screen.x, screen.y);
