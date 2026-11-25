@@ -18,7 +18,10 @@ export class DialogueBox {
   private readonly choices: HTMLElement;
   private readonly live: HTMLElement;
   private readonly instant: boolean;
-  /** The typed part of the line, and the rest of it laid out invisibly so the box never reflows mid-line. */
+  /**
+   * The typed part of the line, and the rest of it laid out invisibly so the box never reflows mid-line.
+   * The rest is drawn by CSS from data-rest, so the element's text is only what has been typed so far.
+   */
   private readonly typed: HTMLElement;
   private readonly ghost: HTMLElement;
   private sizeAnim: Animation | null = null;
@@ -138,7 +141,7 @@ export class DialogueBox {
       }
       this.more.hidden = true;
       this.typed.textContent = '';
-      this.ghost.textContent = line.text;
+      this.ghost.dataset.rest = line.text;
       this.balanceChoices();
     });
     this.shown = 0;
@@ -151,7 +154,7 @@ export class DialogueBox {
     this.timer = window.setInterval(() => {
       this.shown++;
       this.typed.textContent = line.text.slice(0, this.shown);
-      this.ghost.textContent = line.text.slice(this.shown);
+      this.ghost.dataset.rest = line.text.slice(this.shown);
       if (this.shown >= line.text.length) this.completeLine();
     }, 1000 / CHARS_PER_SECOND);
   }
@@ -208,7 +211,7 @@ export class DialogueBox {
     const node = this.node!;
     const text = node.lines[this.index].text;
     this.typed.textContent = text;
-    this.ghost.textContent = '';
+    this.ghost.dataset.rest = '';
     this.typing = false;
     const slots = Array.from(this.choices.children) as HTMLButtonElement[];
     if (slots.length > 0) {

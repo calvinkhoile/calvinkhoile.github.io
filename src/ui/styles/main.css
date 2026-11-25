@@ -1105,6 +1105,9 @@ body.is-talking .joystick {
 .dialogue-ghost {
   visibility: hidden;
 }
+.dialogue-ghost::after {
+  content: attr(data-rest);
+}
 
 .dialogue-more {
   position: absolute;
@@ -3438,8 +3441,9 @@ body.in-finale .joystick {
     width: 36px;
   }
 
+  /* Under the whole HUD (links, badges, icons), however tall it is, so nothing overlaps. */
   .is-touch .minimap {
-    top: calc(60px + var(--safe-top));
+    top: calc(var(--hud-bottom, 112px) + 10px);
   }
 }
 
