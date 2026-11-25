@@ -1549,6 +1549,28 @@ body.is-talking .joystick {
   left: 10px;
 }
 
+/* Narrow sliders (three across on a small phone): smaller labels, so BEFORE and AFTER don't collide. */
+.ba {
+  container-type: inline-size;
+}
+
+@container (max-width: 150px) {
+  .ba .ba-tag {
+    top: 6px;
+    padding: 2px 5px;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+
+  .ba .ba-tag-before {
+    left: 6px;
+  }
+
+  .ba .ba-tag-after {
+    right: 6px;
+  }
+}
+
 .ba-tag-after {
   right: 10px;
 }
@@ -3483,6 +3505,10 @@ body.in-finale .joystick {
     left: auto;
     right: calc(14px + var(--safe-right));
     transform-origin: top right;
+  }
+
+  .is-touch .minimap canvas {
+    width: min(120px, 30vh);
   }
 }
 
