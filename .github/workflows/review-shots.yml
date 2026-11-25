@@ -7,6 +7,9 @@ on:
   push:
     branches: ['claude/**']
 
+permissions:
+  contents: write
+
 jobs:
   shots:
     runs-on: ubuntu-latest
@@ -25,7 +28,12 @@ jobs:
           command -v mogrify || sudo apt-get install -y imagemagick
           find review-shots -name '*.png' -print0 | xargs -0 -r mogrify -resize 50% -quality 72 -format jpg
           find review-shots -name '*.png' -delete
-      - uses: actions/upload-artifact@v4
-        with:
-          name: review-shots
-          path: review-shots
+      - name: Push the pictures to a hidden ref
+        env:
+          TOKEN: ${{ github.token }}
+          REF: refs/review/${{ github.run_id }}-r3
+        run: |
+          cd review-shots
+          git init -q . && git add -A
+          git -c user.name=review-bot -c user.email=review-bot@users.noreply.github.com commit -qm "Review shots at ${{ github.sha }}"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}" HEAD:${REF}
