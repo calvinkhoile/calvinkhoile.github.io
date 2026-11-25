@@ -24,6 +24,10 @@ export class Prompt {
     this.label = this.el.querySelector('.prompt-label')!;
   }
 
+  get isOpen(): boolean {
+    return this.current !== null;
+  }
+
   /** Show `label` at a screen position, or hide when label is null. */
   set(label: string | null, x = 0, y = 0): void {
     if (label === null) {

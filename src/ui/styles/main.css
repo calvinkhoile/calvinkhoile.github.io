@@ -78,12 +78,8 @@ body {
   transform: none;
 }
 
-/* In-world HUD only shows once the visitor is playing */
-body:not(.is-playing) .hint,
-body:not(.is-playing) .joystick,
-body:not(.is-playing) .a-button,
-body:not(.is-playing) .hud-links,
-body.has-card .hud-links {
+/* In-world HUD only shows once the visitor is playing (the rest of it fades: see "HUD steps aside"). */
+body:not(.is-playing) .joystick {
   display: none;
 }
 
@@ -544,6 +540,7 @@ body.has-card .hud-links {
   left: 50%;
   bottom: calc(24px + var(--safe-bottom));
   transform: translateX(-50%);
+  width: max-content;
   max-width: calc(100% - 32px);
   padding: 10px 16px;
   border: 1px solid var(--hairline);
@@ -581,7 +578,8 @@ body.has-card .hud-links {
 
 .is-touch .hint {
   bottom: auto;
-  top: calc(112px + var(--safe-top));
+  /* Just under the top-right HUD, however tall it is right now (set from main.ts). */
+  top: calc(var(--hud-bottom, 104px) + 10px);
   border-radius: 18px;
   font-size: 14px;
   white-space: nowrap;
@@ -658,7 +656,7 @@ body.has-card .hud-links {
   -webkit-tap-highlight-color: transparent;
 }
 
-.is-touch.can-act .a-button {
+.is-touch .a-button {
   display: flex;
   opacity: 0.78;
 }
@@ -765,13 +763,8 @@ body.has-card .hud-links {
   white-space: nowrap;
 }
 
-body.has-card .hint,
 body.has-card .joystick,
-body.has-card .a-button,
-body.has-card .prompt,
-body.is-talking .hint,
-body.is-talking .joystick,
-body.is-talking .prompt {
+body.is-talking .joystick {
   display: none;
 }
 
@@ -827,12 +820,6 @@ body.is-talking .prompt {
   gap: 8px;
 }
 
-body:not(.is-playing) .hud-row2,
-body.has-card .hud-row2,
-body.is-talking .hud-row2 {
-  display: none;
-}
-
 .tracker {
   position: relative;
 }
@@ -877,7 +864,6 @@ body.is-talking .hud-row2 {
   border: 1px solid var(--hairline);
   border-radius: 16px;
   background: rgba(8, 12, 20, 0.96);
-  animation: panel-in 0.16s ease;
 }
 
 .tracker-panel[hidden] {
@@ -970,7 +956,10 @@ body.is-talking .hud-row2 {
   position: absolute;
   left: 50%;
   bottom: calc(18px + var(--safe-bottom));
-  width: min(720px, calc(100% - 24px));
+  /* As wide as its text (and its choices), never wider than the screen allows. */
+  width: max-content;
+  min-width: min(300px, calc(100% - 24px));
+  max-width: min(720px, calc(100% - 24px));
   translate: -50% 0;
   padding: 22px 22px 20px;
   border: 2px solid var(--ink);
@@ -981,6 +970,11 @@ body.is-talking .hud-row2 {
 
 .dialogue[hidden] {
   display: none;
+}
+
+/* While the box glides between line sizes, anything past its edge is cut (the name tab above stays). */
+.dialogue.is-resizing {
+  clip-path: inset(-24px 0 0 0 round 14px);
 }
 
 /* Old-TV power on: a dot stretches into a bright scanline, then the line opens into the box.
@@ -1102,10 +1096,17 @@ body.is-talking .hud-row2 {
 }
 
 .dialogue-text {
-  min-height: 3.1em;
   margin: 0 0 14px;
   font-size: 17px;
   line-height: 1.5;
+}
+
+/* The rest of the line, laid out but not shown, so typing never reflows the box. */
+.dialogue-ghost {
+  visibility: hidden;
+}
+.dialogue-ghost::after {
+  content: attr(data-rest);
 }
 
 .dialogue-more {
@@ -1129,24 +1130,40 @@ body.is-talking .hud-row2 {
 }
 
 .dialogue-choices {
-  display: flex;
-  flex-wrap: wrap;
+  /* One row of equal-width choices; when a label won't fit, they stack as a full-width list. */
+  display: grid;
+  grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr));
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 4px;
+}
+
+.dialogue-choices.is-stacked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Laid out while the line types, shown when it's done. */
+.dialogue-slot {
+  visibility: hidden;
 }
 
 .dialogue-choices:empty {
   display: none;
 }
 
-.dialogue-choice {
+.dialogue-choices > button {
   padding: 10px 16px;
   border: 1px solid var(--hairline);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
-  font: 600 15px/1 var(--font-body);
+  font: 600 15px/1.2 var(--font-body);
+  text-align: center;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.dialogue-choices.is-stacked > button {
+  white-space: normal;
 }
 
 .dialogue-choice:hover,
@@ -1204,7 +1221,8 @@ body.is-talking .hud-row2 {
   gap: 14px;
   padding: 18px 20px;
   border-bottom: 1px solid var(--hairline);
-  background: rgba(11, 13, 18, 0.96);
+  /* Solid, the same as the card: scrolled text must not read through the pinned header. */
+  background: #0b0d12;
 }
 
 .card-grip {
@@ -1219,6 +1237,12 @@ body.is-talking .hud-row2 {
   background: #fff;
   object-fit: contain;
   flex: none;
+}
+
+/* Deloitte's mark is white, so it needs the dark plate (as on the Highlights tile). */
+.card-logo[src$='deloitte.webp'] {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
 .card-heading {
@@ -1508,7 +1532,10 @@ body.is-talking .hud-row2 {
 
 .ba-tag {
   position: absolute;
+  /* Over the divider line, so a narrow slider never cuts into the label. */
+  z-index: 1;
   top: 10px;
+  pointer-events: none;
   padding: 4px 9px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.72);
@@ -1520,6 +1547,28 @@ body.is-talking .hud-row2 {
 
 .ba-tag-before {
   left: 10px;
+}
+
+/* Narrow sliders (three across on a small phone): smaller labels, so BEFORE and AFTER don't collide. */
+.ba {
+  container-type: inline-size;
+}
+
+@container (max-width: 150px) {
+  .ba .ba-tag {
+    top: 6px;
+    padding: 2px 5px;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+
+  .ba .ba-tag-before {
+    left: 6px;
+  }
+
+  .ba .ba-tag-after {
+    right: 6px;
+  }
 }
 
 .ba-tag-after {
@@ -1911,12 +1960,16 @@ body.is-talking .hud-row2 {
 /* ---------- toast ---------- */
 .toast {
   position: absolute;
-  top: calc(110px + var(--safe-top));
+  top: calc(var(--hud-bottom, 98px) + 12px);
   left: 50%;
+  /* Sized to its words; a long one wraps at the screen edge, not at half the screen. */
+  width: max-content;
   max-width: calc(100% - 32px);
   padding: 10px 16px;
   border: 1px solid var(--hairline);
-  border-radius: 999px;
+  border-radius: 20px;
+  line-height: 1.35;
+  text-align: center;
   background: rgba(0, 0, 0, 0.8);
   font-size: 14px;
   font-weight: 600;
@@ -1928,8 +1981,15 @@ body.is-talking .hud-row2 {
   display: none;
 }
 
-.is-touch .toast {
-  top: calc(176px + var(--safe-top));
+/* Toasts take the hint's spot (the hint steps aside while one shows) and draw over floating prompts. */
+.toast {
+  z-index: 2;
+}
+
+/* The quick links and the badge row (with its station list) sit above the hint and toasts. */
+.hud-links,
+.hud-row2 {
+  z-index: 3;
 }
 
 /* ---------- card hints, lettered spots, before/after row ---------- */
@@ -2337,7 +2397,6 @@ body.is-talking .hud-row2 {
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  animation: overlay-in 0.2s ease;
 }
 
 .badge-panel[hidden] {
@@ -2352,7 +2411,6 @@ body.is-talking .hud-row2 {
   border: 1px solid var(--hairline);
   border-radius: 18px;
   background: #0b0d12;
-  animation: card-in 0.22s ease;
 }
 
 .badge-panel-head {
@@ -2445,6 +2503,9 @@ body.is-talking .hud-row2 {
 }
 
 .ceremony-body {
+  /* Above the confetti, so it falls behind the words and the button. */
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2478,6 +2539,25 @@ body.is-talking .hud-row2 {
   font: 400 clamp(34px, 8vw, 54px) / 1 var(--font-display);
 }
 
+/* The words land after the medal has spun in, then the button. */
+.ceremony-kicker,
+.ceremony-name,
+.ceremony-continue {
+  animation: title-in 0.45s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.ceremony-kicker {
+  animation-delay: 0.42s;
+}
+
+.ceremony-name {
+  animation-delay: 0.5s;
+}
+
+.ceremony-continue {
+  animation-delay: 0.7s;
+}
+
 .ceremony-confetti i {
   position: absolute;
   top: -20px;
@@ -2498,6 +2578,9 @@ body.is-talking .hud-row2 {
 
 @media (prefers-reduced-motion: reduce) {
   .ceremony .medal--big,
+  .ceremony-kicker,
+  .ceremony-name,
+  .ceremony-continue,
   .badge-sheet,
   .badge-panel,
   .ceremony {
@@ -2523,9 +2606,6 @@ body.is-talking .hud-row2 {
     font-size: 13px;
   }
 
-  .is-touch .hint {
-    top: calc(158px + var(--safe-top));
-  }
 }
 
 /* ---------- ?lineup=1 review page ---------- */
@@ -2563,7 +2643,11 @@ body.is-talking .hud-row2 {
 /* Phones: with the quick links expanded there's no room for the how-to-move hint under them. */
 @media (max-width: 700px) {
   body.links-open .hint {
-    display: none;
+    opacity: 0 !important;
+    visibility: hidden;
+    transition:
+      opacity 0.16s ease,
+      visibility 0s linear 0.16s;
   }
 }
 
@@ -2572,8 +2656,14 @@ body.is-talking .hud-row2 {
   position: absolute;
   left: 50%;
   bottom: calc(26px + var(--safe-bottom));
-  display: flex;
+  /* The count, then the buttons at one shared width. */
+  display: grid;
+  grid-template-columns: auto;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   align-items: center;
+  /* Sized to its buttons, not squeezed into the half of the screen right of center. */
+  width: max-content;
   gap: 10px;
   padding: 10px 12px 10px 18px;
   border: 1px solid var(--hairline);
@@ -2610,19 +2700,28 @@ body.is-talking .hud-row2 {
   display: none;
 }
 
-body.is-lifting .hint,
-body.is-lifting .joystick,
-body.is-lifting .a-button {
+@media (max-width: 700px) {
+  .lift-hud {
+    gap: 8px;
+    padding: 8px 8px 8px 14px;
+  }
+
+  .lift-count {
+    min-width: 54px;
+    font-size: 20px;
+  }
+
+  .lift-hud .btn {
+    padding: 11px 12px;
+  }
+}
+
+body.is-lifting .joystick {
   display: none;
 }
 
 /* ---------- the 1-on-1 ---------- */
-body.in-finale .hint,
-body.in-finale .joystick,
-body.in-finale .a-button,
-body.in-finale .hud-row2,
-body.in-finale .hud-links,
-body.in-finale .prompt {
+body.in-finale .joystick {
   display: none;
 }
 
@@ -3113,18 +3212,45 @@ body.in-finale .prompt {
 
 .result-contact,
 .result-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  /* Equal-width buttons in even rows: four links in a row (two by two on phones), then the three
+     actions (on phones, two side by side with "Back to the park" across the bottom). */
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   gap: 8px;
   margin-top: 10px;
+}
+
+.result-contact {
+  --cols: 4;
+}
+
+.result-actions {
+  --cols: 3;
 }
 
 .result-contact .btn,
 .result-actions .btn {
   min-width: 0;
-  padding: 12px 18px;
+  padding: 12px 10px;
   font-size: 14px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .result-contact,
+  .result-actions {
+    --cols: 2;
+  }
+
+  .result-actions .result-exit {
+    grid-column: 1 / -1;
+  }
+}
+
+/* A finger leaves hover behind after a tap; on touch an answer only lights up when it's picked. */
+.is-touch .q-option:hover:not(:disabled) {
+  border-color: var(--hairline);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 @media (max-width: 700px) {
@@ -3172,6 +3298,11 @@ body.in-finale .prompt {
 @media (max-width: 700px) {
   .q-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Three answers sit in one row rather than two plus an orphan. */
+  .q-options[data-count='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -3335,12 +3466,6 @@ body.in-finale .prompt {
   border-radius: 9px;
 }
 
-body:not(.is-playing) .minimap,
-body.has-card .minimap,
-body.is-talking .minimap,
-body.in-finale .minimap {
-  display: none;
-}
 
 .fallback {
   z-index: 40;
@@ -3366,9 +3491,37 @@ body.in-finale .minimap {
   .hud-icon {
     width: 36px;
   }
+}
+
+/* Phones, either way up: under the whole HUD (links, badges, icons), however tall it is, so nothing overlaps. */
+@media (max-width: 700px), (max-height: 500px) {
+  .is-touch .minimap {
+    top: calc(var(--hud-bottom, 112px) + 10px);
+  }
+}
+
+/* Landscape phones: smaller, and on the right under the HUD, where it clears the joystick and the A button. */
+@media (max-height: 500px) {
+  .minimap canvas {
+    width: min(160px, 40vh);
+  }
 
   .is-touch .minimap {
-    top: calc(60px + var(--safe-top));
+    left: auto;
+    right: calc(14px + var(--safe-right));
+    transform-origin: top right;
+  }
+
+  .is-touch .minimap canvas {
+    width: min(120px, 30vh);
+  }
+}
+
+/* Landscape phones are wide but short: two screenshots and their captions fit side by side, so show both
+   whole instead of one with the next half cut off at the edge. A third still peeks in to say "swipe". */
+@media (max-height: 500px) and (orientation: landscape) {
+  .card-row-item {
+    flex-basis: calc(50% - 7px);
   }
 }
 
@@ -3452,7 +3605,8 @@ body.in-finale .minimap {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Four equal buttons, whatever their labels. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -3536,8 +3690,14 @@ body.in-finale .minimap {
   animation: sheet-out 0.2s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
-.badge-sheet {
-  animation: card-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1);
+/* The sheet rises in only when the panel opens. Settings and the badge case redraw their contents
+   on every toggle, so a plain animation on the sheet would replay with each tap. */
+.badge-panel.is-entering {
+  animation: overlay-in 0.32s ease both;
+}
+
+.badge-panel.is-entering .badge-sheet {
+  animation: card-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1) both;
 }
 
 /* Badge ceremony */
@@ -3672,6 +3832,46 @@ body.in-finale .minimap {
 
 .minimap.is-leaving {
   animation: lift-out 0.18s ease both;
+}
+
+/* Title: as the loading screen fades, the name, the role and the buttons rise in one after another. */
+.title.is-entering {
+  /* Runs as long as the last child's rise, so the class comes off after everything has landed. */
+  animation: title-veil-in 0.85s ease both;
+}
+
+.title.is-entering .title-name,
+.title.is-entering .title-role,
+.title.is-entering .title-actions {
+  animation: title-in 0.5s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.title.is-entering .title-name {
+  animation-delay: 0.12s;
+}
+
+.title.is-entering .title-role {
+  animation-delay: 0.22s;
+}
+
+.title.is-entering .title-actions {
+  animation-delay: 0.32s;
+}
+
+@keyframes title-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes title-veil-in {
+  from {
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
 }
 
 /* Title and character select: the title lifts away, the select fades in under it. */
@@ -3922,6 +4122,29 @@ body.in-finale .minimap {
   display: none;
 }
 
+/* Only opacity and scale animate: transform is set every frame to follow the shooter. */
+.shot-meter.is-entering {
+  animation: meter-in 0.14s ease-out both;
+}
+
+.shot-meter.is-leaving {
+  animation: meter-out 0.22s ease-in both;
+}
+
+@keyframes meter-in {
+  from {
+    opacity: 0;
+    scale: 0.8 0.6;
+  }
+}
+
+@keyframes meter-out {
+  to {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+
 .shot-meter-zone {
   position: absolute;
   left: 0;
@@ -4046,6 +4269,8 @@ body.in-finale .minimap {
 .is-touch .dialogue-choice:hover,
 .is-touch .dialogue-choice:focus-visible {
   background: rgba(255, 255, 255, 0.08);
+  /* A finger leaves hover behind after a tap; it shouldn't read as a picked choice. */
+  outline: none;
 }
 
 .is-touch .dialogue-choice:active {
@@ -4078,14 +4303,11 @@ body.in-finale .minimap {
   inset: -5px;
 }
 
-.is-touch .dialogue-choice {
+.is-touch .dialogue-choices > button {
   min-height: 44px;
 }
 
-/* The box is tapped to advance on phones, so the A button would only show through it. */
-body.is-talking .a-button {
-  display: none;
-}
+/* (The A button also steps aside while someone's talking: the box is tapped to advance on phones.) */
 
 .badge-count {
   align-self: center;
@@ -4201,6 +4423,10 @@ body.is-talking .a-button {
   font: 400 22px/1.1 var(--font-display);
 }
 
+.hl-years {
+  white-space: nowrap;
+}
+
 .hl-head p {
   margin: 2px 0 0;
   font-size: 13px;
@@ -4216,8 +4442,16 @@ body.is-talking .a-button {
   list-style: none;
 }
 
+/* Each row of stops fills the tile, so no row ends in a ragged gap. */
+.hl-stops > li {
+  display: flex;
+  flex: 1 1 auto;
+}
+
 .hl-stop {
   display: inline-flex;
+  flex: 1;
+  justify-content: center;
   align-items: center;
   gap: 6px;
   min-height: 36px;
@@ -4275,4 +4509,40 @@ body.is-talking .a-button {
 /* Deloitte's wordmark is white, so its logo tile is dark. */
 .hl-tile--deloitte .hl-logo {
   background: #000;
+}
+
+/* ---------- HUD steps aside ----------
+   While a card, a conversation, a lift or the 1-on-1 has the screen, the HUD fades out and back
+   instead of blinking off and on. Hidden pieces can't be tapped or focused. */
+.hud-links,
+.hud-row2,
+.minimap,
+.prompt,
+.a-button {
+  transition: opacity 0.22s ease;
+}
+
+body:not(.is-playing) :is(.hint, .a-button, .hud-links, .hud-row2, .minimap),
+body.has-card :is(.hint, .a-button, .hud-links, .hud-row2, .minimap, .prompt),
+body.is-talking :is(.hint, .a-button, .hud-row2, .minimap, .prompt),
+body.is-lifting :is(.hint, .a-button),
+body.in-finale :is(.hint, .a-button, .hud-links, .hud-row2, .minimap, .prompt),
+body:not(.can-act) .a-button {
+  opacity: 0 !important;
+  visibility: hidden;
+  pointer-events: none !important;
+  transition:
+    opacity 0.16s ease,
+    visibility 0s linear 0.16s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-links,
+  .hud-row2,
+  .minimap,
+  .prompt,
+  .a-button,
+  .hint {
+    transition: none !important;
+  }
 }

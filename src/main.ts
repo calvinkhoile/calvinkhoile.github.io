@@ -854,7 +854,7 @@ async function boot(): Promise<void> {
     meterStart = performance.now();
     meter.classList.remove('is-green', 'is-late');
     meterFill.style.transform = 'scaleY(0)';
-    meter.hidden = false;
+    show(meter, { replay: true });
     const release = new Promise<boolean>((resolve) => (meterRelease = resolve));
     // Hold too long and it goes up late anyway.
     meterTimer = window.setTimeout(releaseShot, METER_FILL_S * 1000 * 1.45);
@@ -874,7 +874,8 @@ async function boot(): Promise<void> {
     meterFill.style.transform = `scaleY(${Math.min(1, v)})`;
     meter.classList.toggle('is-green', green);
     meter.classList.toggle('is-late', !green && v > GREEN[1]);
-    window.setTimeout(() => (meter.hidden = true), 650);
+    // Hold the result a beat, then fade the meter out (it keeps riding beside the shooter as it goes).
+    window.setTimeout(() => void hide(meter), 650);
     // Near misses still fall sometimes, less often from deep.
     resolve(green || Math.random() < (close ? THREE.MathUtils.lerp(0.6, 0.3, distK) : THREE.MathUtils.lerp(0.2, 0.05, distK)));
   }
@@ -977,6 +978,8 @@ async function boot(): Promise<void> {
     else if (['Space', 'Escape', 'KeyE', 'Enter'].includes(e.code)) {
       e.preventDefault();
       stopActivity();
+      // The same key also queued an interact; without this, putting the ball back could pick it straight up again.
+      input.cancelInteract();
     }
   });
 
@@ -989,6 +992,17 @@ async function boot(): Promise<void> {
 
   // Accordion: expanded shows names (and the email spelled out), collapsed shows just the icons.
   // Phones start collapsed to leave room for the world. The choice is remembered.
+  // The hint and toasts sit just under whatever the top-right HUD takes up right now (it grows in a gym,
+  // and on phones when the links open), so they never land on top of it.
+  const measureHud = () => {
+    const bottom = Math.max(hudLinks.getBoundingClientRect().bottom, row2.getBoundingClientRect().bottom);
+    document.documentElement.style.setProperty('--hud-bottom', `${Math.round(bottom)}px`);
+  };
+  const hudObserver = new ResizeObserver(measureHud);
+  hudObserver.observe(hudLinks);
+  hudObserver.observe(row2);
+  window.addEventListener('resize', measureHud);
+
   const LINKS_KEY = 'mypark:links';
   const setLinksOpen = (open: boolean, remember = true) => {
     hudLinks.classList.toggle('is-collapsed', !open);
@@ -997,6 +1011,7 @@ async function boot(): Promise<void> {
     // On phones the expanded links are a column, so the second row has to move below it.
     row2.classList.toggle('is-pushed', open);
     document.body.classList.toggle('links-open', open);
+    measureHud();
     if (!remember) return;
     try {
       localStorage.setItem(LINKS_KEY, open ? 'open' : 'closed');
@@ -1037,6 +1052,9 @@ async function boot(): Promise<void> {
     if (talk.isOpen) talk.advance();
     else input.queueInteract();
   });
+  // The press already happened on pointerdown. Without this, the tap's click lands a moment later on whatever
+  // just opened under the thumb: it closed a photo the instant it opened, or skipped a line's typing.
+  aButton.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
 
   const hint = document.getElementById('hint') as HTMLElement;
   const HINT_AFTER_IDLE = 5; // seconds standing still before the how-to-move hint comes back
@@ -1244,7 +1262,8 @@ async function boot(): Promise<void> {
     // Once they've clearly got the hang of moving, it's retired for good. It also stays out of a notice's way.
     stillFor = player.moving || !playing ? 0 : stillFor + dt;
     if (player.moving) movedFor += dt;
-    const hintOff = movedFor > 4 || player.moving || !toastEl.hidden || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden'));
+    // It also gives way to an interaction prompt, which can float right where the hint sits.
+    const hintOff = movedFor > 4 || player.moving || !toastEl.hidden || tracker.isOpen || prompt.isOpen || (minimap.isOpen && document.body.classList.contains('is-touch')) || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden'));
     hint.classList.toggle('is-hidden', hintOff);
     if (marker.visible) {
       if (player.path.length === 0) marker.visible = false;

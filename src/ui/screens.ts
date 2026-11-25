@@ -49,7 +49,7 @@ export class Screens {
 
   /** Title screen. Resolves when the visitor presses Start (button, Enter, or Space). */
   showTitle(): Promise<void> {
-    this.title.hidden = false;
+    reveal(this.title);
     const start = el<HTMLButtonElement>('title-start');
     start.focus({ preventScroll: true });
     return new Promise((resolve) => {

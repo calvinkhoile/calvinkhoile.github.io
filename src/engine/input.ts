@@ -78,6 +78,11 @@ export class Input {
     this.interactQueued = true;
   }
 
+  /** Drops a queued interact, for a key that something else already handled (putting the ball back). */
+  cancelInteract(): void {
+    this.interactQueued = false;
+  }
+
   /** Read and clear this frame's input. */
   poll(): InputState {
     let x = 0;
