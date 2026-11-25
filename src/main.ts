@@ -1052,6 +1052,9 @@ async function boot(): Promise<void> {
     if (talk.isOpen) talk.advance();
     else input.queueInteract();
   });
+  // The press already happened on pointerdown. Without this, the tap's click lands a moment later on whatever
+  // just opened under the thumb: it closed a photo the instant it opened, or skipped a line's typing.
+  aButton.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
 
   const hint = document.getElementById('hint') as HTMLElement;
   const HINT_AFTER_IDLE = 5; // seconds standing still before the how-to-move hint comes back
