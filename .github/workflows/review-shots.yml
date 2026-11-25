@@ -1,0 +1,31 @@
+name: Review shots
+
+# Temporary: phone captures for the review session, uploaded as a workflow artifact. Never deploys.
+# Removed before the branch's PR opens.
+
+on:
+  push:
+    branches: ['claude/**']
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c playwright.review.config.ts
+        continue-on-error: true
+      - name: Shrink the pictures
+        run: |
+          command -v mogrify || sudo apt-get install -y imagemagick
+          find review-shots -name '*.png' -print0 | xargs -0 -r mogrify -resize 50% -quality 72 -format jpg
+          find review-shots -name '*.png' -delete
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-shots
+          path: review-shots
