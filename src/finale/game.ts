@@ -135,6 +135,8 @@ export class Finale {
       this.card.innerHTML = `<p class="q-setup"><b>Calvin</b> ${esc(lead ? `${lead} ${q.setup}` : q.setup)}</p>
         <h2 class="q-prompt">${esc(q.prompt)}${q.difficulty === 'hard' ? ' <span class="q-three">3 PTS</span>' : ''}</h2>
         <div class="q-body"></div><div class="q-verdict" hidden></div>`;
+      // The last verdict left the panel scrolled to its button. Start the new question from its first line.
+      this.card.scrollTop = 0;
       const body = this.card.querySelector<HTMLElement>('.q-body')!;
       const rendered = renderQuestion(q, body, async (picked) => {
         const right = picked === q.answer;
@@ -181,6 +183,7 @@ export class Finale {
           <button type="button" class="btn result-exit">Back to the park</button>
         </div>
       </div>`;
+    this.card.scrollTop = 0;
     this.card.querySelector<HTMLButtonElement>('.result-again')!.focus({ preventScroll: true });
     this.card.querySelector('.result-share')!.addEventListener('click', () => this.hooks.onShare(share));
     this.card.querySelector('.result-email')!.addEventListener('click', () => this.hooks.onCopyEmail());
