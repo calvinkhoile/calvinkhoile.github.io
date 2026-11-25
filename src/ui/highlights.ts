@@ -81,7 +81,7 @@ export class Highlights {
         return `<li class="hl-tile hl-tile--${c.id}">
           <div class="hl-head">
             <img class="hl-logo" src="${esc(c.logo)}" alt="" />
-            <div><h3>${esc(c.name)}</h3><p>${esc(c.role)} · ${esc(c.years)}</p></div>
+            <div><h3>${esc(c.name)}</h3><p>${esc(c.role)} · <span class="hl-years">${esc(c.years)}</span></p></div>
           </div>
           <ul class="hl-stops" aria-label="${esc(c.name)} stops">${chips}</ul>
           <button type="button" class="hl-go" data-go="gym/${c.id}">Go to the ${esc(c.name)} gym →</button>

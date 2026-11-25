@@ -854,7 +854,7 @@ async function boot(): Promise<void> {
     meterStart = performance.now();
     meter.classList.remove('is-green', 'is-late');
     meterFill.style.transform = 'scaleY(0)';
-    meter.hidden = false;
+    show(meter, { replay: true });
     const release = new Promise<boolean>((resolve) => (meterRelease = resolve));
     // Hold too long and it goes up late anyway.
     meterTimer = window.setTimeout(releaseShot, METER_FILL_S * 1000 * 1.45);
@@ -874,7 +874,8 @@ async function boot(): Promise<void> {
     meterFill.style.transform = `scaleY(${Math.min(1, v)})`;
     meter.classList.toggle('is-green', green);
     meter.classList.toggle('is-late', !green && v > GREEN[1]);
-    window.setTimeout(() => (meter.hidden = true), 650);
+    // Hold the result a beat, then fade the meter out (it keeps riding beside the shooter as it goes).
+    window.setTimeout(() => void hide(meter), 650);
     // Near misses still fall sometimes, less often from deep.
     resolve(green || Math.random() < (close ? THREE.MathUtils.lerp(0.6, 0.3, distK) : THREE.MathUtils.lerp(0.2, 0.05, distK)));
   }
@@ -989,6 +990,17 @@ async function boot(): Promise<void> {
 
   // Accordion: expanded shows names (and the email spelled out), collapsed shows just the icons.
   // Phones start collapsed to leave room for the world. The choice is remembered.
+  // The hint and toasts sit just under whatever the top-right HUD takes up right now (it grows in a gym,
+  // and on phones when the links open), so they never land on top of it.
+  const measureHud = () => {
+    const bottom = Math.max(hudLinks.getBoundingClientRect().bottom, row2.getBoundingClientRect().bottom);
+    document.documentElement.style.setProperty('--hud-bottom', `${Math.round(bottom)}px`);
+  };
+  const hudObserver = new ResizeObserver(measureHud);
+  hudObserver.observe(hudLinks);
+  hudObserver.observe(row2);
+  window.addEventListener('resize', measureHud);
+
   const LINKS_KEY = 'mypark:links';
   const setLinksOpen = (open: boolean, remember = true) => {
     hudLinks.classList.toggle('is-collapsed', !open);
@@ -997,6 +1009,7 @@ async function boot(): Promise<void> {
     // On phones the expanded links are a column, so the second row has to move below it.
     row2.classList.toggle('is-pushed', open);
     document.body.classList.toggle('links-open', open);
+    measureHud();
     if (!remember) return;
     try {
       localStorage.setItem(LINKS_KEY, open ? 'open' : 'closed');
