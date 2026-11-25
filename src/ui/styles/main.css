@@ -3299,6 +3299,11 @@ body.in-finale .joystick {
   .q-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  /* Three answers sit in one row rather than two plus an orphan. */
+  .q-options[data-count='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* Jump buttons in the badge case */
