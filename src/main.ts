@@ -978,6 +978,8 @@ async function boot(): Promise<void> {
     else if (['Space', 'Escape', 'KeyE', 'Enter'].includes(e.code)) {
       e.preventDefault();
       stopActivity();
+      // The same key also queued an interact; without this, putting the ball back could pick it straight up again.
+      input.cancelInteract();
     }
   });
 
