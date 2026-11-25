@@ -96,8 +96,18 @@ export class CourtScene {
     }
   }
 
+  /**
+   * With reduced motion the 1-on-1's set plays jump straight to their end. The visitor's own shot in the
+   * shootaround still flies: it's the answer to their press, and without it a make or a miss just appears.
+   */
+  private ownShot = false;
+
+  private get instant(): boolean {
+    return this.skip && !this.ownShot;
+  }
+
   private tween(dur: number, step: (k: number) => void): Promise<void> {
-    if (this.skip) {
+    if (this.instant) {
       step(1);
       return Promise.resolve();
     }
@@ -258,7 +268,7 @@ export class CourtScene {
       let released = false;
       void hold.then(() => (released = true));
       // With reduced motion tweens finish instantly, so just wait (looping would never yield).
-      if (this.skip) await hold;
+      if (this.instant) await hold;
       let hung = 0;
       while (!released) {
         await this.tween(1 / 30, (k) => {
@@ -309,6 +319,7 @@ export class CourtScene {
     this.player.object.rotation.y = this.player.facing;
     // Pick up the dribble: the ball comes up into the shooting pocket.
     this.stopDribble();
+    this.ownShot = true;
     this.holdBall(x, z);
     const { landed } = await this.rise(release?.then((m) => (made = m)));
     const flight = 0.55 + dist * 0.06;
@@ -325,6 +336,7 @@ export class CourtScene {
       await this.bounceBack(out, 0.5);
     }
     await landed;
+    this.ownShot = false;
     this.holdBall(this.player.x, this.player.z);
     this.startDribble();
     return made;
@@ -347,6 +359,7 @@ export class CourtScene {
 
   endShootaround(): void {
     this.stopDribble();
+    this.ownShot = false;
     this.tweens = [];
     this.ball.visible = false;
     this.arms = 0;
