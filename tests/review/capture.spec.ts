@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { writeFileSync } from 'node:fs';
 import { stations } from '../../src/content/stations';
 
 // Review captures for the polish pass. Not a test suite: it walks every screen, pop-up and animation state
@@ -256,6 +257,17 @@ test('04 a gym: leader, station session with strip, swap, ceremony', async ({ pa
     await page.locator('.prompt').click();
     await toChoices(page);
     await shot(page, '04-leader-choices');
+    // Debug: what the choice buttons look like right now.
+    const info = await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>('.dialogue-choices > *')).map((b) => {
+        const cs = getComputedStyle(b);
+        const r = b.getBoundingClientRect();
+        return { cls: b.className, text: b.textContent, focus: document.activeElement === b, hover: b.matches(':hover'), fv: b.matches(':focus-visible'), opacity: cs.opacity, vis: cs.visibility, bg: cs.backgroundColor, color: cs.color, anim: b.getAnimations().map((a) => `${a.playState}@${a.currentTime}`), rect: [r.x, r.y, r.width, r.height] };
+      }),
+    );
+    writeFileSync(`${dir}/04-leader-choices.json`, JSON.stringify(info, null, 1));
+    await page.waitForTimeout(1000);
+    await shot(page, '04-leader-choices-later');
     await page.getByRole('button', { name: 'Walk me through it' }).click();
     await expect(page.locator('.card')).toBeVisible();
     await cardPages(page, '04-session-1');
