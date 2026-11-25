@@ -4,6 +4,8 @@ import { expect, test, type Page } from '@playwright/test';
 // Accessibility pass: zero serious or critical axe violations on the DOM UI in each of its states.
 
 async function scan(page: Page, label: string): Promise<void> {
+  // Pop-ups fade in and out (even with reduced motion); half-faded text isn't a real state, so let them settle.
+  await expect(page.locator('.is-entering:visible, .is-leaving:visible')).toHaveCount(0);
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   const summary = bad.map((v) => `${v.id}: ${v.help}\n  ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join('\n  ')}`).join('\n');

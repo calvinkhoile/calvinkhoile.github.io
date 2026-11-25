@@ -4536,13 +4536,130 @@ body:not(.can-act) .a-button {
     visibility 0s linear 0.16s;
 }
 
+/* (With reduced motion these fades stay: a fade isn't motion. Only the hint, which also slides, goes still.) */
 @media (prefers-reduced-motion: reduce) {
-  .hud-links,
-  .hud-row2,
-  .minimap,
-  .prompt,
-  .a-button,
   .hint {
     transition: none !important;
+  }
+}
+
+/* ---------- phones: a compact HUD ----------
+   The links, the badge case and the icon row used to stack three deep at full size and ate the top of the
+   screen. Now every button is 30px, the badge case is a count with a row of dots, and the badge case and the
+   icons share one row, so the HUD is two slim rows. */
+@media (max-width: 700px), (max-height: 500px) {
+  .hud-links {
+    top: calc(10px + var(--safe-top));
+    right: calc(10px + var(--safe-right));
+    gap: 5px;
+  }
+
+  .hud-items,
+  .hud-mini {
+    gap: 5px;
+  }
+
+  .hud-btn {
+    height: 30px;
+    gap: 5px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .hud-btn .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .hud-toggle,
+  .hud-icon,
+  .hud-links.is-collapsed .hud-items .hud-btn {
+    width: 30px;
+    padding: 0;
+  }
+
+  .hud-row2 {
+    top: calc(46px + var(--safe-top));
+    right: calc(10px + var(--safe-right));
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    max-width: calc(100vw - 20px - var(--safe-left) - var(--safe-right));
+  }
+
+  .badge-case {
+    align-items: center;
+    height: 30px;
+    gap: 3px;
+    padding: 0 10px 0 6px;
+  }
+
+  .badge-case .medal {
+    width: 7px;
+    height: 7px;
+    border-width: 1px;
+    box-shadow: none;
+    font-size: 0;
+  }
+
+  .badge-count {
+    margin: 0 3px 0 2px;
+    font-size: 13px;
+  }
+
+  .station-counter {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  /* A finger still gets a 44px target around each 30px button. */
+  .is-touch .hud-btn::after,
+  .is-touch .hud-icon::after {
+    inset: -7px;
+  }
+}
+
+/* Phones, quick links open: they make a column (five 30px buttons), and the second row drops below it. */
+@media (max-width: 700px) {
+  .hud-row2.is-pushed {
+    top: calc(196px + var(--safe-top));
+  }
+}
+
+/* ---------- reduced motion: pop-ups still open and close ----------
+   No slides, zooms or power-on effects, but nothing just blinks in or out either: every entrance and exit
+   (the dialogue box, cards, photos, panels, toasts, prompts) becomes a short fade. */
+@media (prefers-reduced-motion: reduce) {
+  .is-entering {
+    animation: rm-fade-in 0.18s ease backwards !important;
+  }
+
+  .is-leaving {
+    animation: rm-fade-out 0.16s ease both !important;
+  }
+
+  .is-entering *,
+  .is-leaving * {
+    animation: none !important;
+  }
+
+  .card-overlay:not([hidden]) {
+    animation: rm-fade-in 0.18s ease backwards !important;
+  }
+}
+
+@keyframes rm-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rm-fade-out {
+  to {
+    opacity: 0;
   }
 }

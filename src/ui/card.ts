@@ -286,8 +286,14 @@ export class CardOverlay {
   /** Close. On phones the sheet slides back down first. */
   close(): void {
     if (!this.model || this.closing) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return this.finish();
     this.closing = true;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Reduced motion: no slide, just a quick fade of the whole overlay.
+      this.overlay.style.transition = 'opacity 0.16s ease';
+      this.overlay.style.opacity = '0';
+      this.closeTimer = window.setTimeout(() => this.finish(), 160);
+      return;
+    }
     const sheet = this.isSheet();
     // Phones: the sheet slides back down. Desktop: the panel eases away.
     this.card.style.animation = 'none'; // a close mid-entrance starts from where the card is
@@ -313,6 +319,8 @@ export class CardOverlay {
     this.card.style.animation = '';
     this.card.style.transform = '';
     this.card.style.opacity = '';
+    this.overlay.style.transition = '';
+    this.overlay.style.opacity = '';
     this.overlay.classList.remove('is-closing');
     this.model = null;
     if (hide) {

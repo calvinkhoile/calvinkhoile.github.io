@@ -4,8 +4,8 @@
 // hide(el): plays `.is-leaving`, then sets `hidden`. Resolves when it's gone.
 // Calling show() while an element is still leaving cancels the exit and keeps it on screen
 // without replaying the entrance, so back-to-back dialogue doesn't flicker.
+// With reduced motion the same classes are set, and the CSS turns every entrance and exit into a short fade.
 
-const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pending = new WeakMap<HTMLElement, { timer: number; done: () => void }>();
 
 /** Longest exit in the CSS, plus slack. A safety net in case animationend never fires. */
@@ -27,7 +27,6 @@ export function show(el: HTMLElement, opts: { replay?: boolean } = {}): void {
     return;
   }
   el.hidden = false;
-  if (reduced()) return;
   el.classList.remove('is-entering');
   void el.offsetWidth; // restart the animation
   el.classList.add('is-entering');
@@ -46,10 +45,6 @@ export function hide(el: HTMLElement): Promise<void> {
     const prev = already.done;
     already.done = () => (prev(), r());
   });
-  if (reduced()) {
-    el.hidden = true;
-    return Promise.resolve();
-  }
   return new Promise((resolve) => {
     el.classList.remove('is-entering');
     el.classList.add('is-leaving');
