@@ -1262,7 +1262,8 @@ async function boot(): Promise<void> {
     // Once they've clearly got the hang of moving, it's retired for good. It also stays out of a notice's way.
     stillFor = player.moving || !playing ? 0 : stillFor + dt;
     if (player.moving) movedFor += dt;
-    const hintOff = movedFor > 4 || player.moving || !toastEl.hidden || tracker.isOpen || (minimap.isOpen && document.body.classList.contains('is-touch')) || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden'));
+    // It also gives way to an interaction prompt, which can float right where the hint sits.
+    const hintOff = movedFor > 4 || player.moving || !toastEl.hidden || tracker.isOpen || prompt.isOpen || (minimap.isOpen && document.body.classList.contains('is-touch')) || (stillFor < HINT_AFTER_IDLE && hint.classList.contains('is-hidden'));
     hint.classList.toggle('is-hidden', hintOff);
     if (marker.visible) {
       if (player.path.length === 0) marker.visible = false;

@@ -3517,6 +3517,14 @@ body.in-finale .joystick {
   }
 }
 
+/* Landscape phones are wide but short: two screenshots and their captions fit side by side, so show both
+   whole instead of one with the next half cut off at the edge. A third still peeks in to say "swipe". */
+@media (max-height: 500px) and (orientation: landscape) {
+  .card-row-item {
+    flex-basis: calc(50% - 7px);
+  }
+}
+
 .hud-mini {
   display: flex;
   gap: 6px;
