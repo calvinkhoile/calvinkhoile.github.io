@@ -4536,13 +4536,43 @@ body:not(.can-act) .a-button {
     visibility 0s linear 0.16s;
 }
 
+/* (With reduced motion these fades stay: a fade isn't motion. Only the hint, which also slides, goes still.) */
 @media (prefers-reduced-motion: reduce) {
-  .hud-links,
-  .hud-row2,
-  .minimap,
-  .prompt,
-  .a-button,
   .hint {
     transition: none !important;
+  }
+}
+
+/* ---------- reduced motion: pop-ups still open and close ----------
+   No slides, zooms or power-on effects, but nothing just blinks in or out either: every entrance and exit
+   (the dialogue box, cards, photos, panels, toasts, prompts) becomes a short fade. */
+@media (prefers-reduced-motion: reduce) {
+  .is-entering {
+    animation: rm-fade-in 0.18s ease backwards !important;
+  }
+
+  .is-leaving {
+    animation: rm-fade-out 0.16s ease both !important;
+  }
+
+  .is-entering *,
+  .is-leaving * {
+    animation: none !important;
+  }
+
+  .card-overlay:not([hidden]) {
+    animation: rm-fade-in 0.18s ease backwards !important;
+  }
+}
+
+@keyframes rm-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rm-fade-out {
+  to {
+    opacity: 0;
   }
 }
