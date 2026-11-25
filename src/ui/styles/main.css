@@ -1956,9 +1956,9 @@ body.is-talking .joystick {
   display: none;
 }
 
-.is-touch .toast {
-  /* Under the how-to-move hint, which sits under the HUD. */
-  top: calc(var(--hud-bottom, 104px) + 72px);
+/* Toasts take the hint's spot (the hint steps aside while one shows) and draw over floating prompts. */
+.toast {
+  z-index: 2;
 }
 
 /* The quick links and the badge row (with its station list) sit above the hint and toasts. */
@@ -2581,9 +2581,6 @@ body.is-talking .joystick {
     font-size: 13px;
   }
 
-  .is-touch .hint {
-    top: calc(158px + var(--safe-top));
-  }
 }
 
 /* ---------- ?lineup=1 review page ---------- */
@@ -2640,6 +2637,8 @@ body.is-talking .joystick {
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   align-items: center;
+  /* Sized to its buttons, not squeezed into the half of the screen right of center. */
+  width: max-content;
   gap: 10px;
   padding: 10px 12px 10px 18px;
   border: 1px solid var(--hairline);
@@ -2674,6 +2673,22 @@ body.is-talking .joystick {
 
 .is-touch .lift-hud kbd {
   display: none;
+}
+
+@media (max-width: 700px) {
+  .lift-hud {
+    gap: 8px;
+    padding: 8px 8px 8px 14px;
+  }
+
+  .lift-count {
+    min-width: 54px;
+    font-size: 20px;
+  }
+
+  .lift-hud .btn {
+    padding: 11px 12px;
+  }
 }
 
 body.is-lifting .joystick {
@@ -3446,10 +3461,19 @@ body.in-finale .joystick {
   .hud-icon {
     width: 36px;
   }
+}
 
-  /* Under the whole HUD (links, badges, icons), however tall it is, so nothing overlaps. */
+/* Phones, either way up: under the whole HUD (links, badges, icons), however tall it is, so nothing overlaps. */
+@media (max-width: 700px), (max-height: 500px) {
   .is-touch .minimap {
     top: calc(var(--hud-bottom, 112px) + 10px);
+  }
+}
+
+/* Landscape phones: smaller, so it clears the joystick. */
+@media (max-height: 500px) {
+  .minimap canvas {
+    width: min(160px, 40vh);
   }
 }
 
