@@ -1532,7 +1532,10 @@ body.is-talking .joystick {
 
 .ba-tag {
   position: absolute;
+  /* Over the divider line, so a narrow slider never cuts into the label. */
+  z-index: 1;
   top: 10px;
+  pointer-events: none;
   padding: 4px 9px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.72);
@@ -3470,10 +3473,16 @@ body.in-finale .joystick {
   }
 }
 
-/* Landscape phones: smaller, so it clears the joystick. */
+/* Landscape phones: smaller, and on the right under the HUD, where it clears the joystick and the A button. */
 @media (max-height: 500px) {
   .minimap canvas {
     width: min(160px, 40vh);
+  }
+
+  .is-touch .minimap {
+    left: auto;
+    right: calc(14px + var(--safe-right));
+    transform-origin: top right;
   }
 }
 

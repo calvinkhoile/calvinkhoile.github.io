@@ -197,6 +197,16 @@ test('02 park HUD, prompt, panels, toast', async ({ page, isMobile }) => {
   await page.locator('#hud-map').click();
   await page.waitForTimeout(800);
   await shot(page, '02-map');
+  writeFileSync(
+    `${dir}/02-map.json`,
+    JSON.stringify(
+      await page.evaluate(() => {
+        const m = document.querySelector<HTMLElement>('.minimap')!;
+        const cs = getComputedStyle(m);
+        return { cls: m.className, hidden: m.hidden, opacity: cs.opacity, body: document.body.className, anim: m.getAnimations().map((a) => `${(a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty}:${a.playState}@${a.currentTime}`) };
+      }),
+    ),
+  );
   await page.locator('#hud-map').click();
   await page.waitForTimeout(600);
 
