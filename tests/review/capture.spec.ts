@@ -24,7 +24,14 @@ async function frame(page: Page, name: string, ms: number): Promise<void> {
 
 async function release(page: Page): Promise<void> {
   await page.evaluate(() => {
-    for (const a of document.getAnimations()) a.finish?.();
+    for (const a of document.getAnimations()) {
+      // Infinite animations can't finish; play them on instead of stopping the loop.
+      try {
+        a.finish();
+      } catch {
+        a.play();
+      }
+    }
   }).catch(() => {});
 }
 

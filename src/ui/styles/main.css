@@ -1239,6 +1239,12 @@ body.is-talking .joystick {
   flex: none;
 }
 
+/* Deloitte's mark is white, so it needs the dark plate (as on the Highlights tile). */
+.card-logo[src$='deloitte.webp'] {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
 .card-heading {
   flex: 1;
   min-width: 0;
