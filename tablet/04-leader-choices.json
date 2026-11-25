@@ -1,0 +1,62 @@
+[
+ {
+  "cls": "dialogue-choice",
+  "text": "Walk me through it",
+  "focus": true,
+  "hover": false,
+  "fv": false,
+  "opacity": "1",
+  "vis": "visible",
+  "bg": "rgba(255, 255, 255, 0.08)",
+  "color": "rgb(255, 255, 255)",
+  "anim": [
+   "finished@240"
+  ],
+  "rect": [
+   94,
+   920,
+   218.65625,
+   40
+  ]
+ },
+ {
+  "cls": "dialogue-choice",
+  "text": "Skip to the badge",
+  "focus": false,
+  "hover": false,
+  "fv": false,
+  "opacity": "1",
+  "vis": "visible",
+  "bg": "rgba(255, 255, 255, 0.08)",
+  "color": "rgb(255, 255, 255)",
+  "anim": [
+   "finished@300"
+  ],
+  "rect": [
+   320.65625,
+   920,
+   218.671875,
+   40
+  ]
+ },
+ {
+  "cls": "dialogue-choice",
+  "text": "I'll look around",
+  "focus": false,
+  "hover": false,
+  "fv": false,
+  "opacity": "1",
+  "vis": "visible",
+  "bg": "rgba(255, 255, 255, 0.08)",
+  "color": "rgb(255, 255, 255)",
+  "anim": [
+   "finished@360"
+  ],
+  "rect": [
+   547.328125,
+   920,
+   218.671875,
+   40
+  ]
+ }
+]
